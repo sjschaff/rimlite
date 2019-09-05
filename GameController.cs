@@ -9,21 +9,14 @@ using Vec2I = UnityEngine.Vector2Int;
 
 public class GameController : MonoBehaviour
 {
-    // TODO: probably use polymorphic class in array w/ Click(tile) etc. rather than enum
-    private enum Tool
-    {
-        CommandMove,
-        Mine,
-        Place,
-        Build,
-    }
-
     public Map map; // TODO: this does not need to be a gameobject
     public Minion _minion;
     public Transform mouseHighlight;
     public Transform itemPrefab;
 
-    private Tool tool;
+    private LinkedList<UITool> tools;
+    private LinkedListNode<UITool> currentTool;
+    private UITool tool => currentTool.Value;
     private LinkedList<Minion> minions;
     private LinkedList<Job> currentJobs;
     private JobWalkDummy walkDummyJob;
@@ -39,8 +32,10 @@ public class GameController : MonoBehaviour
         minions.AddLast(_minion);
         _minion.Init(this);
         currentJobs = new LinkedList<Job>();
-        tool = Tool.CommandMove;
         walkDummyJob = new JobWalkDummy();
+
+        tools = UITool.RegisterTools(this);
+        currentTool = tools.First;
     }
 
     // required:  true if tile is no longer passable, false if tile is now passable
@@ -78,7 +73,7 @@ public class GameController : MonoBehaviour
         RerouteMinions(pos, true);
     }
 
-    private void ModifyTerrain(Vec2I pos, Terrain terrain)
+    public void ModifyTerrain(Vec2I pos, Terrain terrain)
     {
         var tile = map.Tile(pos);
         bool wasPassable = tile.terrain.passable;
@@ -97,6 +92,19 @@ public class GameController : MonoBehaviour
         item.Init(item.spriteRenderer.sprite, "25");
     }
 
+    public void K_MoveMinion(Vec2I pos) => _minion.AssignTask(walkDummyJob.CreateWalkTask(pos));
+
+    public void AddJob(Job job)
+    {
+        Debug.Log("Added Job.");
+        currentJobs.AddLast(job);
+    }
+
+    public void RemoveJob(Job job)
+    {
+        currentJobs.Remove(job);
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -105,33 +113,16 @@ public class GameController : MonoBehaviour
 
         if (Input.GetKeyDown("l"))
         {
-            tool = tool.Next();
+            currentTool = currentTool.Next;
+            if (currentTool == null)
+                currentTool = tools.First;
+
             Debug.Log("Current Tool: " + tool);
         }
 
         if (Input.GetMouseButtonDown(0) && map.ValidTile(tile))
         {
-            if (tool == Tool.CommandMove)
-            {
-                _minion.AssignTask(walkDummyJob.CreateWalkTask(tile));
-            }
-            else if (tool == Tool.Mine)
-            {
-                if (map.Tile(tile).Mineable())
-                {
-                    Debug.Log("added job");
-                    currentJobs.AddLast(new JobMine(this, tile));
-                }
-            }
-            else if (tool == Tool.Place)
-            {
-                ModifyTerrain(tile, new TerrainStandard(TerrainStandard.Terrain.Path));
-            }
-            else if (tool == Tool.Build)
-            {
-                if (!map.Tile(tile).HasBuilding())
-                    AddBuilding(tile, new BuildingWall(BuildingWall.Wall.StoneBrick));
-            }
+            tool.OnClick(tile);
         }
 
         foreach (Minion minion in minions)
@@ -151,10 +142,5 @@ public class GameController : MonoBehaviour
                 }
             }
         }
-    }
-
-    public void RemoveJob(Job job)
-    {
-        currentJobs.Remove(job);
     }
 }

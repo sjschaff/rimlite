@@ -151,7 +151,7 @@ public class Minion : MonoBehaviour
     {
         BB.Assert(currentTask != null);
 
-        if (!path.Contains(updatedTile))
+        if (path == null || !path.Contains(updatedTile))
             return;
 
         var pts = PathToTask(currentTask);
