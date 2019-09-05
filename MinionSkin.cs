@@ -7,16 +7,23 @@ using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
-public struct AnimKey
+public class MetaAtlas
 {
-    public string anim;
-    public string dir;
-    public string frame;
-}
+    private struct AnimKey
+    {
+        public string anim;
+        public string dir;
+        public string frame;
+    }
 
-public class CharacterAtlas : Atlas<AnimKey>
-{
-    public CharacterAtlas(Texture2D atlas) : base(atlas) {}
+    private Dictionary<AnimKey, Atas.Key> keys;
+    private Dictionary<string, Atas> atlases;
+
+    public MetaAtlas()
+    {
+        keys = new Dictionary<AnimKey, Atas.Key>();
+        atlases = new Dictionary<string, Atas>();
+    }
 
     private int OriginAnim(string anim)
     {
@@ -48,40 +55,25 @@ public class CharacterAtlas : Atlas<AnimKey>
 
     private int OffsetFrame(string frame) => Int32.Parse(frame);
 
-    protected override Sprite CreateSprite(AnimKey key)
+    private Atas.Key GetKey(string anim, string dir, string frame)
     {
-        int x = OffsetFrame(key.frame);
-        int y = 20 - (OriginAnim(key.anim) + OffsetDir(key.dir));
+        AnimKey animKey;
+        animKey.anim = anim;
+        animKey.dir = dir;
+        animKey.frame = frame;
+        if (keys.TryGetValue(animKey, out var key))
+            return key;
 
-        var ret = Sprite.Create(
-            atlas,
-            new Rect(x*64, y*64, 64, 64),
-            new Vec2(.5f, 0f),
-            64, 0,
-            SpriteMeshType.FullRect,
-            new Vector4(0, 0, 0, 0),
-            false);
-        ret.name = key.anim + "_" + key.dir + "_" + key.frame;
-        return ret;
-    }
+        var origin = new Vec2I(OffsetFrame(frame), 20 - (OriginAnim(anim) + OffsetDir(dir)));
 
-    public Sprite GetSprite(string anim, string dir, string frame)
-    {
-        AnimKey key;
-        key.anim = anim;
-        key.dir = dir;
-        key.frame = frame;
-        return GetSprite(key);
-    }
-}
+        key = new Atas.Key(
+            origin * 2,
+            new Vec2I(2, 2),
+            new Vec2I(1, 0),
+            64);
 
-public class MetaAtlas
-{
-    private Dictionary<string, CharacterAtlas> atlases;
-
-    public MetaAtlas()
-    {
-        atlases = new Dictionary<string, CharacterAtlas>();
+        keys.Add(animKey, key);
+        return key;
     }
 
     public Sprite GetSprite(string type, bool male, string name, string anim, string dir, string frame)
@@ -98,11 +90,11 @@ public class MetaAtlas
             Texture2D tex = Resources.Load<Texture2D>(path);
             BB.Assert(tex != null, "no texture: " + path);
             tex.filterMode = FilterMode.Point;
-            atlas = new CharacterAtlas(tex);
+            atlas = new Atas(tex, 32);
             atlases.Add(path, atlas);
         }
 
-        return atlas.GetSprite(anim, dir, frame);
+        return atlas.GetSprite(GetKey(anim, dir, frame));
     }
 }
 

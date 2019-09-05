@@ -161,8 +161,8 @@ public class MapTiler
     }
 
     public Map map { get; private set; }
-    public _Atlas atlas { get; private set; }
-    public _Atlas atlas32 { get; private set; }
+    public Atas atlas { get; private set; }
+    public Atas atlas32 { get; private set; }
 
     private TilemapUpdater<VirtualTileTerrainOver> tilemapTerrainOver;
     private TilemapUpdater<VirtualTileBuilding> tilemapBuilding;
@@ -171,8 +171,8 @@ public class MapTiler
     public MapTiler(Map map)
     {
         this.map = map;
-        atlas = new _Atlas(map.atlasTexture, 16);
-        atlas32 = new _Atlas(map.atlas32, 32);
+        atlas = new Atas(map.atlasTexture, 16);
+        atlas32 = new Atas(map.atlas32, 32);
 
         tilemapTerrainOver = new TilemapUpdater<VirtualTileTerrainOver>(this, map.terrainOver);
         tilemapBuilding = new TilemapUpdater<VirtualTileBuilding>(this, map.buildingBase);

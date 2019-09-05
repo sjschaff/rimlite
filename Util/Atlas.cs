@@ -5,33 +5,9 @@ using System.Collections.Generic;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
-public abstract class Atlas<Key>
+public class Atas
 {
-    protected Texture2D atlas;
-    private Dictionary<Key, Sprite> spriteCache;
-
-    protected Atlas(Texture2D atlas)
-    {
-        this.atlas = atlas;
-        spriteCache = new Dictionary<Key, Sprite>();
-    }
-
-    public Sprite GetSprite(Key key)
-    {
-        if (spriteCache.TryGetValue(key, out var ret))
-            return ret;
-
-        ret = CreateSprite(key);
-        spriteCache.Add(key, ret);
-        return ret;
-    }
-
-    protected abstract Sprite CreateSprite(Key key);
-}
-
-public class _Atlas
-{
-    protected struct Key
+    public struct Key
     {
         public readonly Vec2I origin;
         public readonly Vec2I size;
@@ -51,7 +27,7 @@ public class _Atlas
     private readonly Dictionary<Key, Sprite> spriteCache;
     private readonly int tileSize;
 
-    public _Atlas(Texture2D atlas, int tileSize)
+    public Atas(Texture2D atlas, int tileSize)
     {
         this.atlas = atlas;
         spriteCache = new Dictionary<Key, Sprite>();
@@ -64,7 +40,7 @@ public class _Atlas
     public Sprite GetSprite(Vec2I origin, Vec2I size, Vec2I anchor, float ppu)
         => GetSprite(new Key(origin, size, anchor, ppu));
 
-    private Sprite GetSprite(Key key)
+    public Sprite GetSprite(Key key)
     {
         if (spriteCache.TryGetValue(key, out var ret))
             return ret;
