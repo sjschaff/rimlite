@@ -28,16 +28,12 @@ public class GameController : MonoBehaviour
         _minion.Init(this);
     }
 
-    void RemoveBuilding(Vec2I tile)
+    // required:  true if tile is no longer passable, false if tile is now passable
+    private void RerouteMinions(Vec2I tile, bool required)
     {
-        map.RemoveBuilding(tile);
-
         // TODO: check if minions can reroute more efficiently
-    }
-
-    void UpdateTile(Vec2I tile, Terrain terrain)
-    {
-        map.UpdateTile(tile, terrain);
+        if (!required)
+            return;
 
         foreach (var minion in minions)
         {
@@ -46,12 +42,46 @@ public class GameController : MonoBehaviour
         }
     }
 
+    private void RemoveBuilding(Vec2I pos)
+    {
+        var tile = map.Tile(pos);
+        BB.Assert(tile.HasBuilding());
+
+        bool reroute = !tile.building.passable;
+        map.RemoveBuilding(pos);
+
+        if (reroute)
+            RerouteMinions(pos, false);
+    }
+
+    private void AddBuilding(Vec2I pos, Building building)
+    {
+        var tile = map.Tile(pos);
+        BB.Assert(!tile.HasBuilding());
+
+        map.AddBuilding(pos, building);
+        RerouteMinions(pos, true);
+    }
+
+    private void ModifyTerrain(Vec2I pos, Terrain terrain)
+    {
+        var tile = map.Tile(pos);
+        bool wasPassable = tile.terrain.passable;
+        bool nowPassable = terrain.passable;
+
+        map.ModifyTerrain(pos, terrain);
+
+        if (wasPassable != nowPassable)
+            RerouteMinions(pos, wasPassable);
+    }
+
     // TODO: probably use polymorphic class in array w/ Click(tile) etc. rather than enum
     private enum Tool
     {
         CommandMove,
         Mine,
         Place,
+        Build,
     }
 
     private Tool tool = Tool.CommandMove;
@@ -87,7 +117,12 @@ public class GameController : MonoBehaviour
             }
             else if (tool == Tool.Place)
             {
-                UpdateTile(tile, Terrain.Path);
+                ModifyTerrain(tile, new TerrainStandard(TerrainStandard.Terrain.Path));
+            }
+            else if (tool == Tool.Build)
+            {
+                if (!map.Tile(tile).HasBuilding())
+                    AddBuilding(tile, new BuildingWall(BuildingWall.Wall.StoneBrick));
             }
         }
 

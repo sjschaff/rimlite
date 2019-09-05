@@ -8,39 +8,25 @@ using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
-public enum Terrain { Grass, Mud, Dirt, Path, Water }
-public enum Building { None, WallStoneBrick, FloorStoneBrick,/*Stone,*/ Rock, Tree }
 
 // TODO: better name (rename BBTile->VirtualTile)
-public struct BBTile
+
+
+public class BBTile
 {
     public Terrain terrain;
     public Building building;
     // public Item item;
 
-    public bool passable => Passable(terrain) && Passable(building);
-
-    public bool Passable(Terrain terrain) => terrain != Terrain.Water;
-    public bool Passable(Building building) => building == Building.None || building == Building.FloorStoneBrick;
-
-    public bool IsBuilding() => building != Building.None;
-
-    public bool IsFullTileBuilding()
-    {
-        return building == Building.WallStoneBrick || building == Building.FloorStoneBrick;
-    }
-
-    public bool IsWallType()
-    {
-        return building == Building.WallStoneBrick;
-    }
-
-    public bool Mineable() => building == Building.Rock;
+    public bool Passable() => terrain.passable && (building == null ? true : building.passable);
+    public bool HasBuilding() => building != null;
+    public bool Mineable() => building == null ? false : building.mineable;
 
     public BBTile(Terrain terrain)
     {
+        BB.Assert(terrain != null);
         this.terrain = terrain;
-        this.building = Building.None;
+        building = null;
     }
 }
 
@@ -53,6 +39,10 @@ public class Map : MonoBehaviour
 
     public Texture2D atlasTexture;
     public Texture2D atlas32;
+    public Tilemap terrainBase;
+    public Tilemap terrainOver;
+    public Tilemap buildingBase;
+    public Tilemap buildingOver;
 
     private BBTile[,] tiles;
     private MapTiler tiler;
@@ -70,13 +60,14 @@ public class Map : MonoBehaviour
 
     private BBTile[,] GenerateTerrain()
     {
+        var grass = new TerrainStandard(TerrainStandard.Terrain.Grass);
         BBTile[,] tiles = new BBTile[w, h];
         for (int x = 0; x < w; ++x)
             for (int y = 0; y < h; ++y)
-                tiles[x, y] = new BBTile(Terrain.Grass);
+                tiles[x, y] = new BBTile(grass);
 
-        tiles[2, 2].terrain = tiles[2, 3].terrain = tiles[3, 2].terrain = tiles[3, 3].terrain = Terrain.Water;
-        tiles[5, 5].building = Building.Rock;
+        tiles[2, 2].terrain = tiles[2, 3].terrain = tiles[3, 2].terrain = tiles[3, 3].terrain = new TerrainStandard(TerrainStandard.Terrain.Water);
+        tiles[5, 5].building = new BuildingResource(BuildingResource.Resource.Rock);
 
         return tiles;
     }
@@ -89,28 +80,33 @@ public class Map : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // TODO: start or awake?
-        var tilemapBase = transform.GetChild(0).GetComponent<Tilemap>();
-        var tilemapOver = transform.GetChild(1).GetComponent<Tilemap>();
-
         tiles = GenerateTerrain();
-        tiler = new MapTiler(this, atlasTexture, atlas32, tilemapBase, tilemapOver);
+        tiler = new MapTiler(this);
     }
 
-    public void RemoveBuilding(Vec2I tile)
+    public void RemoveBuilding(Vec2I pos)
     {
-        AssertValidTile(tile);
+        var tile = Tile(pos);
+        BB.Assert(tile.HasBuilding());
 
-        tiles[tile.x, tile.y].building = Building.None;
-        tiler.UpdateTile(tile);
+        tile.building = null;
+        tiler.UpdateBuilding(pos);
     }
 
-    public void UpdateTile(Vec2I tile, Terrain terrain)
+    public void AddBuilding(Vec2I pos, Building building)
     {
-        AssertValidTile(tile);
+        var tile = Tile(pos);
+        BB.Assert(!tile.HasBuilding());
 
-        tiles[tile.x, tile.y].building = Building.WallStoneBrick;// = new BBTile(terrain);
-        tiler.UpdateTile(tile);
+        tile.building = building;
+        tiler.UpdateBuilding(pos);
+    }
+
+    public void ModifyTerrain(Vec2I pos, Terrain terrain)
+    {
+        var tile = Tile(pos);
+        tile.terrain = terrain;
+        tiler.UpdateTerrain(pos);
     }
 
     public Vec2I MouseToTile() => UnityEngine.Camera.main.ScreenToWorldPoint(Input.mousePosition).xy().Floor();
