@@ -68,6 +68,7 @@ public class Map : MonoBehaviour
 
         tiles[2, 2].terrain = tiles[2, 3].terrain = tiles[3, 2].terrain = tiles[3, 3].terrain = new TerrainStandard(TerrainStandard.Terrain.Water);
         tiles[5, 5].building = new BuildingResource(BuildingResource.Resource.Rock);
+        tiles[6, 5].building = new BuildingResource(BuildingResource.Resource.Tree);
 
         return tiles;
     }

@@ -128,7 +128,9 @@ public class VirtualTileBuildingOver : VirtualTileBase
 {
     protected override Sprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
     {
-        // TODO:
+        if (tile.HasBuilding() && tile.building.oversized && subTile == Vec2I.zero)
+            return tile.building.GetSpriteOver(tiler, pos);
+
         return null;
     }
 }
@@ -159,8 +161,8 @@ public class MapTiler
     }
 
     public Map map { get; private set; }
-    public _Atlas atlasNew { get; private set; } // TODO: not public
-    public _Atlas atlas32New { get; private set; } // TODO: not public
+    public _Atlas atlas { get; private set; }
+    public _Atlas atlas32 { get; private set; }
 
     private TilemapUpdater<VirtualTileTerrainOver> tilemapTerrainOver;
     private TilemapUpdater<VirtualTileBuilding> tilemapBuilding;
@@ -169,8 +171,8 @@ public class MapTiler
     public MapTiler(Map map)
     {
         this.map = map;
-        atlasNew = new _Atlas(map.atlasTexture, 16);
-        atlas32New = new _Atlas(map.atlas32, 32);
+        atlas = new _Atlas(map.atlasTexture, 16);
+        atlas32 = new _Atlas(map.atlas32, 32);
 
         tilemapTerrainOver = new TilemapUpdater<VirtualTileTerrainOver>(this, map.terrainOver);
         tilemapBuilding = new TilemapUpdater<VirtualTileBuilding>(this, map.buildingBase);
@@ -188,6 +190,7 @@ public class MapTiler
                 var gridPos = new Vec2I(x, y);
                 tilemapTerrainOver.UpdateTile(gridPos);
                 tilemapBuilding.UpdateTile(gridPos);
+                tilemapBuildingOver.UpdateTile(gridPos);
             }
         }
     }

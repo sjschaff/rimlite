@@ -35,12 +35,14 @@ public class _Atlas
     {
         public readonly Vec2I origin;
         public readonly Vec2I size;
+        public readonly Vec2I anchor;
         public readonly float ppu;
 
-        public Key(Vec2I origin, Vec2I size, float ppu)
+        public Key(Vec2I origin, Vec2I size, Vec2I anchor, float ppu)
         {
             this.origin = origin;
             this.size = size;
+            this.anchor = anchor;
             this.ppu = ppu;
         }
     }
@@ -57,7 +59,10 @@ public class _Atlas
     }
 
     public Sprite GetSprite(Vec2I origin, Vec2I size, float ppu)
-        => GetSprite(new Key(origin, size, ppu));
+        => GetSprite(origin, size, Vec2I.zero, ppu);
+
+    public Sprite GetSprite(Vec2I origin, Vec2I size, Vec2I anchor, float ppu)
+        => GetSprite(new Key(origin, size, anchor, ppu));
 
     private Sprite GetSprite(Key key)
     {
@@ -71,9 +76,10 @@ public class _Atlas
 
     private Sprite CreateSprite(Key key)
     {
+        Vec2 anchor = new Vec2(key.anchor.x / (float)key.size.x, key.anchor.y / (float)key.size.y);
         return Sprite.Create(atlas,
             new Rect(key.origin * tileSize, key.size * tileSize),
-            Vec2.zero,
+            anchor,
             key.ppu,
             0, // TODO: 0, 1, 2, 4?
             SpriteMeshType.FullRect,
