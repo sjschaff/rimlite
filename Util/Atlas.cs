@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
-public class Atas
+public class Atlas
 {
     public struct Key
     {
@@ -27,7 +27,7 @@ public class Atas
     private readonly Dictionary<Key, Sprite> spriteCache;
     private readonly int tileSize;
 
-    public Atas(Texture2D atlas, int tileSize)
+    public Atlas(Texture2D atlas, int tileSize)
     {
         this.atlas = atlas;
         spriteCache = new Dictionary<Key, Sprite>();

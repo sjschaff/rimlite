@@ -17,22 +17,18 @@ public class GameController : MonoBehaviour
     private LinkedList<UITool> tools;
     private LinkedListNode<UITool> currentTool;
     private UITool tool => currentTool.Value;
-    private LinkedList<Minion> minions;
-    private LinkedList<Job> currentJobs;
-    private JobWalkDummy walkDummyJob;
+    private LinkedList<Minion> minions = new LinkedList<Minion>();
+    private LinkedList<Item> items = new LinkedList<Item>();
+    private LinkedList<Job> currentJobs = new LinkedList<Job>();
+    private JobWalkDummy walkDummyJob = new JobWalkDummy();
 
-    private void Awake()
-    {
-        minions = new LinkedList<Minion>();
-    }
+    private void Awake() { }
 
     // Start is called before the first frame update
     void Start()
     {
         minions.AddLast(_minion);
         _minion.Init(this);
-        currentJobs = new LinkedList<Job>();
-        walkDummyJob = new JobWalkDummy();
 
         tools = UITool.RegisterTools(this);
         currentTool = tools.First;
@@ -85,11 +81,12 @@ public class GameController : MonoBehaviour
             RerouteMinions(pos, wasPassable);
     }
 
-    public void DropItem(Vec2I pos/*, item info*/)
+    public void DropItem(Vec2I pos, ItemInfo info)
     {
         // TODO: make this real
-        var item = Instantiate(itemPrefab, pos.Vec3(), Quaternion.identity).GetComponent<ItemVis>();
-        item.Init(item.spriteRenderer.sprite, "25");
+        var item = Instantiate(itemPrefab, pos.Vec3(), Quaternion.identity).GetComponent<Item>();
+        item.Init(this, pos, info);
+        items.AddLast(item);
     }
 
     public void K_MoveMinion(Vec2I pos) => _minion.AssignTask(walkDummyJob.CreateWalkTask(pos));

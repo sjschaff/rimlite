@@ -16,13 +16,13 @@ public class MetaAtlas
         public string frame;
     }
 
-    private Dictionary<AnimKey, Atas.Key> keys;
-    private Dictionary<string, Atas> atlases;
+    private Dictionary<AnimKey, Atlas.Key> keys;
+    private Dictionary<string, Atlas> atlases;
 
     public MetaAtlas()
     {
-        keys = new Dictionary<AnimKey, Atas.Key>();
-        atlases = new Dictionary<string, Atas>();
+        keys = new Dictionary<AnimKey, Atlas.Key>();
+        atlases = new Dictionary<string, Atlas>();
     }
 
     private int OriginAnim(string anim)
@@ -55,7 +55,7 @@ public class MetaAtlas
 
     private int OffsetFrame(string frame) => Int32.Parse(frame);
 
-    private Atas.Key GetKey(string anim, string dir, string frame)
+    private Atlas.Key GetKey(string anim, string dir, string frame)
     {
         AnimKey animKey;
         animKey.anim = anim;
@@ -66,7 +66,7 @@ public class MetaAtlas
 
         var origin = new Vec2I(OffsetFrame(frame), 20 - (OriginAnim(anim) + OffsetDir(dir)));
 
-        key = new Atas.Key(
+        key = new Atlas.Key(
             origin * 2,
             new Vec2I(2, 2),
             new Vec2I(1, 0),
@@ -90,7 +90,7 @@ public class MetaAtlas
             Texture2D tex = Resources.Load<Texture2D>(path);
             BB.Assert(tex != null, "no texture: " + path);
             tex.filterMode = FilterMode.Point;
-            atlas = new Atas(tex, 32);
+            atlas = new Atlas(tex, 32);
             atlases.Add(path, atlas);
         }
 

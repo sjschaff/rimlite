@@ -172,7 +172,7 @@ public class BuildingResource : Building
     {
         BB.Assert(subTile == Vec2I.zero);
 
-        Atas atlas;
+        Atlas atlas;
         Vec2I spritePos;
         Vec2I spriteSize;
         float ppu = 32;

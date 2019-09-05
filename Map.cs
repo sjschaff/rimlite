@@ -46,6 +46,7 @@ public class Map : MonoBehaviour
 
     private BBTile[,] tiles;
     private MapTiler tiler;
+    public Atlas itemAtlas;// KLUUUUUDGE
 
     public bool ValidTile(Vec2I tile) => tile.x >= 0 && tile.x < w && tile.y >= 0 && tile.y < h;
 
@@ -83,6 +84,8 @@ public class Map : MonoBehaviour
     {
         tiles = GenerateTerrain();
         tiler = new MapTiler(this);
+
+        itemAtlas = new Atlas(atlasTexture, 8);
     }
 
     public void RemoveBuilding(Vec2I pos)

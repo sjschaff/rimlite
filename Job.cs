@@ -72,9 +72,15 @@ public class JobMine : Job
         game.RemoveJob(this);
 
         game.RemoveBuilding(task.pos);
-        game.DropItem(task.pos);
+        game.DropItem(task.pos, new ItemInfo(ItemType.Stone, 37));
     }
 }
+
+public class JobBuild
+{
+   // public 
+}
+
 
 public class Task
 {
