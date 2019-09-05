@@ -10,10 +10,21 @@ public enum JobType { Move, Mine };
 
 public class Job
 {
+    public readonly GameController game;
     public readonly JobType type;
-    public readonly Vec2I tile;
+    public readonly Vec2I pos;
 
     private float workRemaining;
+    public Job(GameController game, JobType type, Vec2I pos)
+    {
+        this.game = game;
+        this.type = type;
+        this.pos = pos;
+
+        workRemaining = 2;
+        if (type == JobType.Move)
+            workRemaining = 0;
+    }
 
     public bool WorkAdjacent()
     {
@@ -26,7 +37,7 @@ public class Job
         throw new System.Exception("Unknown job: " + type);
     }
 
-    public bool CanWorkFrom(Vec2I tile) => WorkAdjacent() ? tile.Adjacent(this.tile) : tile == this.tile;
+    public bool CanWorkFrom(Vec2I tile) => WorkAdjacent() ? tile.Adjacent(this.pos) : tile == this.pos;
         
 
     public bool IsPersonal()
@@ -38,21 +49,16 @@ public class Job
     {
         switch (type)
         {
-            case JobType.Mine: return MinionSkin.Tool.Pickaxe;
+            case JobType.Mine:
+            {
+                var tile = game.map.Tile(pos);
+                BB.Assert(tile.HasBuilding());
+                BB.Assert(tile.building.mineable);
+                return tile.building.miningTool;
+            }
             case JobType.Move:
             default: return MinionSkin.Tool.None;
         }
-        
-    }
-
-    public Job(JobType type, Vec2I tile)
-    {
-        this.type = type;
-        this.tile = tile;
-
-        workRemaining = 2;
-        if (type == JobType.Move)
-            workRemaining = 0;
     }
 
     public bool PerformWork(float amt)

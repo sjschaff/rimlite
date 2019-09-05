@@ -82,11 +82,14 @@ public class Minion : MonoBehaviour
 
             if (path == null)
             {
-                if (pos.Floor() != currentJob.tile)
-                    skin.SetDir(currentJob.tile - pos);
+                if (pos.Floor() != currentJob.pos)
+                    skin.SetDir(currentJob.pos - pos);
 
-                skin.SetSlashing(true);
-                skin.SetTool(MinionSkin.Tool.Pickaxe);
+                if (currentJob.type != JobType.Move)
+                {
+                    skin.SetSlashing(true);
+                    skin.SetTool(currentJob.Tool());
+                }
             }
         }
         else if (currentJob != null)
@@ -172,9 +175,9 @@ public class Minion : MonoBehaviour
     private Vec2I[] PathToJob(Job job)
     {
         if (job.WorkAdjacent())
-            return AStar.FindPathAdjacent(game.map, pos.Floor(), job.tile);
+            return AStar.FindPathAdjacent(game.map, pos.Floor(), job.pos);
         else
-            return AStar.FindPath(game.map, pos.Floor(), job.tile);
+            return AStar.FindPath(game.map, pos.Floor(), job.pos);
     }
 
     private void FollowPath(Vec2I[] pts)

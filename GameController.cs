@@ -104,7 +104,7 @@ public class GameController : MonoBehaviour
         {
             if (tool == Tool.CommandMove)
             {
-                Job job = new Job(JobType.Move, tile);
+                Job job = new Job(this, JobType.Move, tile);
                 _minion.AssignJob(job);
             }
             else if (tool == Tool.Mine)
@@ -112,7 +112,7 @@ public class GameController : MonoBehaviour
                 if (map.Tile(tile).Mineable())
                 {
                     Debug.Log("added job");
-                    currentJobs.AddLast(new Job(JobType.Mine, tile));
+                    currentJobs.AddLast(new Job(this, JobType.Mine, tile));
                 }
             }
             else if (tool == Tool.Place)
@@ -149,8 +149,8 @@ public class GameController : MonoBehaviour
         Debug.Log("Job Finished.");
         if (job.type == JobType.Mine)
         {
-            RemoveBuilding(job.tile);
-            var item = Instantiate(itemPrefab, job.tile.Vec3(), Quaternion.identity).GetComponent<ItemVis>();
+            RemoveBuilding(job.pos);
+            var item = Instantiate(itemPrefab, job.pos.Vec3(), Quaternion.identity).GetComponent<ItemVis>();
             item.Init(item.spriteRenderer.sprite, "Poooo");
         }
     }

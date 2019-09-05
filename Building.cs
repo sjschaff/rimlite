@@ -10,21 +10,22 @@ public interface Building
 
     bool passable { get; }
     bool tiledRender { get; }
-    bool mineable { get; }
     bool oversized { get; }
+    bool mineable { get; }
+    MinionSkin.Tool miningTool { get; }
 }
 
 public abstract class BuildingSmp : Building
 {
     public Sprite GetSpriteOver(MapTiler tiler, Vec2I pos)
-        => throw new Exception("Get Sprite Over Called on BuildingSmp");
+        => throw new Exception("GetSpriteOver called on BuildingSmp");
     public bool oversized => false;
     public bool mineable => false;
+    public MinionSkin.Tool miningTool => throw new Exception("miningTool called on BuildingSmp");
 
     public abstract Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
     public abstract bool passable { get; }
     public abstract bool tiledRender { get; }
-
 }
 
 
@@ -151,6 +152,19 @@ public class BuildingResource : Building
     public bool tiledRender => false;
     public bool mineable => true;
     public bool oversized => resource == Resource.Tree;
+
+    public MinionSkin.Tool miningTool
+    {
+        get
+        {
+            switch (resource)
+            {
+                case Resource.Rock: return MinionSkin.Tool.Pickaxe;
+                case Resource.Tree: return MinionSkin.Tool.Axe;
+                default: throw new NotImplementedException("Unkown resource: " + resource);
+            }
+        }
+    }
 
     public BuildingResource(Resource resource) => this.resource = resource;
 

@@ -103,7 +103,7 @@ public class MinionSkin : MonoBehaviour
     static readonly string[] dirs = { "up", "left", "down", "right" };
     public enum Dir { Up = 0, Left = 1, Down = 2, Right = 3 }
 
-    public enum Tool { None, Hammer, Pickaxe };
+    public enum Tool { None, Hammer, Pickaxe, Axe };
 
 
     private static MetaAtlas atlas = null;
@@ -119,6 +119,7 @@ public class MinionSkin : MonoBehaviour
             case Tool.None: return null;
             case Tool.Hammer: return "warhammer";
             case Tool.Pickaxe: return "pickaxe";
+            case Tool.Axe: return "axe";
         }
         throw new Exception("unknown tool: " + tool);
     }
