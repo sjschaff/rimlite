@@ -9,12 +9,24 @@ using Vec2I = UnityEngine.Vector2Int;
 
 public class GameController : MonoBehaviour
 {
+    // TODO: probably use polymorphic class in array w/ Click(tile) etc. rather than enum
+    private enum Tool
+    {
+        CommandMove,
+        Mine,
+        Place,
+        Build,
+    }
+
     public Map map; // TODO: this does not need to be a gameobject
     public Minion _minion;
     public Transform mouseHighlight;
     public Transform itemPrefab;
 
+    private Tool tool;
     private LinkedList<Minion> minions;
+    private LinkedList<Job> currentJobs;
+    private JobWalkDummy walkDummyJob;
 
     private void Awake()
     {
@@ -26,6 +38,9 @@ public class GameController : MonoBehaviour
     {
         minions.AddLast(_minion);
         _minion.Init(this);
+        currentJobs = new LinkedList<Job>();
+        tool = Tool.CommandMove;
+        walkDummyJob = new JobWalkDummy();
     }
 
     // required:  true if tile is no longer passable, false if tile is now passable
@@ -37,12 +52,12 @@ public class GameController : MonoBehaviour
 
         foreach (var minion in minions)
         {
-            if (minion.HasJob())
+            if (minion.HasTask())
                 minion.Reroute(tile);
         }
     }
 
-    private void RemoveBuilding(Vec2I pos)
+    public void RemoveBuilding(Vec2I pos)
     {
         var tile = map.Tile(pos);
         BB.Assert(tile.HasBuilding());
@@ -54,7 +69,7 @@ public class GameController : MonoBehaviour
             RerouteMinions(pos, false);
     }
 
-    private void AddBuilding(Vec2I pos, Building building)
+    public void AddBuilding(Vec2I pos, Building building)
     {
         var tile = map.Tile(pos);
         BB.Assert(!tile.HasBuilding());
@@ -75,18 +90,12 @@ public class GameController : MonoBehaviour
             RerouteMinions(pos, wasPassable);
     }
 
-    // TODO: probably use polymorphic class in array w/ Click(tile) etc. rather than enum
-    private enum Tool
+    public void DropItem(Vec2I pos/*, item info*/)
     {
-        CommandMove,
-        Mine,
-        Place,
-        Build,
+        // TODO: make this real
+        var item = Instantiate(itemPrefab, pos.Vec3(), Quaternion.identity).GetComponent<ItemVis>();
+        item.Init(item.spriteRenderer.sprite, "25");
     }
-
-    private Tool tool = Tool.CommandMove;
-
-    private LinkedList<Job> currentJobs = new LinkedList<Job>();
 
     // Update is called once per frame
     void Update()
@@ -104,15 +113,14 @@ public class GameController : MonoBehaviour
         {
             if (tool == Tool.CommandMove)
             {
-                Job job = new Job(this, JobType.Move, tile);
-                _minion.AssignJob(job);
+                _minion.AssignTask(walkDummyJob.CreateWalkTask(tile));
             }
             else if (tool == Tool.Mine)
             {
                 if (map.Tile(tile).Mineable())
                 {
                     Debug.Log("added job");
-                    currentJobs.AddLast(new Job(this, JobType.Mine, tile));
+                    currentJobs.AddLast(new JobMine(this, tile));
                 }
             }
             else if (tool == Tool.Place)
@@ -128,37 +136,25 @@ public class GameController : MonoBehaviour
 
         foreach (Minion minion in minions)
         {
-            if (!minion.HasJob())
+            if (!minion.HasTask())
             {
                 foreach (var job in currentJobs)
                 {
-                    if (minion.AssignJob(job))
+                    foreach (var task in job.AvailableTasks())
                     {
-                        currentJobs.Remove(job);
-                        break;
+                        if (minion.AssignTask(task))
+                        {
+                            job.ClaimTask(task);
+                            break;
+                        }
                     }
-                    else
-                        Debug.Log("did not assign job");
                 }
             }
         }
     }
 
-    public void CompleteJob(Job job)
+    public void RemoveJob(Job job)
     {
-        Debug.Log("Job Finished.");
-        if (job.type == JobType.Mine)
-        {
-            RemoveBuilding(job.pos);
-            var item = Instantiate(itemPrefab, job.pos.Vec3(), Quaternion.identity).GetComponent<ItemVis>();
-            item.Init(item.spriteRenderer.sprite, "Poooo");
-        }
-    }
-
-    public void AbandonJob(Job job)
-    {
-        Debug.Log("job abandoned: " + job.type);
-        if (!job.IsPersonal())
-            currentJobs.AddLast(job);
+        currentJobs.Remove(job);
     }
 }

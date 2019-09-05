@@ -100,17 +100,40 @@ public class MetaAtlas
 
 public class MinionSkin : MonoBehaviour
 {
-    static readonly string[] dirs = { "up", "left", "down", "right" };
-    public enum Dir { Up = 0, Left = 1, Down = 2, Right = 3 }
+    public enum Dir { Up, Left, Down, Right }
 
-    public enum Tool { None, Hammer, Pickaxe, Axe };
-
-
-    private static MetaAtlas atlas = null;
+    private static MetaAtlas atlas;
     private Dictionary<string, SpriteRenderer> spriteLayers;
 
     private SpriteRenderer animDummy;
     private Animator animator;
+
+    private string lastSprite = null;
+    private Dir curDir = Dir.Down;
+
+    private void DirtySprite() => lastSprite = null;
+
+    void Awake()
+    {
+        if (atlas == null)
+            atlas = new MetaAtlas();
+
+        animDummy = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        spriteLayers = new Dictionary<string, SpriteRenderer>();
+
+        int renderLayer = 0;
+        foreach (string layer in layers)
+        {
+            spriteLayers.Add(layer, CreateSpriteLayer(layer, renderLayer));
+            ++renderLayer;
+        }
+    }
 
     private string NameForTool(Tool tool)
     {
@@ -130,7 +153,11 @@ public class MinionSkin : MonoBehaviour
 
     public void SetSlashing(bool w) => animator.SetBool("slash_loop", w);
 
-    public void SetDir(Dir dir) => curDir = (int)dir;
+    public void SetDir(Dir dir)
+    {
+        curDir = dir;
+        DirtySprite();
+    }
 
     public void SetDir(Vec2 dir)
     {
@@ -149,10 +176,6 @@ public class MinionSkin : MonoBehaviour
                 SetDir(MinionSkin.Dir.Up);
         }
     }
-
-
-    string k_curSprite;
-    int curDir = 0;
 
     static readonly string[] layers =
     {
@@ -257,28 +280,6 @@ public class MinionSkin : MonoBehaviour
         return sprite;
     }
 
-    void Awake()
-    {
-        if (atlas == null)
-            atlas = new MetaAtlas();
-
-        animDummy = GetComponent<SpriteRenderer>();
-        animator = GetComponent<Animator>();
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        spriteLayers = new Dictionary<string, SpriteRenderer>();
-
-        int renderLayer = 0;
-        foreach (string layer in layers)
-        {
-            spriteLayers.Add(layer, CreateSpriteLayer(layer, renderLayer));
-            ++renderLayer;
-        }
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -291,10 +292,6 @@ public class MinionSkin : MonoBehaviour
         if (Input.GetKeyDown("t"))
             animator.SetTrigger("shoot");
 
-        if (Input.GetKeyDown("a"))
-        {
-            curDir = (curDir + 1) % dirs.Length;
-        }
         if (Input.GetKeyDown("z"))
         {
             if (equipped == clothed)
@@ -308,27 +305,26 @@ public class MinionSkin : MonoBehaviour
 
     private void LateUpdate()
     {
-       // if (spriteRenderer.sprite.name != k_curSprite)
         if (animDummy.sprite != null)
         {
-            k_curSprite = animDummy.sprite.name;
-            var vals = k_curSprite.Split('_');
-            BB.Assert(vals.Length == 3);
-            string anim = vals[0];
-            string dir = vals[1];
-            string frame = vals[2];
-          //  Debug.Log("[" + anim + ", " + dir + ", " + frame + "]");
-
-            foreach (var kvp in equipped)
+            string spriteName = animDummy.sprite.name;
+            if (lastSprite != spriteName)
             {
-                if (kvp.Value == null)
-                    spriteLayers[kvp.Key].sprite = null;
-                else
-                    spriteLayers[kvp.Key].sprite = atlas.GetSprite(kvp.Key, false, kvp.Value, anim, dirs[curDir], frame);
-            }
+                lastSprite = animDummy.sprite.name;
+                var vals = spriteName.Split('_');
+                BB.Assert(vals.Length == 3);
+                string anim = vals[0];
+                string frame = vals[2];
 
-            //spriteRenderer.sprite = atlas.GetSprite(anim, dirs[curDir], frame);
-           // weaponRenderer.sprite = weaponAtlas.GetSprite(anim, dirs[curDir], frame);
+                foreach (var kvp in equipped)
+                {
+                    if (kvp.Value == null)
+                        spriteLayers[kvp.Key].sprite = null;
+                    else
+                        spriteLayers[kvp.Key].sprite
+                            = atlas.GetSprite(kvp.Key, false, kvp.Value, anim, curDir.ToString().ToLower(), frame);
+                }
+            }
         }
     }
 }

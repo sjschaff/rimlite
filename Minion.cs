@@ -16,7 +16,7 @@ public class Minion : MonoBehaviour
     public MinionSkin skin;
 
     private GameController game;
-    private Job currentJob;
+    private Task currentTask;
     private LinkedList<Vec2I> path;
 
     public Vec2 pos
@@ -25,7 +25,7 @@ public class Minion : MonoBehaviour
         private set => transform.position = new Vec3(value.x, value.y, 0);
     }
 
-    public bool HasJob() => currentJob != null;
+    public bool HasTask() => currentTask != null;
 
     public void Init(GameController game)
     {
@@ -82,24 +82,23 @@ public class Minion : MonoBehaviour
 
             if (path == null)
             {
-                if (pos.Floor() != currentJob.pos)
-                    skin.SetDir(currentJob.pos - pos);
+                if (pos.Floor() != currentTask.pos)
+                    skin.SetDir(currentTask.pos - pos);
 
-                if (currentJob.type != JobType.Move)
+                if (currentTask.HasWork())
                 {
                     skin.SetSlashing(true);
-                    skin.SetTool(currentJob.Tool());
+                    skin.SetTool(currentTask.tool);
                 }
             }
         }
-        else if (currentJob != null)
+        else if (currentTask != null)
         {
-            if (currentJob.PerformWork(Time.deltaTime))
+            if (currentTask.PerformWork(Time.deltaTime))
             {
-                game.CompleteJob(currentJob);
-                currentJob = null;
+                currentTask = null;
                 skin.SetSlashing(false);
-                skin.SetTool(MinionSkin.Tool.None);
+                skin.SetTool(Tool.None);
             }
         }
     }
@@ -117,32 +116,32 @@ public class Minion : MonoBehaviour
         }
     }
 
-    public bool AssignJob(Job job)
+    public bool AssignTask(Task task)
     {
-        BB.Assert(job != null);
-        if (currentJob != null)
+        BB.Assert(task != null);
+        if (currentTask != null)
         {
-            game.AbandonJob(currentJob);
-            currentJob = null;
+            currentTask.Abandon();
+            currentTask = null;
         }
 
-        if (path == null && job.CanWorkFrom(pos.Floor()))
+        if (path == null && task.CanWorkFrom(pos.Floor()))
         {
-            currentJob = job;
+            currentTask = task;
             return true;
         }
         else
         {
-            var pts = PathToJob(job);
+            var pts = PathToTask(task);
             if (pts == null)
             {
-                Debug.Log("No Path To Job");
+                Debug.Log("No Path To Task");
                 return false;
             }
             else
             {
                 FollowPath(pts);
-                currentJob = job;
+                currentTask = task;
                 return true;
             }
         }
@@ -150,17 +149,17 @@ public class Minion : MonoBehaviour
 
     public void Reroute(Vec2I updatedTile)
     {
-        BB.Assert(currentJob != null);
+        BB.Assert(currentTask != null);
 
         if (!path.Contains(updatedTile))
             return;
 
-        var pts = PathToJob(currentJob);
+        var pts = PathToTask(currentTask);
         if (pts == null)
         {
-            Debug.Log("Abandoning Job: No Path");
-            game.AbandonJob(currentJob);
-            currentJob = null;
+            Debug.Log("Abandoning Task: No Path");
+            currentTask.Abandon();
+            currentTask = null;
 
             // TODO: figure out how to handle edge case of currentently in or going into newly solid tile
             path = new LinkedList<Vec2I>();
@@ -172,13 +171,7 @@ public class Minion : MonoBehaviour
         }
     }
 
-    private Vec2I[] PathToJob(Job job)
-    {
-        if (job.WorkAdjacent())
-            return AStar.FindPathAdjacent(game.map, pos.Floor(), job.pos);
-        else
-            return AStar.FindPath(game.map, pos.Floor(), job.pos);
-    }
+    private Vec2I[] PathToTask(Task task) => task.GetPath(game.map, pos.Floor());
 
     private void FollowPath(Vec2I[] pts)
     {

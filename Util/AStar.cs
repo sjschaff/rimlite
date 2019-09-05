@@ -33,13 +33,10 @@ public class AStar
         new Vec2I(0, -1)
     };
 
-    public static Vec2I[] FindPathAdjacent(Map map, Vec2I start, Vec2I end)
-        => FindPath(map, start, end, v => v.Adjacent(end));
-
     public static Vec2I[] FindPath(Map map, Vec2I start, Vec2I end)
         => FindPath(map, start, end, v => v == end);
 
-    private static Vec2I[] FindPath(Map map, Vec2I start, Vec2I end, Func<Vec2I, bool> dstFunc)
+    public static Vec2I[] FindPath(Map map, Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFunc)
     {
         var open = new FastPriorityQueue<Node>(map.w * map.h);
         var opened = new Dictionary<Vec2I, Node>();
@@ -85,7 +82,7 @@ public class AStar
                 }
                 else
                 {
-                    Node nodeNext = new Node(n, pos, g, Vec2I.Distance(start, end));
+                    Node nodeNext = new Node(n, pos, g, Vec2I.Distance(start, endHint));
                     open.Enqueue(nodeNext, nodeNext.f);
                     opened.Add(nodeNext.pos, nodeNext);
                 }
