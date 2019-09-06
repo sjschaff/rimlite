@@ -31,6 +31,13 @@ public static class BB
         return (Arr.Length == j) ? Arr[0] : Arr[j];
     }
 
+    public static void Destroy<T>(this T o) where T : Component => UnityEngine.Object.Destroy(o.gameObject);
+    public static Transform Instantiate(this Transform prefab, Vec2 pos, Transform parent) =>
+        UnityEngine.Object.Instantiate(prefab, pos.Vec3(), Quaternion.identity, parent);
+}
+
+public static class MathExt {
+
     public static Vec2 xy(this Vec3 v) => new Vec2(v.x, v.y);
     public static Vec2I xy(this Vec3I v) => new Vec2I(v.x, v.y);
     public static Vec3I Vec3(this Vec2I v) => new Vec3I(v.x, v.y, 0);

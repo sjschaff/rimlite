@@ -86,6 +86,9 @@ public class Map : MonoBehaviour
         tiles[5, 5].building = new BuildingResource(BuildingResource.Resource.Rock);
         tiles[6, 5].building = new BuildingResource(BuildingResource.Resource.Tree);
 
+        for (int i = 0; i < 16; ++i)
+            tiles[i + 2, 7].building = new BuildingResource(BuildingResource.Resource.Rock);
+
         return tiles;
     }
 

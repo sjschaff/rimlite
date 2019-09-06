@@ -32,6 +32,7 @@ public class JobMine : Job
 {
     private readonly GameController game;
     private readonly Task task;
+    private readonly Transform overlay;
     private bool claimed;
 
     public JobMine(GameController game, Vec2I pos)
@@ -43,6 +44,9 @@ public class JobMine : Job
 
         task = new Task(this, null, pos, v => v.Adjacent(pos), tile.building.miningTool, MinionAnim.Slash, 2);
         claimed = false;
+
+        overlay = game.CreateJobOverlay(pos, game.map.tiler.sprites32.GetSprite(
+                new Vec2I(0, 62), new Vec2I(2, 2), new Vec2I(1, 1)));
     }
 
     public IEnumerable<Task> AvailableTasks()
@@ -77,6 +81,7 @@ public class JobMine : Job
         foreach (ItemInfo item in building.GetMinedMaterials())
             game.DropItem(task.pos, item);
 
+        overlay.Destroy();
         game.RemoveJob(this);
         return null;
     }

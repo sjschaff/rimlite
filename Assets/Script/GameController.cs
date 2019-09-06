@@ -2,15 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 public class GameController : MonoBehaviour
 {
     public Map map; // TODO: this does not need to be a gameobject
-    public Minion _minion;
-    public Transform mouseHighlight;
+
+    public Transform minionPrefab;
     public Transform itemPrefab;
+    public Transform jobOverlayPrefab;
+    public Transform mouseHighlight;
+
+    public Transform CreateJobOverlay(Vec2I pos, Sprite sprite)
+    {
+        var overlay = jobOverlayPrefab.Instantiate(pos + new Vec2(.5f, .5f), transform);
+        overlay.GetComponent<SpriteRenderer>().sprite = sprite;
+        return overlay;
+    }
 
     private LinkedList<UITool> tools;
     private LinkedListNode<UITool> currentTool;
@@ -27,8 +37,12 @@ public class GameController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        minions.AddLast(_minion);
-        _minion.Init(this);
+        for (int i = 0; i < 10; ++i)
+        {
+            Minion minion = minionPrefab.Instantiate(new Vec2(1 + i, 1), transform).GetComponent<Minion>();
+            minion.Init(this);
+            minions.AddLast(minion);
+        }
 
         tools = UITool.RegisterTools(this);
         currentTool = tools.First;
@@ -117,7 +131,7 @@ public class GameController : MonoBehaviour
 
     private Item CreateItem(Vec2I pos, ItemInfo info)
     {
-        var item = Instantiate(itemPrefab, pos.Vec3(), Quaternion.identity).GetComponent<Item>();
+        var item = itemPrefab.Instantiate(pos, transform).GetComponent<Item>();
         item.Init(this, pos, info);
         return item;
     }
@@ -140,7 +154,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void K_MoveMinion(Vec2I pos) => _minion.AssignTask(walkDummyJob.CreateWalkTask(pos));
+    public void K_MoveMinion(Vec2I pos) => minions.First.Value.AssignTask(walkDummyJob.CreateWalkTask(pos));
 
     public void AddJob(Job job)
     {
