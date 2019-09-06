@@ -22,6 +22,23 @@ public class BBTile
     public bool HasBuilding() => building != null;
     public bool Mineable() => building == null ? false : building.mineable;
 
+    // Kinda kludgy but fine for now
+    public T BuildingAs<T>() where T : class
+    {
+        if (building != null)
+        {
+            T t = building as T;
+            if (t != null)
+                return t;
+
+            var v = building as BuildingVirtual;
+            if (v != null)
+                return v.building as T;
+        }
+
+        return null;
+    }
+
     public BBTile(Terrain terrain)
     {
         BB.Assert(terrain != null);
@@ -88,22 +105,29 @@ public class Map : MonoBehaviour
         itemAtlas = new Atlas(atlasTexture, 8);
     }
 
-    public void RemoveBuilding(Vec2I pos)
+    private void SetBuilding(Vec2I pos, Building building)
     {
         var tile = Tile(pos);
-        BB.Assert(tile.HasBuilding());
-
-        tile.building = null;
+        tile.building = building;
         tiler.UpdateBuilding(pos);
+    }
+
+    public void RemoveBuilding(Vec2I pos)
+    {
+        BB.Assert(Tile(pos).HasBuilding());
+        SetBuilding(pos, null);
+    }
+
+    public void ReplaceBuilding(Vec2I pos, Building building)
+    {
+        BB.Assert(Tile(pos).HasBuilding());
+        SetBuilding(pos, building);
     }
 
     public void AddBuilding(Vec2I pos, Building building)
     {
-        var tile = Tile(pos);
-        BB.Assert(!tile.HasBuilding());
-
-        tile.building = building;
-        tiler.UpdateBuilding(pos);
+        BB.Assert(!Tile(pos).HasBuilding());
+        SetBuilding(pos, building);
     }
 
     public void ModifyTerrain(Vec2I pos, Terrain terrain)

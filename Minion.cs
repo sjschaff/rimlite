@@ -17,6 +17,8 @@ public class Minion : MonoBehaviour
 
     private GameController game;
     private Task currentTask;
+    public Item carriedItem { get; private set; }
+    public bool carryingItem => carriedItem != null;
     private LinkedList<Vec2I> path;
 
     public Vec2 pos
@@ -41,6 +43,25 @@ public class Minion : MonoBehaviour
     void Start()
     {
     }
+
+    public void PickupItem(Item item)
+    {
+        BB.Assert(!carryingItem);
+        carriedItem = item;
+        carriedItem.transform.parent = transform;
+        carriedItem.transform.localPosition = Vec3.zero;
+        carriedItem.ShowText(false);
+    }
+
+    public Item RemoveItem()
+    {
+        BB.Assert(carriedItem);
+        Item ret = carriedItem;
+        carriedItem = null;
+        return ret;
+    }
+
+    public void DropItem() => game.DropItem(pos.Floor(), RemoveItem());
 
     private void Move()
     {
@@ -69,8 +90,28 @@ public class Minion : MonoBehaviour
         if (path != null)
         {
             skin.SetDir(path.First.Value - pos);
-            UpdateLine();
+            UpdatePathVis();
         }
+    }
+
+    private void OnBeginWork()
+    {
+        BB.Assert(path == null);
+        BB.Assert(currentTask != null);
+
+        if (pos.Floor() != currentTask.pos)
+            skin.SetDir(currentTask.pos - pos);
+
+        skin.SetTool(currentTask.tool);
+        skin.SetAnimLoop(currentTask.anim);
+    }
+
+    private void OnEndWork()
+    {
+        BB.Assert(currentTask == null);
+
+        skin.SetTool(Tool.None);
+        skin.SetAnimLoop(MinionAnim.None);
     }
 
     // Update is called once per frame
@@ -81,29 +122,28 @@ public class Minion : MonoBehaviour
             Move();
 
             if (path == null)
-            {
-                if (pos.Floor() != currentTask.pos)
-                    skin.SetDir(currentTask.pos - pos);
-
-                if (currentTask.HasWork())
-                {
-                    skin.SetSlashing(true);
-                    skin.SetTool(currentTask.tool);
-                }
-            }
+                OnBeginWork();
         }
         else if (currentTask != null)
         {
-            if (currentTask.PerformWork(Time.deltaTime))
+            currentTask.PerformWork(Time.deltaTime);
+            if (!currentTask.HasWork())
             {
+                //Debug.Log("Completed Task: " + currentTask);
+                Task taskNext = currentTask.Complete(this);
                 currentTask = null;
-                skin.SetSlashing(false);
-                skin.SetTool(Tool.None);
+                OnEndWork();
+
+                if (taskNext != null)
+                {
+                    //Debug.Log("Assigning followup task.");
+                    AssignTask(taskNext);
+                }
             }
         }
     }
 
-    private void UpdateLine()
+    private void UpdatePathVis()
     {
         Vec2 ofs = new Vec2(.5f, .5f);
         line.positionCount = path.Count + 1;
@@ -121,30 +161,36 @@ public class Minion : MonoBehaviour
         BB.Assert(task != null);
         if (currentTask != null)
         {
-            currentTask.Abandon();
+            //Debug.Log("Abandoning current task: " + currentTask);
+            currentTask.Abandon(this);
             currentTask = null;
         }
 
         if (path == null && task.CanWorkFrom(pos.Floor()))
         {
+            //Debug.Log("Accepting task (adj): " + task);
             currentTask = task;
-            return true;
+            OnBeginWork();
         }
         else
         {
             var pts = PathToTask(task);
             if (pts == null)
             {
-                Debug.Log("No Path To Task");
+                // TODO: maybe don't abandon prev task in this case
+                Debug.Log("Rejecting task (no path): " + task);
                 return false;
             }
             else
             {
+                //Debug.Log("Accepting task (path): " + task);
                 FollowPath(pts);
                 currentTask = task;
-                return true;
             }
         }
+
+        currentTask.Claim(this);
+        return true;
     }
 
     public void Reroute(Vec2I updatedTile)
@@ -158,7 +204,7 @@ public class Minion : MonoBehaviour
         if (pts == null)
         {
             Debug.Log("Abandoning Task: No Path");
-            currentTask.Abandon();
+            currentTask.Abandon(this);
             currentTask = null;
 
             // TODO: figure out how to handle edge case of currentently in or going into newly solid tile
@@ -180,15 +226,15 @@ public class Minion : MonoBehaviour
         if (dir.magnitude < float.Epsilon || Vec2.Dot(dir, pts[1] - pts[0]) < -float.Epsilon)
             path.RemoveFirst();
 
-        UpdateLine();
+        UpdatePathVis();
         line.enabled = true;
-        skin.SetWalking(true);
+        skin.SetAnimLoop(MinionAnim.Walk);
     }
 
     private void PathFinished()
     {
         path = null;
         line.enabled = false;
-        skin.SetWalking(false);
+        skin.SetAnimLoop(MinionAnim.None);
     }
 }

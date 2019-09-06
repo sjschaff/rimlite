@@ -15,9 +15,12 @@ public struct ItemInfo
 
     public ItemInfo(ItemType type, int amt)
     {
+        BB.Assert(amt > 0);
         this.type = type;
         this.amt = amt;
     }
+
+    public ItemInfo WithNewAmount(int amt) => new ItemInfo(type, amt);
 }
 
 public class Item : MonoBehaviour
@@ -26,8 +29,12 @@ public class Item : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Text text;
 
-    private Vec2I pos;
-    private ItemInfo info;
+    public Vec2I pos { get; private set; }
+    private ItemInfo info { get;  set; } // TODO: make this normal? figure out publicicty
+    private int amtClaimed;
+    public int amtAvailable => info.amt - amtClaimed;
+    public int amt => info.amt;
+    public ItemType type => info.type;
 
     private Sprite GetSprite()
     {
@@ -43,11 +50,41 @@ public class Item : MonoBehaviour
 
     public void Init(GameController game, Vec2I pos, ItemInfo info)
     {
+        BB.Assert(info.amt > 0);
         this.game = game;
         this.pos = pos;
         this.info = info;
+        this.amtClaimed = 0;
 
         spriteRenderer.sprite = GetSprite();
-        this.text.text = info.amt.ToString();
+        UpdateText();
     }
+
+    public void Destroy() => Destroy(gameObject);
+
+    public void Claim(int amt)
+    {
+        BB.Assert(amtClaimed + amt <= info.amt);
+        amtClaimed += amt;
+    }
+
+    public void Unclaim(int amt)
+    {
+        BB.Assert(amtClaimed >= amt);
+        amtClaimed -= amt;
+    }
+
+    // TODO: Add
+    public void Remove(int amt)
+    {
+        BB.Assert(amt < amtAvailable);
+        info = info.WithNewAmount(info.amt - amt);
+        UpdateText();
+    }
+
+    public void ShowText(bool show) => text.enabled = show;
+
+    private void UpdateText() => text.text = info.amt.ToString();
+
+    public void Place(Vec2I pos) => this.pos = pos;
 }

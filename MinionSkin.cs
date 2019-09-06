@@ -98,6 +98,11 @@ public class MetaAtlas
     }
 }
 
+public enum MinionAnim
+{
+    None, Magic, Walk, Slash, Thrust, Hurt
+}
+
 public class MinionSkin : MonoBehaviour
 {
     public enum Dir { Up, Left, Down, Right }
@@ -149,9 +154,46 @@ public class MinionSkin : MonoBehaviour
 
     public void SetTool(Tool tool) => equipped["weapon"] = NameForTool(tool);
 
-    public void SetWalking(bool w) => animator.SetBool("walking", w);
+    private void SetAnimLoop(MinionAnim anim, bool f)
+    {
+        switch (anim)
+        {
+            case MinionAnim.Walk:
+                animator.SetBool("walking", f);
+                break;
+            case MinionAnim.Slash:
+                animator.SetBool("slash_loop", f);
+                break;
+            case MinionAnim.Magic:
+                animator.SetBool("magic_loop", f);
+                break;
+            default:
+                throw new NotImplementedException("Anim loop not implemented for: " + anim);
+        }
+    }
 
-    public void SetSlashing(bool w) => animator.SetBool("slash_loop", w);
+    public void SetAnimLoop(MinionAnim anim)
+    {
+        if (anim == MinionAnim.None)
+        {
+            SetAnimLoop(MinionAnim.Walk, false);
+            SetAnimLoop(MinionAnim.Slash, false);
+            SetAnimLoop(MinionAnim.Magic, false);
+        }
+        else
+            SetAnimLoop(anim, true);
+    }
+
+    public bool PlayAnimOnce(MinionAnim anim)
+    {
+        throw new NotImplementedException();
+        /*
+            animator.SetTrigger("slash");
+            animator.SetTrigger("thrust");
+            animator.SetTrigger("magic");
+            animator.SetTrigger("shoot");
+         */
+    }
 
     public void SetDir(Dir dir)
     {
@@ -283,15 +325,6 @@ public class MinionSkin : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown("w"))
-            animator.SetTrigger("slash");
-        if (Input.GetKeyDown("e"))
-            animator.SetTrigger("thrust");
-        if (Input.GetKeyDown("r"))
-            animator.SetTrigger("magic");
-        if (Input.GetKeyDown("t"))
-            animator.SetTrigger("shoot");
-
         if (Input.GetKeyDown("z"))
         {
             if (equipped == clothed)
@@ -303,13 +336,17 @@ public class MinionSkin : MonoBehaviour
         }
     }
 
+    //float timeBetweenFrames = 0;
     private void LateUpdate()
     {
+       // timeBetweenFrames += Time.deltaTime;
         if (animDummy.sprite != null)
         {
             string spriteName = animDummy.sprite.name;
             if (lastSprite != spriteName)
             {
+               // Debug.Log("frame time: " + timeBetweenFrames);
+                //timeBetweenFrames = 0;
                 lastSprite = animDummy.sprite.name;
                 var vals = spriteName.Split('_');
                 BB.Assert(vals.Length == 3);

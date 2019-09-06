@@ -55,7 +55,7 @@ public class ToolBuild : UITool
     public override void OnClick(Vec2I pos)
     {
         if (!game.map.Tile(pos).HasBuilding())
-            game.AddBuilding(pos, new BuildingWall(BuildingWall.Wall.StoneBrick));
+            game.AddJob(new JobBuild(game, pos, new BuildingWall(BuildingWall.Wall.StoneBrick)));
     }
 }
 

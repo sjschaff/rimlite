@@ -2,30 +2,34 @@
 
 using Vec2I = UnityEngine.Vector2Int;
 using System;
+using System.Collections.Generic;
 
 public interface Building
 {
-    Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
-    Sprite GetSpriteOver(MapTiler tiler, Vec2I pos);
+    TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
+    TileSprite GetSpriteOver(MapTiler tiler, Vec2I pos);
 
     bool passable { get; }
     bool tiledRender { get; }
     bool oversized { get; }
     bool mineable { get; }
     Tool miningTool { get; }
+
+    IEnumerable<ItemInfo> GetBuildMaterials();
 }
 
 public abstract class BuildingSmp : Building
 {
-    public Sprite GetSpriteOver(MapTiler tiler, Vec2I pos)
+    public TileSprite GetSpriteOver(MapTiler tiler, Vec2I pos)
         => throw new Exception("GetSpriteOver called on BuildingSmp");
     public bool oversized => false;
     public bool mineable => false;
     public Tool miningTool => throw new Exception("miningTool called on BuildingSmp");
 
-    public abstract Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
+    public abstract TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
     public abstract bool passable { get; }
     public abstract bool tiledRender { get; }
+    public abstract IEnumerable<ItemInfo> GetBuildMaterials();
 }
 
 
@@ -49,15 +53,20 @@ public class BuildingFloor : BuildingSmp
         if (!map.ValidTile(pos))
             return false;
 
-        var other = map.Tile(pos).building as BuildingFloor;
+        var other = map.Tile(pos).BuildingAs<BuildingFloor>();
         return other == null ? false : other.floor == floor;
     }
 
-    public override Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
+    public override TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
     {
         TerrainStandard.TileType ttype = TerrainStandard.GetTileType(pos, subTile, p => IsSame(tiler.map, p));
         Vec2I spritePos = FloorOrigin(floor) + TerrainStandard.SpriteOffset(ttype);
         return tiler.atlas32.GetSprite(spritePos, Vec2I.one, 64);
+    }
+
+    public override IEnumerable<ItemInfo> GetBuildMaterials()
+    {
+        yield return new ItemInfo(ItemType.Stone, 5);
     }
 }
 
@@ -87,7 +96,7 @@ public class BuildingWall : BuildingSmp
         if (!map.ValidTile(pos))
             return false;
 
-        var other = map.Tile(pos).building as BuildingWall;
+        var other = map.Tile(pos).BuildingAs<BuildingWall>();
         return other == null ? false : other.wall == wall;
     }
 
@@ -134,12 +143,17 @@ public class BuildingWall : BuildingSmp
         return TerrainStandard.SpriteOffset(ttype) + new Vec2I(0, 1);
     }
 
-    public override Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
+    public override TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
     {
         bool[,] adj = TerrainStandard.GenAdjData(pos, p => IsSame(tiler.map, p));
         TerrainStandard.TileType ttype = TerrainStandard.GetTileType(adj, subTile);
         Vec2I spritePos = WallOrigin(wall) + SpriteOffset(adj, ttype, subTile);
         return tiler.atlas32.GetSprite(spritePos, Vec2I.one, 64);
+    }
+
+    public override IEnumerable<ItemInfo> GetBuildMaterials()
+    {
+        yield return new ItemInfo(ItemType.Stone, 10);
     }
 }
 
@@ -168,7 +182,7 @@ public class BuildingResource : Building
 
     public BuildingResource(Resource resource) => this.resource = resource;
 
-    public Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
+    public TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
     {
         BB.Assert(subTile == Vec2I.zero);
 
@@ -196,7 +210,7 @@ public class BuildingResource : Building
         return atlas.GetSprite(spritePos, spriteSize, ppu);
     }
 
-    public Sprite GetSpriteOver(MapTiler tiler, Vec2I pos)
+    public TileSprite GetSpriteOver(MapTiler tiler, Vec2I pos)
     {
         BB.Assert(oversized);
 
@@ -208,4 +222,41 @@ public class BuildingResource : Building
                 throw new NotImplementedException("Unhandled Resource: " + resource);
         }
     }
+
+    public IEnumerable<ItemInfo> GetBuildMaterials()
+        => throw new NotSupportedException("GetBuildMaterials called on BuildingResource");
+}
+
+public class BuildingVirtual : Building
+{
+    private readonly JobBuild job;
+    public Building building { get; private set; }
+    public float constructionPercent;
+    public bool beganConstruction => constructionPercent > 0;
+    //private items?
+
+    public BuildingVirtual(JobBuild job, Building building)
+    {
+        this.job = job;
+        this.building = building;
+        this.constructionPercent = 0;
+    }
+
+    public bool mineable => false;
+    public bool tiledRender => building.tiledRender;
+    public bool oversized => building.oversized;
+    public bool passable => beganConstruction ? building.passable : true;
+    public Tool miningTool => throw new NotImplementedException("Mining tool requested for virtual building");
+
+    private TileSprite Virtualize(TileSprite sprite)
+        => new TileSprite(sprite.sprite, sprite.color* new Color(.6f, .6f, 1, .5f));
+
+    public TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
+        => Virtualize(building.GetSprite(tiler, pos, subTile));
+
+    public TileSprite GetSpriteOver(MapTiler tiler, Vec2I pos)
+        => Virtualize(building.GetSpriteOver(tiler, pos));
+
+    public IEnumerable<ItemInfo> GetBuildMaterials()
+        => throw new NotSupportedException("GetBuildMaterials called on BuildingVirtual");
 }

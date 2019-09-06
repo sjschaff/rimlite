@@ -7,7 +7,23 @@ using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+public struct TileSprite
+{
+    public readonly Sprite sprite;
+    public readonly Color color;
 
+    public TileSprite(Sprite sprite, Color color)
+    {
+        this.sprite = sprite;
+        this.color = color;
+    }
+
+    public TileSprite(Sprite sprite) : this(sprite, Color.white) { }
+
+    public static implicit operator TileSprite(Sprite sprite) => new TileSprite(sprite);
+}
+
+// Could probably just use stock Tile for this instead
 public class BaseTile : TileBase
 {
     private MapTiler tiler;
@@ -31,16 +47,17 @@ public class BaseTile : TileBase
     }
 }
 
-public abstract class VirtualTileBase : TileBase
+public abstract class VirtualTileBase : Tile
 {
-    protected abstract Sprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile);
+    protected abstract TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile);
 
     protected MapTiler tiler { get; private set; }
-
-    public static T Create<T>(MapTiler tiler) where T : VirtualTileBase
+    private Tilemap tilemap;
+    public static T Create<T>(Tilemap tilemap, MapTiler tiler) where T : VirtualTileBase
     {
         T vtile = CreateInstance<T>();
         vtile.tiler = tiler;
+        vtile.tilemap = tilemap;
         return vtile;
     }
 
@@ -48,19 +65,26 @@ public abstract class VirtualTileBase : TileBase
     protected Vec2I GridToTile(Vec3I v) => new Vec2I(v.x >> 1, v.y >> 1);
     protected Vec2I GridToSubTile(Vec3I v) => new Vec2I(v.x % 2, v.y % 2);
 
-    public override void GetTileData(Vec3I gridPos, ITilemap tilemap, ref TileData tileData)
+    public override void GetTileData(Vec3I gridPos, ITilemap itilemap, ref TileData tileData)
     {
         Vec2I pos = GridToTile(gridPos);
         Vec2I subTile = GridToSubTile(gridPos);
         BBTile tile = GetTile(pos);
 
-        tileData = new TileData();
-        tileData.sprite = GetSprite(tile, pos, subTile);
-        tileData.color = Color.white;
-        tileData.transform = Matrix4x4.identity;
-        tileData.gameObject = null;
-        tileData.flags = TileFlags.None;
-        tileData.colliderType = Tile.ColliderType.None;
+        TileSprite sprite = GetSprite(tile, pos, subTile);
+
+        tileData = new TileData
+        {
+            sprite = sprite.sprite,
+            color = sprite.color,
+            transform = Matrix4x4.identity,
+            gameObject = null,
+            flags = TileFlags.None,
+            colliderType = Tile.ColliderType.None
+        };
+
+        // Unity so broken (requires tileData.color to be set also *shrug*)
+        tilemap.SetColor(gridPos, sprite.color);
     }
 
 
@@ -89,13 +113,13 @@ public abstract class VirtualTileBase : TileBase
 
 public class VirtualTileTerrainBase : VirtualTileBase
 {
-    protected override Sprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+    protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
         => TerrainStandard.GetSprite(tiler, TerrainStandard.Terrain.Grass, TerrainStandard.TileType.Base, 0);
 }
 
 public class VirtualTileTerrainOver : VirtualTileBase
 {
-    protected override Sprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+    protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
         => tile.terrain.GetSprite(tiler, pos, subTile);
 
     public override bool GetTileAnimationData(Vec3I gridPos, ITilemap tilemap, ref TileAnimationData tileAnimationData)
@@ -115,7 +139,7 @@ public class VirtualTileTerrainOver : VirtualTileBase
 
 public class VirtualTileBuilding : VirtualTileBase
 {
-    protected override Sprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+    protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
     {
         if (tile.HasBuilding() && (tile.building.tiledRender || subTile == Vec2I.zero))
             return tile.building.GetSprite(tiler, pos, subTile);
@@ -126,7 +150,7 @@ public class VirtualTileBuilding : VirtualTileBase
 
 public class VirtualTileBuildingOver : VirtualTileBase
 {
-    protected override Sprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+    protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
     {
         if (tile.HasBuilding() && tile.building.oversized && subTile == Vec2I.zero)
             return tile.building.GetSpriteOver(tiler, pos);
@@ -139,15 +163,15 @@ public class MapTiler
 {
     private class TilemapUpdater<T> where T : VirtualTileBase
     {
-        private readonly Tilemap tilemap;
+            public readonly Tilemap tilemap;
         private readonly T vtileA;
         private readonly T vtileB;
 
         public TilemapUpdater(MapTiler tiler, Tilemap tilemap)
         {
             this.tilemap = tilemap;
-            vtileA = VirtualTileBase.Create<T>(tiler);
-            vtileB = VirtualTileBase.Create<T>(tiler);
+            vtileA = VirtualTileBase.Create<T>(tilemap, tiler);
+            vtileB = VirtualTileBase.Create<T>(tilemap, tiler);
         }
 
         public void UpdateTile(Vec2I v)
@@ -178,10 +202,10 @@ public class MapTiler
         tilemapBuilding = new TilemapUpdater<VirtualTileBuilding>(this, map.buildingBase);
         tilemapBuildingOver = new TilemapUpdater<VirtualTileBuildingOver>(this, map.buildingOver);
 
-        var vtileBase = VirtualTileBase.Create<VirtualTileTerrainBase>(this);
-        for (int x = 0; x < map.w * 2; ++x)
+        var vtileBase = VirtualTileBase.Create<VirtualTileTerrainBase>(map.terrainBase, this);
+       /* for (int x = 0; x < map.w * 2; ++x)
             for (int y = 0; y < map.h * 2; ++y)
-                map.terrainBase.SetTile(new Vec3I(x, y, 0), vtileBase);
+                map.terrainBase.SetTile(new Vec3I(x, y, 0), vtileBase);*/
 
         for (int x = 0; x < map.w; ++x)
         {

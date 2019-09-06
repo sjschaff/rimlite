@@ -15,9 +15,12 @@ public static class BB
         // TODO: make debug only
         if (!a)
         {
-            throw new System.Exception("Assert failed - " + msg);
+            throw new Exception("Assert failed - " + msg);
         }
     }
+
+    public static void AssertNotNull<T>(T t, string msg = null) where T : class
+        => Assert(t != null, msg);
 
     public static T Next<T>(this T src) where T : struct
     {
