@@ -82,7 +82,26 @@ public class Item : MonoBehaviour
         UpdateText();
     }
 
-    public void ShowText(bool show) => text.enabled = show;
+    public enum Config { Ground, PlayerAbove, PlayerBelow }
+
+    public void Configure(Config config)
+    {
+        if (config == Config.Ground)
+        {
+            text.enabled = true;
+            spriteRenderer.sortingLayerName = "Default";
+        }
+        else
+        {
+            text.enabled = false;
+            if (config == Config.PlayerAbove)
+                spriteRenderer.sortingLayerName = "Over Player";
+            else if (config == Config.PlayerBelow)
+                spriteRenderer.sortingLayerName = "Under Player";
+            else
+                throw new NotSupportedException("Unknown Item Config: " + config);
+        }
+    }
 
     private void UpdateText() => text.text = info.amt.ToString();
 

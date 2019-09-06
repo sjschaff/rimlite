@@ -109,7 +109,7 @@ public class GameController : MonoBehaviour
         item.transform.parent = transform;
         item.transform.localPosition = pos.Vec3();
         item.Place(pos);
-        item.ShowText(true);
+        item.Configure(Item.Config.Ground);
         items.AddLast(item);
     }
 

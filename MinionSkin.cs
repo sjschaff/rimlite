@@ -115,6 +115,7 @@ public class MinionSkin : MonoBehaviour
 
     private string lastSprite = null;
     private Dir curDir = Dir.Down;
+    public Dir dir => curDir;
 
     private void DirtySprite() => lastSprite = null;
 

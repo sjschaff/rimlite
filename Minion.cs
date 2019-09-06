@@ -44,13 +44,29 @@ public class Minion : MonoBehaviour
     {
     }
 
+    private void SetDir(Vec2 dir)
+    {
+        skin.SetDir(dir);
+        if (carriedItem != null)
+            ReconfigureItem();
+    }
+
+    public void ReconfigureItem()
+    {
+        BB.AssertNotNull(carriedItem);
+        carriedItem.Configure(
+            skin.dir == MinionSkin.Dir.Up ?
+                Item.Config.PlayerBelow :
+                Item.Config.PlayerAbove);
+    }
+
     public void PickupItem(Item item)
     {
         BB.Assert(!carryingItem);
         carriedItem = item;
         carriedItem.transform.parent = transform;
-        carriedItem.transform.localPosition = Vec3.zero;
-        carriedItem.ShowText(false);
+        carriedItem.transform.localPosition = new Vec3(0, .2f, 0);
+        ReconfigureItem();
     }
 
     public Item RemoveItem()
@@ -89,7 +105,7 @@ public class Minion : MonoBehaviour
 
         if (path != null)
         {
-            skin.SetDir(path.First.Value - pos);
+            SetDir(path.First.Value - pos);
             UpdatePathVis();
         }
     }
@@ -100,7 +116,7 @@ public class Minion : MonoBehaviour
         BB.Assert(currentTask != null);
 
         if (pos.Floor() != currentTask.pos)
-            skin.SetDir(currentTask.pos - pos);
+            SetDir(currentTask.pos - pos);
 
         skin.SetTool(currentTask.tool);
         skin.SetAnimLoop(currentTask.anim);

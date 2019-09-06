@@ -168,7 +168,7 @@ public class JobBuild : Job
                     int amt = Math.Min(haul.amtRemaining, item.amtAvailable);
                     Item item2 = item;
                     var info = new HaulTaskInfo(haul, amt, item);
-                    yield return new Task(this, info, item.pos, v => v == item.pos, Tool.None, MinionAnim.Magic, .32f);//7/60f);
+                    yield return new Task(this, info, item.pos, v => v == item.pos, Tool.None, MinionAnim.Magic, .425f);
                 }
             }
         }

@@ -163,7 +163,7 @@ public class MapTiler
 {
     private class TilemapUpdater<T> where T : VirtualTileBase
     {
-            public readonly Tilemap tilemap;
+        private readonly Tilemap tilemap;
         private readonly T vtileA;
         private readonly T vtileB;
 
@@ -203,9 +203,9 @@ public class MapTiler
         tilemapBuildingOver = new TilemapUpdater<VirtualTileBuildingOver>(this, map.buildingOver);
 
         var vtileBase = VirtualTileBase.Create<VirtualTileTerrainBase>(map.terrainBase, this);
-       /* for (int x = 0; x < map.w * 2; ++x)
+        for (int x = 0; x < map.w * 2; ++x)
             for (int y = 0; y < map.h * 2; ++y)
-                map.terrainBase.SetTile(new Vec3I(x, y, 0), vtileBase);*/
+                map.terrainBase.SetTile(new Vec3I(x, y, 0), vtileBase);
 
         for (int x = 0; x < map.w; ++x)
         {
