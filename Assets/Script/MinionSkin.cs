@@ -349,9 +349,9 @@ public class MinionSkin : MonoBehaviour
                 //timeBetweenFrames = 0;
                 lastSprite = animDummy.sprite.name;
                 var vals = spriteName.Split('_');
-                BB.Assert(vals.Length == 3);
+                BB.Assert(vals.Length == 2);
                 string anim = vals[0];
-                string frame = vals[2];
+                string frame = vals[1];
 
                 foreach (var kvp in equipped)
                 {
