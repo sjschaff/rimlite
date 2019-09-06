@@ -203,7 +203,7 @@ public class TerrainStandard : Terrain
             }
         }
 
-        return GetSprite(tiler, terrain, ttype, 0);
+        return GetSprite(tiler, terrain, ttype, frame);
     }
 
     public Sprite[] GetAnimationSprites(MapTiler tiler, Vec2I pos, Vec2I subTile)
