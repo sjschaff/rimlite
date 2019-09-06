@@ -172,41 +172,53 @@ public class Minion : MonoBehaviour
         }
     }
 
-    public bool AssignTask(Task task)
+    private void AssignTask(Task task, Vec2I[] pts)
     {
-        BB.Assert(task != null);
         if (currentTask != null)
         {
             //Debug.Log("Abandoning current task: " + currentTask);
             currentTask.Abandon(this);
-            currentTask = null;
         }
 
-        if (path == null && task.CanWorkFrom(pos.Floor()))
+        currentTask = task;
+        currentTask.Claim(this);
+
+        if (pts == null)
         {
-            //Debug.Log("Accepting task (adj): " + task);
-            currentTask = task;
+            BB.Assert(task.CanWorkFrom(pos.Floor()));
             OnBeginWork();
         }
         else
         {
+            FollowPath(pts);
+        }
+    }
+
+    public bool AssignTask(Task task)
+    {
+        BB.Assert(task != null);
+
+        if (path == null && task.CanWorkFrom(pos.Floor()))
+        {
+            //Debug.Log("Accepting task (adj): " + task);
+            AssignTask(task, null);
+            return true;
+        }
+        else
+        {
             var pts = PathToTask(task);
-            if (pts == null)
+            if (pts != null)
             {
-                // TODO: maybe don't abandon prev task in this case
-                Debug.Log("Rejecting task (no path): " + task);
-                return false;
+                //Debug.Log("Accepting task (path): " + task);
+                AssignTask(task, pts);
+                return true;
             }
             else
             {
-                //Debug.Log("Accepting task (path): " + task);
-                FollowPath(pts);
-                currentTask = task;
+                Debug.Log("Rejecting task (no path): " + task);
+                return false;
             }
         }
-
-        currentTask.Claim(this);
-        return true;
     }
 
     public void Reroute(Vec2I updatedTile)
