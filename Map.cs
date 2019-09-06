@@ -8,10 +8,6 @@ using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
-
-// TODO: better name (rename BBTile->VirtualTile)
-
-
 public class BBTile
 {
     public Terrain terrain;
@@ -54,16 +50,18 @@ public class Map : MonoBehaviour
     [HideInInspector]
     public readonly int h = 32;
 
-    public Texture2D atlasTexture;
-    public Texture2D atlas32;
+    public Texture2D tileset32;
+    public Texture2D tileset64;
+    public Texture2D sprites32;
+    public Texture2D sprites64;
+
     public Tilemap terrainBase;
     public Tilemap terrainOver;
     public Tilemap buildingBase;
     public Tilemap buildingOver;
 
     private BBTile[,] tiles;
-    private MapTiler tiler;
-    public Atlas itemAtlas;// KLUUUUUDGE
+    public MapTiler tiler; // KLUDGE for sprite access
 
     public bool ValidTile(Vec2I tile) => tile.x >= 0 && tile.x < w && tile.y >= 0 && tile.y < h;
 
@@ -101,8 +99,6 @@ public class Map : MonoBehaviour
     {
         tiles = GenerateTerrain();
         tiler = new MapTiler(this);
-
-        itemAtlas = new Atlas(atlasTexture, 8);
     }
 
     private void SetBuilding(Vec2I pos, Building building)

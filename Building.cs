@@ -16,6 +16,7 @@ public interface Building
     Tool miningTool { get; }
 
     IEnumerable<ItemInfo> GetBuildMaterials();
+    IEnumerable<ItemInfo> GetMinedMaterials();
 }
 
 public abstract class BuildingSmp : Building
@@ -24,7 +25,10 @@ public abstract class BuildingSmp : Building
         => throw new Exception("GetSpriteOver called on BuildingSmp");
     public bool oversized => false;
     public bool mineable => false;
-    public Tool miningTool => throw new Exception("miningTool called on BuildingSmp");
+    public Tool miningTool =>
+        throw new NotSupportedException("miningTool called on BuildingSmp");
+    public IEnumerable<ItemInfo> GetMinedMaterials() =>
+        throw new NotSupportedException("GetMinedMaterials called on BuildingSmp");
 
     public abstract TileSprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
     public abstract bool passable { get; }
@@ -61,7 +65,7 @@ public class BuildingFloor : BuildingSmp
     {
         TerrainStandard.TileType ttype = TerrainStandard.GetTileType(pos, subTile, p => IsSame(tiler.map, p));
         Vec2I spritePos = FloorOrigin(floor) + TerrainStandard.SpriteOffset(ttype);
-        return tiler.atlas32.GetSprite(spritePos, Vec2I.one, 64);
+        return tiler.tileset64.GetSprite(spritePos, Vec2I.one);
     }
 
     public override IEnumerable<ItemInfo> GetBuildMaterials()
@@ -148,7 +152,7 @@ public class BuildingWall : BuildingSmp
         bool[,] adj = TerrainStandard.GenAdjData(pos, p => IsSame(tiler.map, p));
         TerrainStandard.TileType ttype = TerrainStandard.GetTileType(adj, subTile);
         Vec2I spritePos = WallOrigin(wall) + SpriteOffset(adj, ttype, subTile);
-        return tiler.atlas32.GetSprite(spritePos, Vec2I.one, 64);
+        return tiler.tileset64.GetSprite(spritePos, Vec2I.one);
     }
 
     public override IEnumerable<ItemInfo> GetBuildMaterials()
@@ -189,25 +193,24 @@ public class BuildingResource : Building
         Atlas atlas;
         Vec2I spritePos;
         Vec2I spriteSize;
-        float ppu = 32;
 
         switch (resource)
         {
             case Resource.Rock:
-                atlas = tiler.atlas32;
-                spritePos = new Vec2I(0, 2);
-                spriteSize = Vec2I.one;
+                atlas = tiler.sprites32;
+                spritePos = new Vec2I(0, 18);
+                spriteSize = new Vec2I(4, 4);
                 break;
             case Resource.Tree:
-                atlas = tiler.atlas;
-                spritePos = new Vec2I(1, 2);
-                spriteSize = new Vec2I(2, 2);
+                atlas = tiler.sprites32;
+                spritePos = new Vec2I(2, 4);
+                spriteSize = new Vec2I(4, 4);
                 break;
             default:
                 throw new NotImplementedException("Unknown Resource: " + resource);
         }
 
-        return atlas.GetSprite(spritePos, spriteSize, ppu);
+        return atlas.GetSprite(spritePos, spriteSize);
     }
 
     public TileSprite GetSpriteOver(MapTiler tiler, Vec2I pos)
@@ -217,7 +220,7 @@ public class BuildingResource : Building
         switch (resource)
         {
             case Resource.Tree:
-                return tiler.atlas.GetSprite(new Vec2I(0, 4), new Vec2I(4, 5), new Vec2I(1, -2), 32);
+                return tiler.sprites32.GetSprite(new Vec2I(0, 8), new Vec2I(8, 10), new Vec2I(2, -4));
             default:
                 throw new NotImplementedException("Unhandled Resource: " + resource);
         }
@@ -225,6 +228,16 @@ public class BuildingResource : Building
 
     public IEnumerable<ItemInfo> GetBuildMaterials()
         => throw new NotSupportedException("GetBuildMaterials called on BuildingResource");
+
+    public IEnumerable<ItemInfo> GetMinedMaterials()
+    {
+        switch (resource)
+        {
+            case Resource.Rock: yield return new ItemInfo(ItemType.Stone, 36); break;
+            case Resource.Tree: yield return new ItemInfo(ItemType.Wood, 25); break;
+            default: throw new NotImplementedException("Unknown resource: " + resource);
+        }
+    }
 }
 
 public class BuildingVirtual : Building
@@ -259,4 +272,6 @@ public class BuildingVirtual : Building
 
     public IEnumerable<ItemInfo> GetBuildMaterials()
         => throw new NotSupportedException("GetBuildMaterials called on BuildingVirtual");
+    public IEnumerable<ItemInfo> GetMinedMaterials()
+        => throw new NotSupportedException("GetMinedMaterials called on BuildingVirtual");
 }

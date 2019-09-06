@@ -69,8 +69,7 @@ public class MetaAtlas
         key = new Atlas.Key(
             origin * 2,
             new Vec2I(2, 2),
-            new Vec2I(1, 0),
-            64);
+            new Vec2I(1, 0));
 
         keys.Add(animKey, key);
         return key;
@@ -90,7 +89,7 @@ public class MetaAtlas
             Texture2D tex = Resources.Load<Texture2D>(path);
             BB.Assert(tex != null, "no texture: " + path);
             tex.filterMode = FilterMode.Point;
-            atlas = new Atlas(tex, 32);
+            atlas = new Atlas(tex, 32, 64);
             atlases.Add(path, atlas);
         }
 

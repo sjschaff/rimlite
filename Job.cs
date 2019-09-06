@@ -71,10 +71,13 @@ public class JobMine : Job
     {
         BB.Assert(task == this.task);
         BB.Assert(claimed);
-        game.RemoveJob(this);
 
+        Building building = game.map.Tile(task.pos).building;
         game.RemoveBuilding(task.pos);
-        game.DropItem(task.pos, new ItemInfo(ItemType.Stone, 37));
+        foreach (ItemInfo item in building.GetMinedMaterials())
+            game.DropItem(task.pos, item);
+
+        game.RemoveJob(this);
         return null;
     }
 }

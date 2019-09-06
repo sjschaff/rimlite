@@ -177,7 +177,7 @@ public class TerrainStandard : Terrain
     public static Sprite GetSprite(MapTiler tiler, Terrain terrain, TileType ttype, int frame)
     {
         var spritePos = TerrainOrigin(terrain, frame) + SpriteOffset(ttype);
-        return tiler.atlas.GetSprite(spritePos, Vec2I.one, 32);
+        return tiler.tileset32.GetSprite(spritePos, Vec2I.one);
     }
 
     public Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)

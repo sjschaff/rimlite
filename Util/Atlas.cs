@@ -12,33 +12,33 @@ public class Atlas
         public readonly Vec2I origin;
         public readonly Vec2I size;
         public readonly Vec2I anchor;
-        public readonly float ppu;
 
-        public Key(Vec2I origin, Vec2I size, Vec2I anchor, float ppu)
+        public Key(Vec2I origin, Vec2I size, Vec2I anchor)
         {
             this.origin = origin;
             this.size = size;
             this.anchor = anchor;
-            this.ppu = ppu;
         }
     }
 
     private readonly Texture2D atlas;
     private readonly Dictionary<Key, Sprite> spriteCache;
     private readonly int tileSize;
+    private readonly int ppu;
 
-    public Atlas(Texture2D atlas, int tileSize)
+    public Atlas(Texture2D atlas, int tileSize, int ppu)
     {
         this.atlas = atlas;
         spriteCache = new Dictionary<Key, Sprite>();
         this.tileSize = tileSize;
+        this.ppu = ppu;
     }
 
-    public Sprite GetSprite(Vec2I origin, Vec2I size, float ppu)
-        => GetSprite(origin, size, Vec2I.zero, ppu);
+    public Sprite GetSprite(Vec2I origin, Vec2I size)
+        => GetSprite(origin, size, Vec2I.zero);
 
-    public Sprite GetSprite(Vec2I origin, Vec2I size, Vec2I anchor, float ppu)
-        => GetSprite(new Key(origin, size, anchor, ppu));
+    public Sprite GetSprite(Vec2I origin, Vec2I size, Vec2I anchor)
+        => GetSprite(new Key(origin, size, anchor));
 
     public Sprite GetSprite(Key key)
     {
@@ -56,7 +56,7 @@ public class Atlas
         return Sprite.Create(atlas,
             new Rect(key.origin * tileSize, key.size * tileSize),
             anchor,
-            key.ppu,
+            ppu,
             0, // TODO: 0, 1, 2, 4?
             SpriteMeshType.FullRect,
             Vector4.zero,
