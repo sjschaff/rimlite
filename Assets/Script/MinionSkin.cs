@@ -16,14 +16,10 @@ public class MetaAtlas
         public string frame;
     }
 
-    private Dictionary<AnimKey, Atlas.Key> keys;
-    private Dictionary<string, Atlas> atlases;
+    private readonly Dictionary<AnimKey, Atlas.Key> keys = new Dictionary<AnimKey, Atlas.Key>();
+    private readonly Dictionary<string, Atlas> atlases = new Dictionary<string, Atlas>();
 
-    public MetaAtlas()
-    {
-        keys = new Dictionary<AnimKey, Atlas.Key>();
-        atlases = new Dictionary<string, Atlas>();
-    }
+    public MetaAtlas() { }
 
     private int OriginAnim(string anim)
     {
@@ -112,9 +108,10 @@ public class MinionSkin : MonoBehaviour
     private SpriteRenderer animDummy;
     private Animator animator;
 
+    private Dictionary<string, string> equipped;
+    public Dir dir { get; private set; } = Dir.Down;
+
     private string lastSprite = null;
-    private Dir curDir = Dir.Down;
-    public Dir dir => curDir;
 
     private void DirtySprite() => lastSprite = null;
 
@@ -125,6 +122,7 @@ public class MinionSkin : MonoBehaviour
 
         animDummy = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+        K_SetOutfit(0);
     }
 
     // Start is called before the first frame update
@@ -152,7 +150,11 @@ public class MinionSkin : MonoBehaviour
         throw new Exception("unknown tool: " + tool);
     }
 
-    public void SetTool(Tool tool) => equipped["weapon"] = NameForTool(tool);
+    public void SetTool(Tool tool)
+    {
+        equipped["weapon"] = NameForTool(tool);
+        DirtySprite();
+    }
 
     private void SetAnimLoop(MinionAnim anim, bool f)
     {
@@ -197,7 +199,7 @@ public class MinionSkin : MonoBehaviour
 
     public void SetDir(Dir dir)
     {
-        curDir = dir;
+        this.dir = dir;
         DirtySprite();
     }
 
@@ -243,71 +245,6 @@ public class MinionSkin : MonoBehaviour
         "weapon",
     };
 
-    private static Dictionary<string, string> clothed = new Dictionary<string, string>
-    {
-        { "body/base", "base" },
-        { "body/eyes", "blue" },
-        { "body/nose", "buttonnose" },
-        { "body/ears", "elvenears" },
-        { "hair",  "princess" },
-        { "face", null },
-
-        { "feet",  "shoes_brown" },
-        { "legs", "pants_white" },
-        { "wrist", "bracers_leather" },
-        { "hands", null },
-        { "torso", "shirt_white" },
-        { "tabbard", null },
-        { "shoulders", null },
-        { "belt", "leather" },
-        { "head", "hat_leather" },
-        //{ "weapon", }
-    };
-
-    private static Dictionary<string, string> monk = new Dictionary<string, string>
-    {
-        { "body/base", "base" },
-        { "body/eyes", "blue" },
-        { "body/nose", "buttonnose" },
-        { "body/ears", "elvenears" },
-        { "hair",  null },
-        { "face", null },
-
-        { "feet",  "shoes_black" },
-        { "legs", "robe" },
-        { "wrist", null },
-        { "hands", null },
-        { "torso", "shirt_white" },
-        { "tabbard", null },
-        { "shoulders", null },
-        { "belt", "cloth_white" },
-        { "head", "hood_cloth" },
-        //{ "weapon", }
-    };
-
-    private static Dictionary<string, string> plate = new Dictionary<string, string>
-    {
-        { "body/base", "base" },
-        { "body/eyes", "blue" },
-        { "body/nose", "buttonnose" },
-        { "body/ears", null },
-        { "hair",  null },
-        { "face", null },
-
-        { "feet",  "plate_gold" },
-        { "legs", "plate_gold" },
-        { "wrist", null },
-        { "hands", "plate_gold" },
-        { "torso", "plate_gold" },
-        { "tabbard", null },
-        { "shoulders", "plate_gold" },
-        { "belt", null },
-        { "head", "plate_gold" },
-        //{ "weapon", }
-    };
-
-    private Dictionary<string, string> equipped = clothed;
-
     private SpriteRenderer CreateSpriteLayer(string name, int renderLayer)
     {
         var layer = new GameObject(name);
@@ -322,18 +259,21 @@ public class MinionSkin : MonoBehaviour
         return sprite;
     }
 
+
+    int k_curOutfit = 0;
+    private void K_SetOutfit(int i)
+    {
+        k_curOutfit = i;
+        equipped = new Dictionary<string, string>(
+            K_outfits[i]);
+        DirtySprite();
+    }
+
     // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown("z"))
-        {
-            if (equipped == clothed)
-                equipped = monk;
-            else if (equipped == monk)
-                equipped = plate;
-            else
-                equipped = clothed;
-        }
+            K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
     }
 
     //float timeBetweenFrames = 0;
@@ -359,9 +299,75 @@ public class MinionSkin : MonoBehaviour
                         spriteLayers[kvp.Key].sprite = null;
                     else
                         spriteLayers[kvp.Key].sprite
-                            = atlas.GetSprite(kvp.Key, false, kvp.Value, anim, curDir.ToString().ToLower(), frame);
+                            = atlas.GetSprite(kvp.Key, false, kvp.Value, anim, dir.ToString().ToLower(), frame);
                 }
             }
         }
     }
+
+    private static Dictionary<string, string> K_clothed = new Dictionary<string, string>
+    {
+        { "body/base", "base" },
+        { "body/eyes", "blue" },
+        { "body/nose", "buttonnose" },
+        { "body/ears", "elvenears" },
+        { "hair",  "princess" },
+        { "face", null },
+
+        { "feet",  "shoes_brown" },
+        { "legs", "pants_white" },
+        { "wrist", "bracers_leather" },
+        { "hands", null },
+        { "torso", "shirt_white" },
+        { "tabbard", null },
+        { "shoulders", null },
+        { "belt", "leather" },
+        { "head", "hat_leather" },
+        //{ "weapon", }
+    };
+
+    private static Dictionary<string, string> K_monk = new Dictionary<string, string>
+    {
+        { "body/base", "base" },
+        { "body/eyes", "blue" },
+        { "body/nose", "buttonnose" },
+        { "body/ears", "elvenears" },
+        { "hair",  null },
+        { "face", null },
+
+        { "feet",  "shoes_black" },
+        { "legs", "robe" },
+        { "wrist", null },
+        { "hands", null },
+        { "torso", "shirt_white" },
+        { "tabbard", null },
+        { "shoulders", null },
+        { "belt", "cloth_white" },
+        { "head", "hood_cloth" },
+        //{ "weapon", }
+    };
+
+    private static Dictionary<string, string> K_plate = new Dictionary<string, string>
+    {
+        { "body/base", "base" },
+        { "body/eyes", "blue" },
+        { "body/nose", "buttonnose" },
+        { "body/ears", null },
+        { "hair",  null },
+        { "face", null },
+
+        { "feet",  "plate_gold" },
+        { "legs", "plate_gold" },
+        { "wrist", null },
+        { "hands", "plate_gold" },
+        { "torso", "plate_gold" },
+        { "tabbard", null },
+        { "shoulders", "plate_gold" },
+        { "belt", null },
+        { "head", "plate_gold" },
+        //{ "weapon", }
+    };
+
+    private static List<Dictionary<string, string>> K_outfits =
+        new List<Dictionary<string, string>>() { K_clothed, K_monk, K_plate };
 }

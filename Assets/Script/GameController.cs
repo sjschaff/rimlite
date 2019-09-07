@@ -156,7 +156,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void K_MoveMinion(Vec2I pos) => minions.First.Value.AssignTask(walkDummyJob.CreateWalkTask(pos));
+    public void K_MoveMinion(Vec2I pos) => D_minionNoTask.AssignTask(walkDummyJob.CreateWalkTask(pos));
 
     public void AddJob(Job job)
     {
