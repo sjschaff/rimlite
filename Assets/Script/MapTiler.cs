@@ -37,13 +37,15 @@ public class BaseTile : TileBase
 
     public override void GetTileData(Vec3I position, ITilemap tilemap, ref TileData tileData)
     {
-        tileData = new TileData();
-        tileData.sprite = TerrainStandard.GetSprite(tiler, TerrainStandard.Terrain.Grass, TerrainStandard.TileType.Base, 0);
-        tileData.color = Color.white;
-        tileData.transform = Matrix4x4.identity;
-        tileData.gameObject = null;
-        tileData.flags = TileFlags.None;
-        tileData.colliderType = Tile.ColliderType.None;
+        tileData = new TileData
+        {
+            sprite = TerrainStandard.GetSprite(tiler, TerrainStandard.Terrain.Grass, TerrainStandard.TileType.Base, 0),
+            color = Color.white,
+            transform = Matrix4x4.identity,
+            gameObject = null,
+            flags = TileFlags.None,
+            colliderType = Tile.ColliderType.None
+        };
     }
 }
 
@@ -141,7 +143,7 @@ public class VirtualTileBuilding : VirtualTileBase
 {
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
     {
-        if (tile.HasBuilding() && (tile.building.tiledRender || subTile == Vec2I.zero))
+        if (tile.hasBuilding && (tile.building.tiledRender || subTile == Vec2I.zero))
             return tile.building.GetSprite(tiler, pos, subTile);
 
         return null;
@@ -152,7 +154,7 @@ public class VirtualTileBuildingOver : VirtualTileBase
 {
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
     {
-        if (tile.HasBuilding() && tile.building.oversized && subTile == Vec2I.zero)
+        if (tile.hasBuilding && tile.building.oversized && subTile == Vec2I.zero)
             return tile.building.GetSpriteOver(tiler, pos);
 
         return null;
@@ -190,9 +192,9 @@ public class MapTiler
     public Atlas sprites32 { get; private set; }
     public Atlas sprites64 { get; private set; }
 
-    private TilemapUpdater<VirtualTileTerrainOver> tilemapTerrainOver;
-    private TilemapUpdater<VirtualTileBuilding> tilemapBuilding;
-    private TilemapUpdater<VirtualTileBuildingOver> tilemapBuildingOver;
+    private readonly TilemapUpdater<VirtualTileTerrainOver> tilemapTerrainOver;
+    private readonly TilemapUpdater<VirtualTileBuilding> tilemapBuilding;
+    private readonly TilemapUpdater<VirtualTileBuildingOver> tilemapBuildingOver;
 
     public MapTiler(Map map)
     {

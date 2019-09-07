@@ -245,20 +245,20 @@ public class BuildingVirtual : Building
     private readonly JobBuild job;
     public Building building { get; private set; }
     public float constructionPercent;
-    public bool beganConstruction => constructionPercent > 0;
-    //private items?
+    public bool constructing;
 
     public BuildingVirtual(JobBuild job, Building building)
     {
         this.job = job;
         this.building = building;
+        this.constructing = false;
         this.constructionPercent = 0;
     }
 
     public bool mineable => false;
     public bool tiledRender => building.tiledRender;
     public bool oversized => building.oversized;
-    public bool passable => beganConstruction ? building.passable : true;
+    public bool passable => constructing ? building.passable : true;
     public Tool miningTool => throw new NotImplementedException("Mining tool requested for virtual building");
 
     private TileSprite Virtualize(TileSprite sprite)

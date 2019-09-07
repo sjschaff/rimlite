@@ -16,7 +16,6 @@ public abstract class UITool
         tools.AddLast(new ToolPlace(game));
         tools.AddLast(new ToolBuild(game));
 
-        var f = tools.First;
         return tools;
     }
 
@@ -43,7 +42,8 @@ public class ToolMine : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        if (game.map.Tile(pos).Mineable())
+        var tile = game.map.Tile(pos);
+        if (tile.mineable && !tile.hasJob)
             game.AddJob(new JobMine(game, pos));
     }
 }
@@ -54,7 +54,7 @@ public class ToolBuild : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        if (!game.map.Tile(pos).HasBuilding())
+        if (!game.map.Tile(pos).hasBuilding)
             game.AddJob(new JobBuild(game, pos, new BuildingWall(BuildingWall.Wall.StoneBrick)));
     }
 }

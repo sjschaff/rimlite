@@ -54,7 +54,7 @@ public class AStar
             foreach (Vec2I dir in directions)
             {
                 Vec2I pos = n.pos + dir;
-                if (!map.ValidTile(pos) || !map.Tile(pos).Passable() || closed.ContainsKey(pos))
+                if (!map.ValidTile(pos) || !map.Tile(pos).passable || closed.ContainsKey(pos))
                     continue;
 
                 if (dstFunc(pos))

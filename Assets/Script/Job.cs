@@ -26,20 +26,121 @@ public class JobWalkDummy : Job
 
     public Task CreateWalkTask(Vec2I pos)
         => new Task(this, null, pos, v => v == pos, Tool.None, MinionAnim.None, 0);
+
+    public Task CreateVacateTask(Vec2I pos)
+        => new Task(this, null, pos, v => v != pos, Tool.None, MinionAnim.None, 0);
 }
 
-public class JobMine : Job
+public abstract class JobStandard : Job
 {
-    private readonly GameController game;
+    protected GameController game { get; private set; }
+    protected Vec2I pos { get; private set; }
+    protected BBTile tile { get; private set; }
+
+    protected JobStandard(GameController game, Vec2I pos)
+    {
+        this.game = game;
+        this.pos = pos;
+        tile = game.map.Tile(pos);
+        tile.activeJob = this;
+    }
+
+    private Task Finish()
+    {
+        BB.Assert(tile.hasJob);
+        BB.Assert(tile.activeJob == this);
+        tile.activeJob = null;
+        game.RemoveJob(this);
+        return null;
+    }
+
+#if DEBUG
+    private bool D_finished = false;
+    private Task D_lastTaskOffered = null;
+    private readonly Dictionary<Task, Minion> D_outstandingTasks = new Dictionary<Task, Minion>();
+
+    public IEnumerable<Task> AvailableTasks()
+    {
+        BB.Assert(!D_finished);
+        BB.Assert(D_lastTaskOffered == null);
+
+        foreach (Task task in GetAvailableTasks())
+        {
+            D_lastTaskOffered = task;
+            yield return task;
+        }
+
+        D_lastTaskOffered = null;
+    }
+
+    public void ClaimTask(Minion minion, Task task)
+    {
+        //Debug.Log("Task claimed job{" + GetHashCode() + "} + task{" + task.GetHashCode() + "} + minion{"+minion.GetHashCode() +"}");
+        BB.Assert(!D_finished);
+        BB.Assert(task == D_lastTaskOffered);
+        BB.Assert(!D_outstandingTasks.ContainsKey(task));
+        D_outstandingTasks.Add(task, minion);
+
+        D_lastTaskOffered = null;
+        OnClaimTask(minion, task);
+    }
+
+    public void AbandonTask(Minion minion, Task task)
+    {
+        BB.Assert(!D_finished);
+        BB.Assert(D_lastTaskOffered == null);
+        BB.Assert(D_outstandingTasks.ContainsKey(task));
+        BB.Assert(D_outstandingTasks[task] == minion);
+        D_outstandingTasks.Remove(task);
+
+        OnAbandonTask(minion, task);
+    }
+
+    public Task CompleteTask(Minion minion, Task task)
+    {
+        //Debug.Log("Task completed job{" + GetHashCode() + "} + task{" + task.GetHashCode() + "} + minion{"+minion.GetHashCode()+"}");
+        BB.Assert(!D_finished);
+        BB.Assert(D_lastTaskOffered == null);
+        BB.Assert(D_outstandingTasks.ContainsKey(task));
+        BB.Assert(D_outstandingTasks[task] == minion);
+        D_outstandingTasks.Remove(task);
+
+        D_lastTaskOffered = OnCompleteTask(minion, task);
+        return D_lastTaskOffered;
+    }
+
+    protected Task FinishJob()
+    {
+        BB.Assert(!D_finished);
+        BB.Assert(D_outstandingTasks.Count == 0);
+
+        D_finished = true;
+        return Finish();
+    }
+
+#else
+    public IEnumerable<Task> AvailableTasks() => GetAvailableTasks();
+    public void ClaimTask(Minion minion, Task task) => OnClaimTask(minion, task);
+    public void AbandonTask(Minion minion, Task task) => OnAbandonTask(minion, task);
+    public Task CompleteTask(Minion minion, Task task) => OnCompleteTask(minion, task);
+    protected Task FinishJob() => Finish();
+#endif
+
+    public abstract IEnumerable<Task> GetAvailableTasks();
+    public abstract void OnClaimTask(Minion minion, Task task);
+    public abstract void OnAbandonTask(Minion minion, Task task);
+    public abstract Task OnCompleteTask(Minion minion, Task task);
+}
+
+public class JobMine : JobStandard
+{
     private readonly Task task;
     private readonly Transform overlay;
     private bool claimed;
 
-    public JobMine(GameController game, Vec2I pos)
+    public JobMine(GameController game, Vec2I pos) : base(game, pos)
     {
-        this.game = game;
-        var tile = game.map.Tile(pos);
-        BB.Assert(tile.HasBuilding());
+        BB.Assert(tile.hasBuilding);
         BB.Assert(tile.building.mineable);
 
         task = new Task(this, null, pos, v => v.Adjacent(pos), tile.building.miningTool, MinionAnim.Slash, 2);
@@ -49,13 +150,13 @@ public class JobMine : Job
                 new Vec2I(0, 62), new Vec2I(2, 2), new Vec2I(1, 1)));
     }
 
-    public IEnumerable<Task> AvailableTasks()
+    public override IEnumerable<Task> GetAvailableTasks()
     {
         if (!claimed)
             yield return task;
     }
 
-    public void ClaimTask(Minion minion, Task task)
+    public override void OnClaimTask(Minion minion, Task task)
     {
         BB.Assert(task == this.task);
         BB.Assert(!claimed);
@@ -63,7 +164,7 @@ public class JobMine : Job
         claimed = true;
     }
 
-    public void AbandonTask(Minion minion, Task task)
+    public override void OnAbandonTask(Minion minion, Task task)
     {
         BB.Assert(task == this.task);
         BB.Assert(claimed);
@@ -71,24 +172,23 @@ public class JobMine : Job
         claimed = false;
     }
 
-    public Task CompleteTask(Minion minion, Task task)
+    public override Task OnCompleteTask(Minion minion, Task task)
     {
         BB.Assert(task == this.task);
         BB.Assert(claimed);
 
-        Building building = game.map.Tile(task.pos).building;
-        game.RemoveBuilding(task.pos);
+        Building building = tile.building;
+        game.RemoveBuilding(pos);
         foreach (ItemInfo item in building.GetMinedMaterials())
-            game.DropItem(task.pos, item);
+            game.DropItem(pos, item);
 
         overlay.Destroy();
-        game.RemoveJob(this);
-        return null;
+        return FinishJob();
     }
 }
 
 // TODO: support hualing to multiple jobs
-public class JobBuild : Job
+public class JobBuild : JobStandard
 {
     private class HaulTaskInfo : TaskInfo
     {
@@ -132,17 +232,14 @@ public class JobBuild : Job
 
     private enum State { Hauling, BuildUnclaimed, BuildClaimed }
 
-    private readonly GameController game;
-    private readonly Vec2I pos;
     private readonly BuildingVirtual virtualBuilding;
+    private bool vacatedTile = false;
 
     private State state;
     private readonly List<HaulInfo> hauls;
 
-    public JobBuild(GameController game, Vec2I pos, Building building)
+    public JobBuild(GameController game, Vec2I pos, Building building) : base(game, pos)
     {
-        this.game = game;
-        this.pos = pos;
         virtualBuilding = new BuildingVirtual(this, building);
         game.AddBuilding(pos, virtualBuilding);
 
@@ -152,14 +249,17 @@ public class JobBuild : Job
             hauls.Add(new HaulInfo(item));
     }
 
-    public IEnumerable<Task> AvailableTasks()
+    public override IEnumerable<Task> GetAvailableTasks()
     {
         if (state == State.BuildClaimed)
             yield break;
 
         if (state == State.BuildUnclaimed)
         {
-            yield return TaskBuild();
+            Task task = TryTaskBuild(null);
+            if (task != null)
+                yield return task;
+
             yield break;
         }
 
@@ -182,7 +282,7 @@ public class JobBuild : Job
         }
     }
 
-    public void ClaimTask(Minion minion, Task task)
+    public override void OnClaimTask(Minion minion, Task task)
     {
         BB.Assert(state != State.BuildClaimed);
 
@@ -200,7 +300,7 @@ public class JobBuild : Job
         }
     }
 
-    public void AbandonTask(Minion minion, Task task)
+    public override void OnAbandonTask(Minion minion, Task task)
     {
         BB.Assert(state != State.BuildUnclaimed);
         if (state == State.BuildClaimed)
@@ -225,16 +325,15 @@ public class JobBuild : Job
         }
     }
 
-    public Task CompleteTask(Minion minion, Task task)
+    public override Task OnCompleteTask(Minion minion, Task task)
     {
         BB.Assert(state != State.BuildUnclaimed);
         if (state == State.BuildClaimed)
         {
-            BB.Assert(game.map.Tile(pos).building == virtualBuilding);
-            Debug.Log("build complete.");
+            BB.Assert(tile.building == virtualBuilding);
             game.ReplaceBuilding(pos, virtualBuilding.building);
-            game.RemoveJob(this);
-            return null;
+
+            return FinishJob();
         }
         else
         {
@@ -256,8 +355,9 @@ public class JobBuild : Job
                 BB.Assert(info.haul.amtRemaining >= 0);
                 minion.RemoveItem().Destroy();
 
-                if (info.haul.amtRemaining == 0)
+                if (info.haul.amtStored == info.haul.info.amt)
                 {
+                    BB.Assert(info.haul.amtClaimed == 0);
                     bool doneHauling = true;
                     foreach (var haul in hauls)
                     {
@@ -271,7 +371,7 @@ public class JobBuild : Job
                     if (doneHauling)
                     {
                         state = State.BuildUnclaimed;
-                        return TaskBuild();
+                        return TryTaskBuild(minion);
                     }
                 }
 
@@ -280,7 +380,24 @@ public class JobBuild : Job
         }
     }
 
-    private Task TaskBuild() => new Task(this, null, pos, v => v.Adjacent(pos), Tool.Hammer, MinionAnim.Slash, 2);
+    private Task TryTaskBuild(Minion minion)
+    {
+        if (virtualBuilding.building.passable)
+            vacatedTile = true;
+
+        if (!vacatedTile)
+        {
+            game.VacateTile(pos);
+            if (game.IsTileOccupied(pos, minion))
+                return null;
+
+            virtualBuilding.constructing = true;
+            vacatedTile = true;
+            game.RerouteMinions(pos, true);
+        }
+
+        return new Task(this, null, pos, v => v.Adjacent(pos), Tool.Hammer, MinionAnim.Slash, 2);
+    }
 }
 
 public interface TaskInfo {}

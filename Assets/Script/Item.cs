@@ -78,7 +78,8 @@ public class Item : MonoBehaviour
     // TODO: Add
     public void Remove(int amt)
     {
-        BB.Assert(amt < amtAvailable);
+        BB.Assert(amt < info.amt);
+        BB.Assert(amt <= amtAvailable);
         info = info.WithNewAmount(info.amt - amt);
         UpdateText();
     }

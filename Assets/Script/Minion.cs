@@ -21,6 +21,8 @@ public class Minion : MonoBehaviour
     public bool carryingItem => carriedItem != null;
     private LinkedList<Vec2I> path;
 
+    public bool idle => currentTask == null; // TODO: make sure path is always null if currentTask is null
+
     public Vec2 pos
     {
         get => transform.position.xy();

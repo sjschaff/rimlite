@@ -25,10 +25,11 @@ public class GameController : MonoBehaviour
     private LinkedList<UITool> tools;
     private LinkedListNode<UITool> currentTool;
     private UITool tool => currentTool.Value;
-    private LinkedList<Minion> minions = new LinkedList<Minion>();
-    private LinkedList<Item> items = new LinkedList<Item>();
-    private LinkedList<Job> currentJobs = new LinkedList<Job>();
-    private JobWalkDummy walkDummyJob = new JobWalkDummy();
+    private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
+    private Minion D_minionNoTask;
+    private readonly LinkedList<Item> items = new LinkedList<Item>();
+    private readonly LinkedList<Job> currentJobs = new LinkedList<Job>();
+    private readonly JobWalkDummy walkDummyJob = new JobWalkDummy();
 
     private void Awake() {
         Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
@@ -43,13 +44,14 @@ public class GameController : MonoBehaviour
             minion.Init(this);
             minions.AddLast(minion);
         }
+        D_minionNoTask = minions.First.Value;
 
         tools = UITool.RegisterTools(this);
         currentTool = tools.First;
     }
 
     // required:  true if pos is no longer passable, false if pos is now passable
-    private void RerouteMinions(Vec2I pos, bool required)
+    public void RerouteMinions(Vec2I pos, bool required)
     {
         // TODO: check if minions can reroute more efficiently
         if (!required)
@@ -78,31 +80,31 @@ public class GameController : MonoBehaviour
     public void RemoveBuilding(Vec2I pos)
     {
         var tile = map.Tile(pos);
-        BB.Assert(tile.HasBuilding());
+        BB.Assert(tile.hasBuilding);
 
-        bool passable = tile.Passable();
+        bool passable = tile.passable;
         map.RemoveBuilding(pos);
-        RerouteMinions(pos, passable, tile.Passable());
+        RerouteMinions(pos, passable, tile.passable);
     }
 
     public void AddBuilding(Vec2I pos, Building building)
     {
         var tile = map.Tile(pos);
-        BB.Assert(!tile.HasBuilding());
+        BB.Assert(!tile.hasBuilding);
 
-        bool passable = tile.Passable();
+        bool passable = tile.passable;
         map.AddBuilding(pos, building);
-        RerouteMinions(pos, passable, tile.Passable());
+        RerouteMinions(pos, passable, tile.passable);
     }
 
     public void ReplaceBuilding(Vec2I pos, Building building)
     {
         var tile = map.Tile(pos);
-        BB.Assert(tile.HasBuilding());
+        BB.Assert(tile.hasBuilding);
 
-        bool passable = tile.Passable();
+        bool passable = tile.passable;
         map.ReplaceBuilding(pos, building);
-        RerouteMinions(pos, passable, tile.Passable());
+        RerouteMinions(pos, passable, tile.passable);
     }
 
     public void ModifyTerrain(Vec2I pos, Terrain terrain)
@@ -158,13 +160,36 @@ public class GameController : MonoBehaviour
 
     public void AddJob(Job job)
     {
-        Debug.Log("Added Job: " + job);
+        Debug.Log("Added Job: " + job + "(" + job.GetHashCode() + ")");
         currentJobs.AddLast(job);
     }
 
     public void RemoveJob(Job job)
     {
         currentJobs.Remove(job);
+    }
+
+    public bool IsTileOccupied(Vec2I pos, Minion minionIgnore)
+    {
+        foreach (Minion minion in minions)
+        {
+            if (minion != minionIgnore && Vec2.Distance(minion.pos, pos) < .9f)
+                return true;
+        }
+
+        return false;
+    }
+
+    public void VacateTile(Vec2I pos)
+    {
+        foreach (Minion minion in minions)
+        {
+            if (minion.idle && minion.pos.Floor() == pos)
+            {
+                if (!minion.AssignTask(walkDummyJob.CreateVacateTask(pos)))
+                    Debug.Log("cannon vacate: no path");
+            }
+        }
     }
 
     // Update is called once per frame
@@ -189,6 +214,9 @@ public class GameController : MonoBehaviour
 
         foreach (Minion minion in minions)
         {
+            if (minion == D_minionNoTask)
+                continue;
+
             if (!minion.HasTask())
             {
                 foreach (var job in currentJobs)

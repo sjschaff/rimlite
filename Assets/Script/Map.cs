@@ -12,23 +12,22 @@ public class BBTile
 {
     public Terrain terrain;
     public Building building;
-    // public Item item;
+    public Job activeJob;
 
-    public bool Passable() => terrain.passable && (building == null ? true : building.passable);
-    public bool HasBuilding() => building != null;
-    public bool Mineable() => building == null ? false : building.mineable;
+    public bool hasJob => activeJob != null;
+    public bool passable => terrain.passable && (building == null ? true : building.passable);
+    public bool hasBuilding => building != null;
+    public bool mineable => building == null ? false : building.mineable;
 
     // Kinda kludgy but fine for now
     public T BuildingAs<T>() where T : class
     {
         if (building != null)
         {
-            T t = building as T;
-            if (t != null)
+            if (building is T t)
                 return t;
 
-            var v = building as BuildingVirtual;
-            if (v != null)
+            if (building is BuildingVirtual v)
                 return v.building as T;
         }
 
@@ -113,19 +112,19 @@ public class Map : MonoBehaviour
 
     public void RemoveBuilding(Vec2I pos)
     {
-        BB.Assert(Tile(pos).HasBuilding());
+        BB.Assert(Tile(pos).hasBuilding);
         SetBuilding(pos, null);
     }
 
     public void ReplaceBuilding(Vec2I pos, Building building)
     {
-        BB.Assert(Tile(pos).HasBuilding());
+        BB.Assert(Tile(pos).hasBuilding);
         SetBuilding(pos, building);
     }
 
     public void AddBuilding(Vec2I pos, Building building)
     {
-        BB.Assert(!Tile(pos).HasBuilding());
+        BB.Assert(!Tile(pos).hasBuilding);
         SetBuilding(pos, building);
     }
 
