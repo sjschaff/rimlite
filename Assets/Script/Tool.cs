@@ -23,7 +23,9 @@ public abstract class UITool
 
     protected UITool(GameController game) => this.game = game;
 
-    public abstract void OnClick(Vec2I pos);
+    public virtual void OnClick(Vec2I pos) { }
+    public virtual void OnDragStart(Vec2 start) { }
+    public virtual void OnDragEnd(Vec2 end) { }
 }
 
 public class ToolControlMinion : UITool

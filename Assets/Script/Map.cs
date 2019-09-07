@@ -135,8 +135,6 @@ public class Map : MonoBehaviour
         tiler.UpdateTerrain(pos);
     }
 
-    public Vec2I MouseToTile() => UnityEngine.Camera.main.ScreenToWorldPoint(Input.mousePosition).xy().Floor();
-
     // Update is called once per frame
     void Update()
     {

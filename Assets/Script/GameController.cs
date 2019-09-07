@@ -13,7 +13,9 @@ public class GameController : MonoBehaviour
     public Transform minionPrefab;
     public Transform itemPrefab;
     public Transform jobOverlayPrefab;
+
     public Transform mouseHighlight;
+    public LineRenderer dragOutline;
 
     public Transform CreateJobOverlay(Vec2I pos, Sprite sprite)
     {
@@ -192,11 +194,36 @@ public class GameController : MonoBehaviour
         }
     }
 
+    float time = 0;
+    bool isDraging = false;
+    Vec2 clickStart;
+
+    private static float dragTime = .16f;
+
+    private void UpdateDragOutline(Vec2 end)
+    {
+        float units = UnityEngine.Camera.main.orthographicSize * 2;
+        float pixels = Screen.height;
+
+        float unitsPerPixel = units / pixels;
+        dragOutline.widthMultiplier = 2 * unitsPerPixel;
+
+        var a = clickStart;
+        var b = end;
+        dragOutline.SetPositions(new Vec3[] {
+            new Vec3(a.x, a.y),
+            new Vec3(b.x, a.y),
+            new Vec3(b.x, b.y),
+            new Vec3(a.x, b.y)
+        });
+    }
+
     // Update is called once per frame
     void Update()
     {
-        var tile = map.MouseToTile();
-        mouseHighlight.localPosition = (Vec2)tile;
+        var mousePos = UnityEngine.Camera.main.ScreenToWorldPoint(Input.mousePosition).xy();
+        mouseHighlight.localPosition = (Vec2)mousePos.Floor();
+        UpdateDragOutline(mousePos);
 
         if (Input.GetKeyDown("l"))
         {
@@ -207,9 +234,39 @@ public class GameController : MonoBehaviour
             Debug.Log("Current Tool: " + tool);
         }
 
-        if (Input.GetMouseButtonDown(0) && map.ValidTile(tile))
+        if (Input.GetMouseButtonDown(0))
         {
-            tool.OnClick(tile);
+            time = 0;
+            clickStart = mousePos;
+        }
+        else if (Input.GetMouseButton(0))
+            time += Time.deltaTime;
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (!isDraging)
+            {
+                //Debug.Log("OnClick: " + time);
+                if (map.ValidTile(clickStart.Floor()))
+                    tool.OnClick(clickStart.Floor());
+            }
+            else
+            {
+                //Debug.Log("OnDragEnd");
+                tool.OnDragEnd(mousePos.Floor());
+                dragOutline.enabled = false;
+            }
+
+            time = 0;
+            isDraging = false;
+        }
+
+        if (time > dragTime && !isDraging)
+        {
+            //Debug.Log("OnDragStart");
+            isDraging = true;
+            tool.OnDragStart(clickStart.Floor());
+            dragOutline.enabled = true;
         }
 
         foreach (Minion minion in minions)
