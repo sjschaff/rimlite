@@ -279,6 +279,9 @@ public class JobBuild : JobStandard
             if (haul.amtRemaining > 0)
             {
                 var items = new List<Item>(game.FindItems(haul.info.type));
+                if (items.Count == 0)
+                    continue;
+
                 var queue = new FastPriorityQueue<ItemPriority>(items.Count);
                 foreach (Item item in items)
                     queue.Enqueue(new ItemPriority(item), Vec2.Distance(item.pos, pos) / (float)haul.HaulAmount(item));

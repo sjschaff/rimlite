@@ -198,7 +198,7 @@ public class GameController : MonoBehaviour
     bool isDraging = false;
     Vec2 clickStart;
 
-    private static float dragTime = .16f;
+    private const float dragTime = .16f;
 
     private void UpdateDragOutline(Vec2 end)
     {
@@ -253,7 +253,7 @@ public class GameController : MonoBehaviour
             else
             {
                 //Debug.Log("OnDragEnd");
-                tool.OnDragEnd(mousePos.Floor());
+                tool.OnDragEnd(clickStart, mousePos);
                 dragOutline.enabled = false;
             }
 

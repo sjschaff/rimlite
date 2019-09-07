@@ -44,8 +44,16 @@ public static class MathExt {
     public static Vec3 Vec3(this Vec2 v) => new Vec3(v.x, v.y, 0);
 
     public static Vec2I Floor(this Vec2 v) => new Vec2I(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
+    public static Vec2I Ceil(this Vec2 v) => new Vec2I(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
     public static bool Adjacent(this Vec2I vA, Vec2I vB)
     {
         return (Math.Abs(vB.y - vA.y) + Math.Abs(vB.x - vA.x)) == 1;
+    }
+
+    public static IEnumerable<Vec2I> AllTiles(this RectInt rect)
+    {
+        for (int x = 0; x < rect.width; ++x)
+            for (int y = 0; y < rect.height; ++y)
+                yield return new Vec2I(rect.x + x, rect.y + y);
     }
 }
