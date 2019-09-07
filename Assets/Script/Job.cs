@@ -3,7 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
+using Priority_Queue;
 
 public enum Tool { None, Hammer, Pickaxe, Axe };
 
@@ -228,6 +230,14 @@ public class JobBuild : JobStandard
             this.info = info;
             this.amtStored = this.amtClaimed = 0;
         }
+
+        public int HaulAmount(Item item) => Math.Min(amtRemaining, item.amtAvailable);
+    }
+
+    private class ItemPriority : FastPriorityQueueNode
+    {
+        public readonly Item item;
+        public ItemPriority(Item item) => this.item = item;
     }
 
     private enum State { Hauling, BuildUnclaimed, BuildClaimed }
@@ -263,17 +273,23 @@ public class JobBuild : JobStandard
             yield break;
         }
 
-        // TODO: something far more interesting whereby nearer items and larger stack sizes are prioritized
+        // TODO: priority should take into account minion locations
         foreach (HaulInfo haul in hauls)
         {
             if (haul.amtRemaining > 0)
             {
-                foreach (Item item in game.FindItems(haul.info.type))
+                var items = new List<Item>(game.FindItems(haul.info.type));
+                var queue = new FastPriorityQueue<ItemPriority>(items.Count);
+                foreach (Item item in items)
+                    queue.Enqueue(new ItemPriority(item), Vec2.Distance(item.pos, pos) / (float)haul.HaulAmount(item));
+
+                foreach (var p in queue)
                 {
+                    Item item = p.item;
                     if (item.amtAvailable == 0)
                         continue;
 
-                    int amt = Math.Min(haul.amtRemaining, item.amtAvailable);
+                    int amt = haul.HaulAmount(item);
                     Item item2 = item;
                     var info = new HaulTaskInfo(haul, amt, item);
                     yield return new Task(this, info, item.pos, v => v == item.pos, Tool.None, MinionAnim.Magic, .425f);
