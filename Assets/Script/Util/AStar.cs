@@ -27,9 +27,13 @@ public class AStar
 
     private static readonly Vec2I[] directions =
     {
+        new Vec2I(-1, -1),
         new Vec2I(-1, 0),
+        new Vec2I(-1, 1),
         new Vec2I(0, 1),
+        new Vec2I(1, 1),
         new Vec2I(1, 0),
+        new Vec2I(1, -1),
         new Vec2I(0, -1)
     };
 
@@ -57,6 +61,13 @@ public class AStar
                 if (!map.ValidTile(pos) || !map.Tile(pos).passable || closed.ContainsKey(pos))
                     continue;
 
+                if (dir.x != 0 && dir.y != 0)
+                {
+                    if (!map.Tile(n.pos + new Vec2I(dir.x, 0)).passable ||
+                        !map.Tile(n.pos + new Vec2I(0, dir.y)).passable)
+                        continue;
+                }
+
                 if (dstFunc(pos))
                 {
                     Stack<Vec2I> path = new Stack<Vec2I>();
@@ -69,7 +80,7 @@ public class AStar
                     return path.ToArray();
                 }
 
-                float g = n.g + 1;
+                float g = n.g + Vec2I.Distance(pos, n.pos);
 
                 if (opened.TryGetValue(pos, out var nodeOpen))
                 {
