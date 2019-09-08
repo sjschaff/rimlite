@@ -140,6 +140,12 @@ public class JobMine : JobStandard
     private readonly Transform overlay;
     private bool claimed;
 
+    public static Transform CreateOverlay(GameController game, Vec2I pos)
+    {
+        return game.CreateJobOverlay(pos, game.map.tiler.sprites32.GetSprite(
+                new Vec2I(0, 62), new Vec2I(2, 2), new Vec2I(1, 1)));
+    }
+
     public JobMine(GameController game, Vec2I pos) : base(game, pos)
     {
         BB.Assert(tile.hasBuilding);
@@ -148,8 +154,7 @@ public class JobMine : JobStandard
         task = new Task(this, null, pos, v => v.Adjacent(pos), tile.building.miningTool, MinionAnim.Slash, 2);
         claimed = false;
 
-        overlay = game.CreateJobOverlay(pos, game.map.tiler.sprites32.GetSprite(
-                new Vec2I(0, 62), new Vec2I(2, 2), new Vec2I(1, 1)));
+        overlay = CreateOverlay(game, pos);
     }
 
     public override IEnumerable<Task> GetAvailableTasks()

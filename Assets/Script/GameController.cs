@@ -279,11 +279,14 @@ public class GameController : MonoBehaviour
             isDraging = false;
         }
 
+        if (isDraging)
+            tool.OnDragUpdate(clickStart, mousePos);
+
         if (time > dragTime && !isDraging)
         {
             //Debug.Log("OnDragStart");
             isDraging = true;
-            tool.OnDragStart(clickStart.Floor());
+            tool.OnDragStart(clickStart, mousePos);
             dragOutline.enabled = true;
         }
 

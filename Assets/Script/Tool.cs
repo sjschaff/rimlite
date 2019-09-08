@@ -23,9 +23,7 @@ public abstract class UITool
 
     protected UITool(GameController game) => this.game = game;
 
-    public virtual void OnClick(Vec2I pos) { }
-    public virtual void OnDragStart(Vec2 start) { }
-    public virtual void OnDragEnd(Vec2 start, Vec2 end)
+    public static RectInt RectInclusive(Vec2 start, Vec2 end)
     {
         Vec2 lower = Vec2.Min(start, end);
         Vec2 upper = Vec2.Max(start, end);
@@ -33,9 +31,21 @@ public abstract class UITool
         Vec2I tileStart = lower.Floor();
         Vec2I tileEnd = upper.Ceil();
 
-        OnDragEnd(new RectInt(tileStart, tileEnd - tileStart));
+        return new RectInt(tileStart, tileEnd - tileStart);
     }
 
+    public virtual void OnClick(Vec2I pos) { }
+    public virtual void OnDragStart(Vec2 start, Vec2 end)
+        => OnDragStart(RectInclusive(start, end));
+
+    public virtual void OnDragUpdate(Vec2 start, Vec2 end)
+        => OnDragUpdate(RectInclusive(start, end));
+
+    public virtual void OnDragEnd(Vec2 start, Vec2 end)
+        => OnDragEnd(RectInclusive(start, end));
+
+    protected virtual void OnDragStart(RectInt rect) => OnDragUpdate(rect);
+    protected virtual void OnDragUpdate(RectInt rec) { }
     protected virtual void OnDragEnd(RectInt rect) { }
 }
 
@@ -51,6 +61,8 @@ public class ToolControlMinion : UITool
 
 public class ToolMine : UITool
 {
+    private Dictionary<Vec2I, Transform> activeOverlays = new Dictionary<Vec2I, Transform>();
+
     public ToolMine(GameController game) : base(game) { }
 
     public override void OnClick(Vec2I pos)
@@ -60,10 +72,43 @@ public class ToolMine : UITool
             game.AddJob(new JobMine(game, pos));
     }
 
+    protected override void OnDragUpdate(RectInt rect)
+    {
+        List<Vec2I> toRemove = new List<Vec2I>();
+        foreach (var kvp in activeOverlays)
+        {
+            if (!rect.Contains(kvp.Key))
+            {
+                kvp.Value.Destroy();
+                toRemove.Add(kvp.Key);
+            }
+        }
+
+        foreach (var v in toRemove)
+            activeOverlays.Remove(v);
+
+        foreach (var v in rect.AllTiles())
+        {
+            if (!activeOverlays.ContainsKey(v))
+            {
+                if (game.map.Tile(v).mineable)
+                {
+                    var o = JobMine.CreateOverlay(game, v);
+                    activeOverlays.Add(v, o);
+                }
+            }
+        }
+    }
+
     protected override void OnDragEnd(RectInt rect)
     {
         foreach (var v in rect.AllTiles())
             OnClick(v);
+
+        foreach (var kvp in activeOverlays)
+            kvp.Value.Destroy();
+
+        activeOverlays = new Dictionary<Vec2I, Transform>();
     }
 }
 
