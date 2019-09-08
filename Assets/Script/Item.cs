@@ -91,7 +91,7 @@ public class Item : MonoBehaviour
         if (config == Config.Ground)
         {
             text.enabled = true;
-            spriteRenderer.SetLayer("Default");
+            spriteRenderer.SetLayer("Default", 1000);
         }
         else
         {
@@ -99,7 +99,7 @@ public class Item : MonoBehaviour
             if (config == Config.PlayerAbove)
                 spriteRenderer.SetLayer("Over Player");
             else if (config == Config.PlayerBelow)
-                spriteRenderer.SetLayer("Default");
+                spriteRenderer.SetLayer("Default", 1000);
             else
                 throw new NotSupportedException("Unknown Item Config: " + config);
         }

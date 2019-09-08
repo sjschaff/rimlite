@@ -240,6 +240,9 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown("tab"))
+            tool.OnTab();
+
         var mousePos = UnityEngine.Camera.main.ScreenToWorldPoint(Input.mousePosition).xy();
         mouseHighlight.localPosition = (Vec2)mousePos.Floor();
         UpdateDragOutline(mousePos);

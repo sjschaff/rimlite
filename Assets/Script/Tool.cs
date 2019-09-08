@@ -34,6 +34,9 @@ public abstract class UITool
         return new RectInt(tileStart, tileEnd - tileStart);
     }
 
+    // TODO: make this more general
+    public virtual void OnTab() { }
+
     public virtual void OnClick(Vec2I pos) { }
     public virtual void OnDragStart(Vec2 start, Vec2 end)
         => OnDragStart(RectInclusive(start, end));
@@ -114,12 +117,28 @@ public class ToolMine : UITool
 
 public class ToolBuild : UITool
 {
+    private int currentBuild = 0;
+
     public ToolBuild(GameController game) : base(game) { }
+
+    public override void OnTab()
+    {
+        currentBuild = (currentBuild + 1) % 2;
+        Debug.Log("Build " + currentBuild);
+    }
 
     public override void OnClick(Vec2I pos)
     {
         if (!game.map.Tile(pos).hasBuilding)
-            game.AddJob(new JobBuild(game, pos, new BuildingWall(BuildingWall.Wall.StoneBrick)));
+        {
+            Building building = null;
+            switch (currentBuild)
+            {
+                case 0: building = new BuildingWall(BuildingWall.Wall.StoneBrick); break;
+                case 1: building = new BuildingFloor(BuildingFloor.Floor.StoneBrick); break;
+            }
+            game.AddJob(new JobBuild(game, pos, building));
+        }
     }
 
     protected override void OnDragEnd(RectInt rect)

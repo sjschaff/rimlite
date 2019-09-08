@@ -47,7 +47,12 @@ public class BuildingFloor : BuildingSmp
 
     private static Vec2I FloorOrigin(Floor floor)
     {
-        throw new NotImplementedException("Unknown Floor: " + floor);
+        switch (floor)
+        {
+            case Floor.StoneBrick: return new Vec2I(0, 9);
+            default:
+                throw new NotImplementedException("Unknown Floor: " + floor);
+        }
     }
 
     public BuildingFloor(Floor floor) => this.floor = floor;
