@@ -14,8 +14,8 @@ public class GameController : MonoBehaviour
     public Transform itemPrefab;
     public Transform jobOverlayPrefab;
 
-    public Transform mouseHighlight;
-    public LineRenderer dragOutline;
+    private Transform mouseHighlight;
+    private LineRenderer dragOutline;
 
     public Transform CreateJobOverlay(Vec2I pos, Sprite sprite)
     {
@@ -24,14 +24,26 @@ public class GameController : MonoBehaviour
         return overlay;
     }
 
+    public LineRenderer CreateDragOutline()
+        => new GameObject("Drag Outline").AddLineRenderer(Color.white, 1, true, true, null);
+
+    public Transform CreateMouseHighlight()
+        => new GameObject("Mouse Highlight").AddLineRenderer(
+            new Color(.2f, .2f, .2f, .5f), 1 / 32f, true, false, new Vec2[] {
+                new Vec2(0, 0),
+                new Vec2(1, 0),
+                new Vec2(1, 1),
+                new Vec2(0, 1)
+            }).transform;
+
     private LinkedList<UITool> tools;
     private LinkedListNode<UITool> currentTool;
-    private UITool tool => currentTool.Value;
     private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
     private Minion D_minionNoTask;
     private readonly LinkedList<Item> items = new LinkedList<Item>();
     private readonly LinkedList<Job> currentJobs = new LinkedList<Job>();
     private readonly JobWalkDummy walkDummyJob = new JobWalkDummy();
+    private UITool tool => currentTool.Value;
 
     private void Awake() {
         Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
@@ -40,6 +52,11 @@ public class GameController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        mouseHighlight = CreateMouseHighlight();
+        dragOutline = CreateDragOutline();
+        dragOutline.enabled = false;
+        dragOutline.sortingOrder = 1;
+
         for (int i = 0; i < 10; ++i)
         {
             Minion minion = minionPrefab.Instantiate(new Vec2(1 + i, 1), transform).GetComponent<Minion>();
@@ -210,6 +227,7 @@ public class GameController : MonoBehaviour
 
         var a = clickStart;
         var b = end;
+        dragOutline.positionCount = 4;
         dragOutline.SetPositions(new Vec3[] {
             new Vec3(a.x, a.y),
             new Vec3(b.x, a.y),
