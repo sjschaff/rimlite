@@ -91,15 +91,15 @@ public class Item : MonoBehaviour
         if (config == Config.Ground)
         {
             text.enabled = true;
-            spriteRenderer.sortingLayerName = "Default";
+            spriteRenderer.SetLayer("Default");
         }
         else
         {
             text.enabled = false;
             if (config == Config.PlayerAbove)
-                spriteRenderer.sortingLayerName = "Over Player";
+                spriteRenderer.SetLayer("Over Player");
             else if (config == Config.PlayerBelow)
-                spriteRenderer.sortingLayerName = "Under Player";
+                spriteRenderer.SetLayer("Default");
             else
                 throw new NotSupportedException("Unknown Item Config: " + config);
         }

@@ -34,6 +34,13 @@ public static class BB
     public static void Destroy<T>(this T o) where T : Component => UnityEngine.Object.Destroy(o.gameObject);
     public static Transform Instantiate(this Transform prefab, Vec2 pos, Transform parent) =>
         UnityEngine.Object.Instantiate(prefab, pos.Vec3(), Quaternion.identity, parent);
+
+    public static void SetLayer(this Renderer renderer, string layerName, int order = 0)
+    {
+        renderer.sortingLayerName = layerName;
+        renderer.sortingLayerID = SortingLayer.NameToID(layerName);
+        renderer.sortingOrder = order;
+    }
 }
 
 public static class MathExt {

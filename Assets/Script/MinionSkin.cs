@@ -205,7 +205,7 @@ public class MinionSkin : MonoBehaviour
 
     public void SetDir(Vec2 dir)
     {
-        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+        if (Mathf.Abs(dir.x) > float.Epsilon)
         {
             if (dir.x < 0)
                 SetDir(MinionSkin.Dir.Left);
@@ -252,9 +252,7 @@ public class MinionSkin : MonoBehaviour
         layer.transform.localPosition = Vec3.zero;
 
         var sprite = layer.AddComponent<SpriteRenderer>();
-        sprite.sortingLayerName = "Player";
-        sprite.sortingLayerID = SortingLayer.NameToID("Player");
-        sprite.sortingOrder = renderLayer;
+        sprite.SetLayer("Player", renderLayer);
 
         return sprite;
     }

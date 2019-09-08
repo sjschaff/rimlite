@@ -25,10 +25,11 @@ public class GameController : MonoBehaviour
     }
 
     public LineRenderer CreateDragOutline()
-        => new GameObject("Drag Outline").AddLineRenderer(Color.white, 1, true, true, null);
+        => new GameObject("Drag Outline").AddLineRenderer("Highlight", 0, Color.white, 1, true, true, null);
 
     public Transform CreateMouseHighlight()
         => new GameObject("Mouse Highlight").AddLineRenderer(
+            "Highlight", 0,
             new Color(.2f, .2f, .2f, .5f), 1 / 32f, true, false, new Vec2[] {
                 new Vec2(0, 0),
                 new Vec2(1, 0),

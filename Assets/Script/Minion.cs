@@ -38,7 +38,7 @@ public class Minion : MonoBehaviour
 
     void Awake()
     {
-        line = gameObject.AddLineRenderer(new Color(.2f, .2f, .2f, .5f), 1/32f, false, true, null);
+        line = gameObject.AddLineRenderer("Default", 1000, new Color(.2f, .2f, .2f, .5f), 1/32f, false, true, null);
     }
 
     // Use this for initialization

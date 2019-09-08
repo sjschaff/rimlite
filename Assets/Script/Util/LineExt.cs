@@ -32,13 +32,14 @@ public static class LineExt
         return mat;
     }
 
-    public static LineRenderer AddLineRenderer(this GameObject o, Color color, float width, bool loop, bool useWorldspace, Vec2[] pts)
+    public static LineRenderer AddLineRenderer(this GameObject o,
+        string sortingLayer, int sortingOrder, Color color,
+        float width, bool loop, bool useWorldspace, Vec2[] pts)
     {
         var line = o.AddComponent<LineRenderer>();
         line.loop = loop;
         line.material = GetMaterial(color);
-        line.sortingLayerName = "Highlight";
-        line.sortingLayerID = SortingLayer.NameToID("Highlight");
+        line.SetLayer(sortingLayer, sortingOrder);
         line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         line.receiveShadows = false;
         line.useWorldSpace = useWorldspace;
