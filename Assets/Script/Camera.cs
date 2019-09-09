@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
+using Vec3 = UnityEngine.Vector3;
 
 public static class VecExt
 {
@@ -60,5 +61,12 @@ public class Camera : MonoBehaviour
             drag.Scale(cam.OrthoScale());
             transform.localPosition = transStart + drag;
         }
+
+        Vec2 halfSize = new Vec2(cam.orthographicSize * cam.aspect, cam.orthographicSize);
+
+        Vec2 pos = cam.transform.localPosition.xy();
+        pos = Vec2.Max(pos, halfSize);
+        pos = Vec2.Min(pos, new Vec2(64, 64) - halfSize); // TODO: use real map size
+        cam.transform.localPosition = new Vec3(pos.x, pos.y, -11);
     }
 }
