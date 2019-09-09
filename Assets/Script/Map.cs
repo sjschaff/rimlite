@@ -81,7 +81,11 @@ public class Map : MonoBehaviour
             for (int y = 0; y < h; ++y)
                 tiles[x, y] = new BBTile(grass);
 
-        tiles[2, 2].terrain = tiles[2, 3].terrain = tiles[3, 2].terrain = tiles[3, 3].terrain = new TerrainStandard(TerrainStandard.Terrain.Water);
+        var water = new TerrainStandard(TerrainStandard.Terrain.Water);
+        for (int x = 2; x < 5; ++x)
+            for (int y = 2; y < 5; ++y)
+                tiles[x, y].terrain = water;
+
         tiles[5, 5].building = new BuildingResource(BuildingResource.Resource.Rock);
         tiles[6, 5].building = new BuildingResource(BuildingResource.Resource.Tree);
 

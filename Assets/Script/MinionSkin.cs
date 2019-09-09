@@ -248,7 +248,7 @@ public class MinionSkin : MonoBehaviour
     private SpriteRenderer CreateSpriteLayer(string name, int renderLayer)
     {
         var layer = new GameObject(name);
-        layer.transform.parent = transform;
+        layer.transform.SetParent(transform, false);
         layer.transform.localPosition = Vec3.zero;
 
         var sprite = layer.AddComponent<SpriteRenderer>();
