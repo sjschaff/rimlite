@@ -58,7 +58,8 @@ public class ToolControlMinion : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        game.K_MoveMinion(pos);
+        if (game.map.Tile(pos).passable)
+            game.K_MoveMinion(pos);
     }
 }
 

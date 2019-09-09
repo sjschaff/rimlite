@@ -45,9 +45,9 @@ public class BBTile
 public class Map : MonoBehaviour
 {
     [HideInInspector]
-    public readonly int w = 32;
+    public readonly int w = 64;
     [HideInInspector]
-    public readonly int h = 32;
+    public readonly int h = 64;
 
     public Texture2D tileset32;
     public Texture2D tileset64;

@@ -25,6 +25,8 @@ public class AStar
         public float f => g + h;
     }
 
+    private static FastPriorityQueue<Node> open;
+
     private static readonly Vec2I[] directions =
     {
         new Vec2I(-1, -1),
@@ -42,7 +44,11 @@ public class AStar
 
     public static Vec2I[] FindPath(Map map, Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFunc)
     {
-        var open = new FastPriorityQueue<Node>(map.w * map.h);
+        if (open == null)
+            open = new FastPriorityQueue<Node>(map.w * map.h);
+        else
+            open.Clear();
+
         var opened = new Dictionary<Vec2I, Node>();
         var closed = new Dictionary<Vec2I, Node>();
 
@@ -77,6 +83,7 @@ public class AStar
                         path.Push(n.pos);
                         n = n.parent;
                     }
+
                     return path.ToArray();
                 }
 
