@@ -41,6 +41,10 @@ public static class BB
         renderer.sortingLayerID = SortingLayer.NameToID(layerName);
         renderer.sortingOrder = order;
     }
+
+    public static bool InGrid(Vec2I gridSize, Vec2I pt) =>
+        pt.x >= 0 && pt.y >= 0 && pt.x < gridSize.x && pt.y < gridSize.y;
+
 }
 
 public static class MathExt {

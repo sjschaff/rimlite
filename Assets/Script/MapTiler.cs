@@ -209,13 +209,13 @@ public class MapTiler
         tilemapBuildingOver = new TilemapUpdater<VirtualTileBuildingOver>(this, map.buildingOver);
 
         var vtileBase = VirtualTileBase.Create<VirtualTileTerrainBase>(map.terrainBase, this);
-        for (int x = 0; x < map.w * 2; ++x)
-            for (int y = 0; y < map.h * 2; ++y)
+        for (int x = 0; x < map.size.x * 2; ++x)
+            for (int y = 0; y < map.size.y * 2; ++y)
                 map.terrainBase.SetTile(new Vec3I(x, y, 0), vtileBase);
 
-        for (int x = 0; x < map.w; ++x)
+        for (int x = 0; x < map.size.x; ++x)
         {
-            for (int y = 0; y < map.h; ++y)
+            for (int y = 0; y < map.size.y; ++y)
             {
                 var gridPos = new Vec2I(x, y);
                 tilemapTerrainOver.UpdateTile(gridPos);

@@ -461,7 +461,8 @@ public class Task
     public bool CanWorkFrom(Vec2I tile) => workFromFn(tile);
 
     public Vec2I[] GetPath(Map map, Vec2I start)
-        => AStar.FindPath(map, start, pos, workFromFn);
+        => AStar.FindPath(AStar.K_queue, map.size, 
+            pt => map.Tile(pt).passable, start, pos, workFromFn)?.pts;
 
     // Returns true if complete
     public void PerformWork(float amt)

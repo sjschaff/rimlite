@@ -45,9 +45,11 @@ public class BBTile
 public class Map : MonoBehaviour
 {
     [HideInInspector]
-    public readonly int w = 64;
+    private const int w = 64;
     [HideInInspector]
-    public readonly int h = 64;
+    private const int h = 64;
+    [HideInInspector]
+    public readonly Vec2I size = new Vec2I(w, h);
 
     public Texture2D tileset32;
     public Texture2D tileset64;
@@ -62,7 +64,7 @@ public class Map : MonoBehaviour
     private BBTile[,] tiles;
     public MapTiler tiler; // KLUDGE for sprite access
 
-    public bool ValidTile(Vec2I tile) => tile.x >= 0 && tile.x < w && tile.y >= 0 && tile.y < h;
+    public bool ValidTile(Vec2I tile) => BB.InGrid(size, tile);
 
     public void AssertValidTile(Vec2I tile) => BB.Assert(ValidTile(tile));
 

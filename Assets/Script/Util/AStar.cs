@@ -25,7 +25,17 @@ public class AStar
         public float f => g + h;
     }
 
-    private static FastPriorityQueue<Node> open;
+    public interface IQueueCache { }
+
+    private class QueueCache : IQueueCache
+    {
+        public readonly FastPriorityQueue<Node> queue;
+        public QueueCache(int size) =>
+            this.queue = new FastPriorityQueue<Node>(size);
+    }
+
+    public static IQueueCache CreateQueueCache(int w, int h) => new QueueCache(w* h);
+    public static IQueueCache K_queue = new QueueCache(64 * 64);
 
     private static readonly Vec2I[] directions =
     {
@@ -39,15 +49,47 @@ public class AStar
         new Vec2I(0, -1)
     };
 
-    public static Vec2I[] FindPath(Map map, Vec2I start, Vec2I end)
-        => FindPath(map, start, end, v => v == end);
-
-    public static Vec2I[] FindPath(Map map, Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFunc)
+    public class Path
     {
-        if (open == null)
-            open = new FastPriorityQueue<Node>(map.w * map.h);
-        else
-            open.Clear();
+        public readonly float g;
+        public readonly Vec2I[] pts;
+
+        public Path(float g, Vec2I[] pts)
+        {
+            this.g = g;
+            this.pts = pts;
+        }
+
+        public Path Reversed()
+        {
+            Vec2I[] ptsReversed = new Vec2I[pts.Length];
+            for (int i = 0; i < pts.Length; ++i)
+                ptsReversed[pts.Length - 1 - i] = pts[i];
+            return new Path(g, ptsReversed);
+        }
+    }
+
+    private static Path ConstructPath(Node n)
+    {
+        float g = n.g;
+
+        Stack<Vec2I> path = new Stack<Vec2I>();
+        while (n != null)
+        {
+            path.Push(n.pos);
+            n = n.parent;
+        }
+
+        return new Path(g, path.ToArray());
+    }
+
+    public static Path FindPath(
+        IQueueCache queueCache,
+        Vec2I size, Func<Vec2I, bool> passFn,
+        Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFunc)
+    {
+        var open = (queueCache as QueueCache).queue;
+        open.Clear();
 
         var opened = new Dictionary<Vec2I, Node>();
         var closed = new Dictionary<Vec2I, Node>();
@@ -58,33 +100,23 @@ public class AStar
         while (open.Count > 0)
         {
             Node n = open.Dequeue();
+            if (dstFunc(n.pos))
+                return ConstructPath(n);
+
             opened.Remove(n.pos);
             closed.Add(n.pos, n);
 
             foreach (Vec2I dir in directions)
             {
                 Vec2I pos = n.pos + dir;
-                if (!map.ValidTile(pos) || !map.Tile(pos).passable || closed.ContainsKey(pos))
+                if (!BB.InGrid(size, pos) || !passFn(pos) || closed.ContainsKey(pos))
                     continue;
 
                 if (dir.x != 0 && dir.y != 0)
                 {
-                    if (!map.Tile(n.pos + new Vec2I(dir.x, 0)).passable ||
-                        !map.Tile(n.pos + new Vec2I(0, dir.y)).passable)
+                    if (!passFn(n.pos + new Vec2I(dir.x, 0)) ||
+                        !passFn(n.pos + new Vec2I(0, dir.y)))
                         continue;
-                }
-
-                if (dstFunc(pos))
-                {
-                    Stack<Vec2I> path = new Stack<Vec2I>();
-                    path.Push(pos);
-                    while (n != null)
-                    {
-                        path.Push(n.pos);
-                        n = n.parent;
-                    }
-
-                    return path.ToArray();
                 }
 
                 float g = n.g + Vec2I.Distance(pos, n.pos);
@@ -98,7 +130,7 @@ public class AStar
                         open.UpdatePriority(nodeOpen, nodeOpen.f);
                     }
                 }
-                else
+                else if (!closed.ContainsKey(pos))
                 {
                     Node nodeNext = new Node(n, pos, g, Vec2I.Distance(start, endHint));
                     open.Enqueue(nodeNext, nodeNext.f);
