@@ -22,7 +22,7 @@ namespace Priority_Queue
         /// <param name="maxNodes">The max nodes ever allowed to be enqueued (going over this will cause undefined behavior)</param>
         public FastPriorityQueue(int maxNodes)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if (maxNodes <= 0)
             {
                 throw new InvalidOperationException("New queue size cannot be smaller than 1");
@@ -80,7 +80,7 @@ namespace Priority_Queue
 #endif
         public bool Contains(T node)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if(node == null)
             {
                 throw new ArgumentNullException("node");
@@ -110,7 +110,7 @@ namespace Priority_Queue
 #endif
         public void Enqueue(T node, float priority)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if(node == null)
             {
                 throw new ArgumentNullException("node");
@@ -350,7 +350,7 @@ namespace Priority_Queue
 #endif
         public T Dequeue()
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if(_numNodes <= 0)
             {
                 throw new InvalidOperationException("Cannot call Dequeue() on an empty queue");
@@ -391,7 +391,7 @@ namespace Priority_Queue
         /// </summary>
         public void Resize(int maxNodes)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if (maxNodes <= 0)
             {
                 throw new InvalidOperationException("Queue size cannot be smaller than 1");
@@ -418,7 +418,7 @@ namespace Priority_Queue
         {
             get
             {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
                 if(_numNodes <= 0)
                 {
                     throw new InvalidOperationException("Cannot call .First on an empty queue");
@@ -440,7 +440,7 @@ namespace Priority_Queue
 #endif
         public void UpdatePriority(T node, float priority)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if(node == null)
             {
                 throw new ArgumentNullException("node");
@@ -488,7 +488,7 @@ namespace Priority_Queue
 #endif
         public void Remove(T node)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if(node == null)
             {
                 throw new ArgumentNullException("node");
@@ -532,7 +532,7 @@ namespace Priority_Queue
 #endif
         public void ResetNode(T node)
         {
-#if DEBUG
+#if HACK_NOT_DEBUG_LOLZ
             if (node == null)
             {
                 throw new ArgumentNullException("node");

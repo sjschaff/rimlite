@@ -25,17 +25,55 @@ public class AStar
         public float f => g + h;
     }
 
-    public interface IQueueCache { }
+    public interface ISearchCache { }
 
-    private class QueueCache : IQueueCache
+    private class SearchCache : ISearchCache
     {
-        public readonly FastPriorityQueue<Node> queue;
-        public QueueCache(int size) =>
-            this.queue = new FastPriorityQueue<Node>(size);
+        public readonly Vec2I size;
+        private readonly FastPriorityQueue<Node> open;
+        private readonly Node[,] opened;
+        private readonly bool[,] closed;
+
+        public SearchCache(Vec2I size)
+        {
+            this.size = size;
+            open = new FastPriorityQueue<Node>(size.x * size.y);
+            opened = new Node[size.x, size.y];
+            closed = new bool[size.x, size.y];
+        }
+
+        public void Reset()
+        {
+            open.Clear();
+            Array.Clear(opened, 0, opened.Length);
+            Array.Clear(closed, 0, closed.Length);
+        }
+
+        public void Open(Node node)
+        {
+            open.Enqueue(node, node.f);
+            opened[node.pos.x, node.pos.y] = node;
+        }
+
+        public bool hasOpen => open.Count > 0;
+
+        public Node NextOpen()
+        {
+            Node node = open.Dequeue();
+            opened[node.pos.x, node.pos.y] = null;
+            closed[node.pos.x, node.pos.y] = true;
+
+            return node;
+        }
+
+        public bool Closed(Vec2I pos) => closed[pos.x, pos.y];
+
+        public Node GetOpenNode(Vec2I pos) => opened[pos.x, pos.y];
+
+        public void UpdateOpenNode(Node node) => open.UpdatePriority(node, node.f);
     }
 
-    public static IQueueCache CreateQueueCache(int w, int h) => new QueueCache(w* h);
-    public static IQueueCache K_queue = new QueueCache(64 * 64);
+    public static ISearchCache CreateSearchCache(Vec2I size) => new SearchCache(size);
 
     private static readonly Vec2I[] directions =
     {
@@ -84,33 +122,24 @@ public class AStar
     }
 
     public static Path FindPath(
-        IQueueCache queueCache,
-        Vec2I size, Func<Vec2I, bool> passFn,
-        Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFunc)
+        ISearchCache searchCache, Func<Vec2I, bool> passFn,
+        Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFn)
     {
-        var open = (queueCache as QueueCache).queue;
-        open.Clear();
+        var cache = (searchCache as SearchCache);
+        cache.Reset();
 
-        var opened = new Dictionary<Vec2I, Node>();
-        var closed = new Dictionary<Vec2I, Node>();
-
-        var nodeStart = new Node(null, start, 0, 0);
-        open.Enqueue(nodeStart, nodeStart.f);
-        opened.Add(start, nodeStart);
-        while (open.Count > 0)
+        cache.Open(new Node(null, start, 0, 0));
+        while (cache.hasOpen)
         {
-            Node n = open.Dequeue();
-            if (dstFunc(n.pos))
+            Node n = cache.NextOpen();
+            if (dstFn(n.pos))
                 return ConstructPath(n);
-
-            opened.Remove(n.pos);
-            closed.Add(n.pos, n);
 
             foreach (Vec2I dir in directions)
             {
                 Vec2I pos = n.pos + dir;
-                if (!BB.InGrid(size, pos) || !passFn(pos) || closed.ContainsKey(pos))
-                    continue;
+               if (!BB.InGrid(cache.size, pos) || cache.Closed(pos) || !passFn(pos))
+                        continue;
 
                 if (dir.x != 0 && dir.y != 0)
                 {
@@ -121,20 +150,19 @@ public class AStar
 
                 float g = n.g + Vec2I.Distance(pos, n.pos);
 
-                if (opened.TryGetValue(pos, out var nodeOpen))
+                Node openNode = cache.GetOpenNode(pos);
+                if (openNode != null)
                 {
-                    if (g < nodeOpen.g)
+                    if (g < openNode.g)
                     {
-                        nodeOpen.parent = n;
-                        nodeOpen.g = g;
-                        open.UpdatePriority(nodeOpen, nodeOpen.f);
+                        openNode.parent = n;
+                        openNode.g = g;
+                        cache.UpdateOpenNode(openNode);
                     }
                 }
-                else if (!closed.ContainsKey(pos))
+                else
                 {
-                    Node nodeNext = new Node(n, pos, g, Vec2I.Distance(start, endHint));
-                    open.Enqueue(nodeNext, nodeNext.f);
-                    opened.Add(nodeNext.pos, nodeNext);
+                    cache.Open(new Node(n, pos, g, Vec2I.Distance(start, endHint)));
                 }
             }
         }

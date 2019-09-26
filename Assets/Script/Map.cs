@@ -45,9 +45,9 @@ public class BBTile
 public class Map : MonoBehaviour
 {
     [HideInInspector]
-    private const int w = 64;
+    private const int w = 128;
     [HideInInspector]
-    private const int h = 64;
+    private const int h = 128;
     [HideInInspector]
     public readonly Vec2I size = new Vec2I(w, h);
 
@@ -63,6 +63,8 @@ public class Map : MonoBehaviour
 
     private BBTile[,] tiles;
     public MapTiler tiler; // KLUDGE for sprite access
+
+    public Nav nav { get; private set; }
 
     public bool ValidTile(Vec2I tile) => BB.InGrid(size, tile);
 
@@ -107,6 +109,7 @@ public class Map : MonoBehaviour
     {
         tiles = GenerateTerrain();
         tiler = new MapTiler(this);
+        nav = new Nav(this);
     }
 
     private void SetBuilding(Vec2I pos, Building building)
