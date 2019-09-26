@@ -303,7 +303,7 @@ public class MinionSkin : MonoBehaviour
         }
     }
 
-    private static Dictionary<string, string> K_clothed = new Dictionary<string, string>
+    private static readonly Dictionary<string, string> K_clothed = new Dictionary<string, string>
     {
         { "body/base", "base" },
         { "body/eyes", "blue" },
@@ -324,7 +324,7 @@ public class MinionSkin : MonoBehaviour
         //{ "weapon", }
     };
 
-    private static Dictionary<string, string> K_monk = new Dictionary<string, string>
+    private static readonly Dictionary<string, string> K_monk = new Dictionary<string, string>
     {
         { "body/base", "base" },
         { "body/eyes", "blue" },
@@ -345,7 +345,7 @@ public class MinionSkin : MonoBehaviour
         //{ "weapon", }
     };
 
-    private static Dictionary<string, string> K_plate = new Dictionary<string, string>
+    private static readonly Dictionary<string, string> K_plate = new Dictionary<string, string>
     {
         { "body/base", "base" },
         { "body/eyes", "blue" },
@@ -366,6 +366,6 @@ public class MinionSkin : MonoBehaviour
         //{ "weapon", }
     };
 
-    private static List<Dictionary<string, string>> K_outfits =
+    private static readonly List<Dictionary<string, string>> K_outfits =
         new List<Dictionary<string, string>>() { K_clothed, K_monk, K_plate };
 }

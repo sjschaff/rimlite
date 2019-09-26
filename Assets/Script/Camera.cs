@@ -23,6 +23,7 @@ public class Camera : MonoBehaviour
     private const float zoomZpeed = .5f;
     private const float minZoom = 2;
     private const float maxZoom = 20;
+    public bool lockToMap = false;
 
     Vector3 dragStart;
     Vector3 transStart;
@@ -62,11 +63,14 @@ public class Camera : MonoBehaviour
             transform.localPosition = transStart + drag;
         }
 
-        Vec2 halfSize = new Vec2(cam.orthographicSize * cam.aspect, cam.orthographicSize);
+        if (lockToMap)
+        {
+            Vec2 halfSize = new Vec2(cam.orthographicSize * cam.aspect, cam.orthographicSize);
 
-        Vec2 pos = cam.transform.localPosition.xy();
-        pos = Vec2.Max(pos, halfSize);
-        pos = Vec2.Min(pos, new Vec2(64, 64) - halfSize); // TODO: use real map size
-        cam.transform.localPosition = new Vec3(pos.x, pos.y, -11);
+            Vec2 pos = cam.transform.localPosition.xy();
+            pos = Vec2.Max(pos, halfSize);
+            pos = Vec2.Min(pos, new Vec2(64, 64) - halfSize); // TODO: use real map size
+            cam.transform.localPosition = new Vec3(pos.x, pos.y, -11);
+        }
     }
 }

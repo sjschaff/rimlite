@@ -49,8 +49,10 @@ public static class BB
 
 public static class MathExt {
 
+#pragma warning disable IDE1006 // Naming Styles
     public static Vec2 xy(this Vec3 v) => new Vec2(v.x, v.y);
     public static Vec2I xy(this Vec3I v) => new Vec2I(v.x, v.y);
+#pragma warning restore IDE1006 // Naming Styles
     public static Vec3I Vec3(this Vec2I v) => new Vec3I(v.x, v.y, 0);
     public static Vec3 Vec3(this Vec2 v) => new Vec3(v.x, v.y, 0);
 
