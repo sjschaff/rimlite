@@ -10,11 +10,11 @@ public class AStar
     private class Node : FastPriorityQueueNode
     {
         public Node parent;
-        public readonly Vec2I pos;
+        public Vec2I pos;
         public float g;
-        public readonly float h;
+        public float h;
 
-        public Node(Node parent, Vec2I pos, float g, float h)
+        public void Init(Node parent, Vec2I pos, float g, float h)
         {
             this.parent = parent;
             this.pos = pos;
@@ -34,23 +34,38 @@ public class AStar
         private readonly Node[,] opened;
         private readonly bool[,] closed;
 
+        private readonly List<Node> nodePool;
+        private int numAllocs;
+
         public SearchCache(Vec2I size)
         {
             this.size = size;
-            open = new FastPriorityQueue<Node>(size.x * size.y);
+            int maxNodes = size.x * size.y;
+            open = new FastPriorityQueue<Node>(maxNodes);
             opened = new Node[size.x, size.y];
             closed = new bool[size.x, size.y];
+
+            nodePool = new List<Node>(maxNodes);
+            numAllocs = 0;
+            for (int i = 0; i < maxNodes; ++i)
+                nodePool.Add(new Node());
         }
 
         public void Reset()
         {
+            numAllocs = 0;
             open.Clear();
             Array.Clear(opened, 0, opened.Length);
             Array.Clear(closed, 0, closed.Length);
         }
 
-        public void Open(Node node)
+        public void Open(Node parent, Vec2I pos, float g, float h)
         {
+            Node node = nodePool[numAllocs];
+            open.ResetNode(node);
+            ++numAllocs;
+
+            node.Init(parent, pos, g, h);
             open.Enqueue(node, node.f);
             opened[node.pos.x, node.pos.y] = node;
         }
@@ -128,7 +143,7 @@ public class AStar
         var cache = (searchCache as SearchCache);
         cache.Reset();
 
-        cache.Open(new Node(null, start, 0, 0));
+        cache.Open(null, start, 0, 0);
         while (cache.hasOpen)
         {
             Node n = cache.NextOpen();
@@ -162,7 +177,7 @@ public class AStar
                 }
                 else
                 {
-                    cache.Open(new Node(n, pos, g, Vec2I.Distance(start, endHint)));
+                    cache.Open(n, pos, g, Vec2I.Distance(start, endHint));
                 }
             }
         }
