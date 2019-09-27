@@ -132,7 +132,7 @@ public class VirtualTileTerrainOver : VirtualTileBase
 public class VirtualTileBuilding : VirtualTileBase
 {
     protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => tile.hasBuilding && (tile.building.tiledRender || subTile == Vec2I.zero);
+        => tile.hasBuilding && (tile.building.TiledRender() || subTile == Vec2I.zero);
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
         => tile.building.GetSprite(map, pos, subTile);
@@ -141,7 +141,7 @@ public class VirtualTileBuilding : VirtualTileBase
 public class VirtualTileBuildingOver : VirtualTileBase
 {
     protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => tile.hasBuilding && tile.building.oversized && subTile == Vec2I.zero;
+        => tile.hasBuilding && tile.building.Oversized() && subTile == Vec2I.zero;
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
         => tile.building.GetSpriteOver(map, pos);

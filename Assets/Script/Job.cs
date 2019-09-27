@@ -184,7 +184,7 @@ public class JobMine : JobStandard
         BB.Assert(task == this.task);
         BB.Assert(claimed);
 
-        Building building = tile.building;
+        IBuilding building = tile.building;
         game.RemoveBuilding(pos);
         foreach (ItemInfo item in building.GetMinedMaterials())
             game.DropItem(pos, item);
@@ -247,20 +247,23 @@ public class JobBuild : JobStandard
 
     private enum State { Hauling, BuildUnclaimed, BuildClaimed }
 
-    private readonly BuildingVirtual virtualBuilding;
+    public readonly IBuildingProto prototype;
+    private readonly BuildingProtoConstruction.BuildingConstruction building;
     private bool vacatedTile = false;
 
     private State state;
     private readonly List<HaulInfo> hauls;
 
-    public JobBuild(GameController game, Vec2I pos, Building building) : base(game, pos)
+    public JobBuild(GameController game, Vec2I pos, IBuildingProto prototype) : base(game, pos)
     {
-        virtualBuilding = new BuildingVirtual(this, building);
-        game.AddBuilding(pos, virtualBuilding);
+        BB.Assert(prototype != null);
+        this.prototype = prototype;
+        building = BuildingProtoConstruction.K_single.Create(this);
+        game.AddBuilding(pos, building);
 
         state = State.Hauling;
         hauls = new List<HaulInfo>();
-        foreach (var item in building.GetBuildMaterials())
+        foreach (var item in prototype.GetBuildMaterials())
             hauls.Add(new HaulInfo(item));
     }
 
@@ -354,8 +357,8 @@ public class JobBuild : JobStandard
         BB.Assert(state != State.BuildUnclaimed);
         if (state == State.BuildClaimed)
         {
-            BB.Assert(tile.building == virtualBuilding);
-            game.ReplaceBuilding(pos, virtualBuilding.building);
+            BB.Assert(tile.building == building);
+            game.ReplaceBuilding(pos, prototype.CreateBuilding());
 
             return FinishJob();
         }
@@ -406,7 +409,7 @@ public class JobBuild : JobStandard
 
     private Task TryTaskBuild(Minion minion)
     {
-        if (virtualBuilding.building.passable)
+        if (prototype.passable)
             vacatedTile = true;
 
         if (!vacatedTile)
@@ -415,7 +418,7 @@ public class JobBuild : JobStandard
             if (game.IsTileOccupied(pos, minion))
                 return null;
 
-            virtualBuilding.constructing = true;
+            building.constructionBegan = true;
             vacatedTile = true;
             game.RerouteMinions(pos, true);
         }

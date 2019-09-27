@@ -132,13 +132,13 @@ public class ToolBuild : UITool
     {
         if (!game.map.Tile(pos).hasBuilding)
         {
-            Building building = null;
+            IBuildingProto proto = null;
             switch (currentBuild)
             {
-                case 0: building = new BuildingWall(BuildingWall.Wall.StoneBrick); break;
-                case 1: building = new BuildingFloor(BuildingFloor.Floor.StoneBrick); break;
+                case 0: proto = BuildingProtoWall.K_Stone; break;
+                case 1: proto = BuildingProtoFloor.K_Stone; break;
             }
-            game.AddJob(new JobBuild(game, pos, building));
+            game.AddJob(new JobBuild(game, pos, proto));
         }
     }
 

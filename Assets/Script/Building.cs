@@ -4,47 +4,162 @@ using Vec2I = UnityEngine.Vector2Int;
 using System;
 using System.Collections.Generic;
 
-public interface Building
+public struct BuildingBounds
 {
-    TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
-    TileSprite GetSpriteOver(Map map, Vec2I pos);
+    public readonly Vec2I size;
+    public readonly Vec2I origin;
+
+    public BuildingBounds(Vec2I size, Vec2I origin)
+    {
+        this.size = size;
+        this.origin = origin;
+    }
+
+    public static readonly BuildingBounds Unit = new BuildingBounds(Vec2I.one, Vec2I.zero);
+
+    public static bool operator ==(BuildingBounds a, BuildingBounds b)
+        => a.size == b.size && a.origin == b.origin;
+
+    public static bool operator !=(BuildingBounds a, BuildingBounds b) => !(a == b);
+
+    public override bool Equals(object obj)
+    {
+        return obj is BuildingBounds bounds && bounds == this;
+    }
+
+    public override int GetHashCode()
+    {
+        var hashCode = 1845097995;
+        hashCode = hashCode * -1521134295 + EqualityComparer<Vec2I>.Default.GetHashCode(size);
+        hashCode = hashCode * -1521134295 + EqualityComparer<Vec2I>.Default.GetHashCode(origin);
+        return hashCode;
+    }
+}
+
+public enum RenderFlags
+{
+    None = 0,
+    Tiled = 1,
+    Oversized = 2,
+}
+
+public interface IBuilding
+{
+    IBuildingProto prototype { get; }
 
     bool passable { get; }
-    bool tiledRender { get; }
-    bool oversized { get; }
     bool mineable { get; }
     Tool miningTool { get; }
-
-    IEnumerable<ItemInfo> GetBuildMaterials();
     IEnumerable<ItemInfo> GetMinedMaterials();
+
+    BuildingBounds bounds { get; }
+    RenderFlags renderFlags { get; }
+    TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
+    TileSprite GetSpriteOver(Map map, Vec2I pos);
 }
 
-public abstract class BuildingSmp : Building
+public static class BuildingExt
 {
-    public TileSprite GetSpriteOver(Map map, Vec2I pos)
-        => throw new Exception("GetSpriteOver called on BuildingSmp");
-    public bool oversized => false;
-    public bool mineable => false;
-    public Tool miningTool =>
-        throw new NotSupportedException("miningTool called on BuildingSmp");
-    public IEnumerable<ItemInfo> GetMinedMaterials() =>
-        throw new NotSupportedException("GetMinedMaterials called on BuildingSmp");
+    public static bool TiledRender(this IBuilding bldg)
+        => (bldg.renderFlags & RenderFlags.Tiled) != 0;
+    public static bool Oversized(this IBuilding bldg)
+        => (bldg.renderFlags & RenderFlags.Oversized) != 0;
 
-    public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
-    public abstract bool passable { get; }
-    public abstract bool tiledRender { get; }
+    public static IEnumerable<Vec2I> AllTiles(this IBuilding bldg, Vec2I pos)
+    {
+        var bounds = bldg.bounds;
+        return new RectInt(pos - bounds.origin, bounds.size).AllTiles();
+    }
+}
+
+public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingProto
+{
+    protected readonly TProto proto;
+    public IBuildingProto prototype => proto;
+    protected BuildingBase(TProto proto) => this.proto = proto;
+
+    public virtual bool passable => proto.passable;
+    public virtual bool mineable => proto.mineable;
+    public virtual Tool miningTool => proto.miningTool;
+    public virtual IEnumerable<ItemInfo> GetMinedMaterials() => proto.GetMinedMaterials();
+
+    public virtual BuildingBounds bounds => proto.bounds;
+    public virtual RenderFlags renderFlags => proto.renderFlags;
+    public virtual TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
+        => proto.GetSprite(map, pos, subTile);
+    public virtual TileSprite GetSpriteOver(Map map, Vec2I pos)
+        => proto.GetSpriteOver(map, pos);
+}
+
+public interface IBuildingProto
+{
+    IBuilding CreateBuilding();
+    IEnumerable<ItemInfo> GetBuildMaterials();
+
+    bool passable { get; }
+    bool mineable { get; }
+    Tool miningTool { get; }
+    IEnumerable<ItemInfo> GetMinedMaterials();
+
+    BuildingBounds bounds { get; }
+    RenderFlags renderFlags { get; }
+    TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
+    TileSprite GetSpriteOver(Map map, Vec2I pos);
+}
+
+public abstract class BuildingProtoTiledRender : IBuildingProto
+{
+    protected BuildingProtoTiledRender() { }
+
+    public abstract IBuilding CreateBuilding();
     public abstract IEnumerable<ItemInfo> GetBuildMaterials();
+    public abstract bool passable { get; }
+    public abstract bool mineable { get; }
+    public abstract Tool miningTool { get; }
+    public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
+
+    public BuildingBounds bounds => BuildingBounds.Unit;
+    public RenderFlags renderFlags => RenderFlags.Tiled;
+
+    public TileSprite GetSpriteOver(Map map, Vec2I pos)
+        => throw new NotSupportedException("GetSpriteOver called on BuildingProtoTiledRender.");
+
+    // TODO: this is a terrible name
+    protected bool GetSame<TThis>(Map map, Vec2I pos, out TThis proto) where TThis : BuildingProtoTiledRender
+    {
+        proto = null;
+        if (!map.ValidTile(pos))
+            return false;
+
+        var bldgOther = map.Tile(pos).building;
+        if (bldgOther is BuildingProtoConstruction.BuildingConstruction bldgConstruction)
+            proto = bldgConstruction.job.prototype as TThis;
+        else
+            proto = bldgOther?.prototype as TThis;
+
+        return proto != null;
+    }
+
+    public abstract IEnumerable<ItemInfo> GetMinedMaterials();
 }
 
-public class BuildingFloor : BuildingSmp
+public class BuildingProtoFloor : BuildingProtoTiledRender
 {
+    public static BuildingProtoFloor K_Stone = new BuildingProtoFloor(Floor.StoneBrick);
+
     public enum Floor { StoneBrick } // TODO: get rid of this enum
-    private readonly Floor floor;
+    public readonly Floor floor;
+
+    public BuildingProtoFloor(Floor floor) => this.floor = floor;
+
+    public override IBuilding CreateBuilding() => new BuildingFloor(this);
 
     public override bool passable => true;
-    public override bool tiledRender => true;
+    public override bool mineable => false;
+    public override Tool miningTool => throw new NotSupportedException("miningTool called on BuildingProtoFloor");
+    public override IEnumerable<ItemInfo> GetMinedMaterials() { yield break; }
 
-    private static Vec2I FloorOrigin(Floor floor)
+    private Vec2I SpriteOrigin()
     {
         switch (floor)
         {
@@ -54,21 +169,17 @@ public class BuildingFloor : BuildingSmp
         }
     }
 
-    public BuildingFloor(Floor floor) => this.floor = floor;
-
     private bool IsSame(Map map, Vec2I pos)
     {
-        if (!map.ValidTile(pos))
-            return false;
-
-        var other = map.Tile(pos).BuildingAs<BuildingFloor>();
-        return other == null ? false : other.floor == floor;
+        if (GetSame<BuildingProtoFloor>(map, pos, out var protoOther))
+            return protoOther == this;
+        return false;
     }
 
     public override TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
     {
-        TerrainStandard.TileType ttype = TerrainStandard.GetTileType(pos, subTile, p => IsSame(map, p));
-        Vec2I spritePos = FloorOrigin(floor) + TerrainStandard.SpriteOffset(ttype);
+        var ttype = TerrainStandard.GetTileType(pos, subTile, p => IsSame(map, p));
+        Vec2I spritePos = SpriteOrigin() + TerrainStandard.SpriteOffset(ttype);
         return map.game.assets.tileset64.GetSprite(spritePos, Vec2I.one);
     }
 
@@ -76,18 +187,31 @@ public class BuildingFloor : BuildingSmp
     {
         yield return new ItemInfo(ItemType.Stone, 5);
     }
+
+    private class BuildingFloor : BuildingBase<BuildingProtoFloor>
+    {
+        public BuildingFloor(BuildingProtoFloor proto) : base(proto) { }
+    }
 }
 
-public class BuildingWall : BuildingSmp
+public class BuildingProtoWall : BuildingProtoTiledRender
 {
+    public static BuildingProtoWall K_Stone = new BuildingProtoWall(Wall.StoneBrick);
+
     // TODO: get rid of this enum
     public enum Wall { StoneBrick }
     private readonly Wall wall;
 
-    public override bool passable => false;
-    public override bool tiledRender => true;
+    public BuildingProtoWall(Wall wall) => this.wall = wall;
 
-    private static Vec2I WallOrigin(Wall wall)
+    public override IBuilding CreateBuilding() => new BuildingWall(this);
+
+    public override bool passable => false;
+    public override bool mineable => false;
+    public override Tool miningTool => throw new NotSupportedException("miningTool called on BuildingWall");
+    public override IEnumerable<ItemInfo> GetMinedMaterials() { yield break; }
+
+    private Vec2I SpriteOrigin()
     {
         switch (wall)
         {
@@ -97,16 +221,7 @@ public class BuildingWall : BuildingSmp
         throw new NotImplementedException("Unknown Building: " + wall);
     }
 
-    public BuildingWall(Wall wall) => this.wall = wall;
-
-    private bool IsSame(Map map, Vec2I pos)
-    {
-        if (!map.ValidTile(pos))
-            return false;
-
-        var other = map.Tile(pos).BuildingAs<BuildingWall>();
-        return other == null ? false : other.wall == wall;
-    }
+    private bool IsSame(Map map, Vec2I pos) => GetSame<BuildingProtoWall>(map, pos, out _);
 
     // TODO: so ghetto
     private Vec2I SpriteOffset(bool[,] adj, TerrainStandard.TileType ttype, Vec2I subTile)
@@ -155,7 +270,7 @@ public class BuildingWall : BuildingSmp
     {
         bool[,] adj = TerrainStandard.GenAdjData(pos, p => IsSame(map, p));
         TerrainStandard.TileType ttype = TerrainStandard.GetTileType(adj, subTile);
-        Vec2I spritePos = WallOrigin(wall) + SpriteOffset(adj, ttype, subTile);
+        Vec2I spritePos = SpriteOrigin() + SpriteOffset(adj, ttype, subTile);
         return map.game.assets.tileset64.GetSprite(spritePos, Vec2I.one);
     }
 
@@ -163,18 +278,27 @@ public class BuildingWall : BuildingSmp
     {
         yield return new ItemInfo(ItemType.Stone, 10);
     }
+
+    private class BuildingWall : BuildingBase<BuildingProtoWall>
+    {
+        public BuildingWall(BuildingProtoWall proto) : base(proto) { }
+    }
 }
 
-public class BuildingResource : Building
+public class BuildingProtoResource : IBuildingProto
 {
+    public static readonly BuildingProtoResource K_Rock = new BuildingProtoResource(Resource.Rock);
+    public static readonly BuildingProtoResource K_Tree = new BuildingProtoResource(Resource.Tree);
+
     public enum Resource { Rock, Tree }
     private readonly Resource resource;
-    
-    public bool passable => false;
-    public bool tiledRender => false;
-    public bool mineable => true;
-    public bool oversized => resource == Resource.Tree;
 
+    public BuildingProtoResource(Resource resource) => this.resource = resource;
+
+    public IBuilding CreateBuilding() => new BuildingResource(this);
+
+    public bool passable => false;
+    public bool mineable => true;
     public Tool miningTool
     {
         get
@@ -188,7 +312,9 @@ public class BuildingResource : Building
         }
     }
 
-    public BuildingResource(Resource resource) => this.resource = resource;
+    public BuildingBounds bounds => BuildingBounds.Unit;
+
+    public RenderFlags renderFlags => resource == Resource.Tree ? RenderFlags.Oversized : RenderFlags.None;
 
     public TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
     {
@@ -219,7 +345,7 @@ public class BuildingResource : Building
 
     public TileSprite GetSpriteOver(Map map, Vec2I pos)
     {
-        BB.Assert(oversized);
+        BB.Assert((renderFlags & RenderFlags.Oversized) != 0);
 
         switch (resource)
         {
@@ -242,40 +368,71 @@ public class BuildingResource : Building
             default: throw new NotImplementedException("Unknown resource: " + resource);
         }
     }
+
+    public class BuildingResource : BuildingBase<BuildingProtoResource>
+    {
+        float minedAmt; // or some such thing....
+
+        public BuildingResource(BuildingProtoResource proto) : base(proto) => minedAmt = 0;
+    }
 }
 
-public class BuildingVirtual : Building
+public class BuildingProtoConstruction : IBuildingProto
 {
-    private readonly JobBuild job;
-    public Building building { get; private set; }
-    public float constructionPercent;
-    public bool constructing;
+    public static BuildingProtoConstruction K_single = new BuildingProtoConstruction();
 
-    public BuildingVirtual(JobBuild job, Building building)
+    public BuildingProtoConstruction() { }
+
+    public BuildingConstruction Create(JobBuild job)
+        => new BuildingConstruction(this, job);
+
+    public class BuildingConstruction : BuildingBase<BuildingProtoConstruction>
     {
-        this.job = job;
-        this.building = building;
-        this.constructing = false;
-        this.constructionPercent = 0;
+        public JobBuild job;
+        public bool constructionBegan;
+        public float constructionPercent; // or some such thing...
+
+        public BuildingConstruction(BuildingProtoConstruction proto, JobBuild job) : base(proto)
+        {
+            this.job = job;
+            constructionBegan = false;
+            constructionPercent = 0;
+        }
+
+        public override bool passable => true;
+        public override bool mineable => false;
+
+        public override BuildingBounds bounds => job.prototype.bounds;
+        public override RenderFlags renderFlags => job.prototype.renderFlags;
+
+        private TileSprite Virtualize(TileSprite sprite)
+            => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .5f));
+
+        public override TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
+            => Virtualize(job.prototype.GetSprite(map, pos, subTile));
+
+        public override TileSprite GetSpriteOver(Map map, Vec2I pos)
+            => Virtualize(job.prototype.GetSpriteOver(map, pos));
     }
 
-    public bool mineable => false;
-    public bool tiledRender => building.tiledRender;
-    public bool oversized => building.oversized;
-    public bool passable => constructing ? building.passable : true;
-    public Tool miningTool => throw new NotImplementedException("Mining tool requested for virtual building");
-
-    private TileSprite Virtualize(TileSprite sprite)
-        => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .5f));
-
-    public TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-        => Virtualize(building.GetSprite(map, pos, subTile));
-
-    public TileSprite GetSpriteOver(Map map, Vec2I pos)
-        => Virtualize(building.GetSpriteOver(map, pos));
-
+    public IBuilding CreateBuilding()
+        => throw new NotSupportedException("CreateBuilding called on BuildingProtoConstruction");
     public IEnumerable<ItemInfo> GetBuildMaterials()
-        => throw new NotSupportedException("GetBuildMaterials called on BuildingVirtual");
+        => throw new NotSupportedException("GetBuildMaterials called on BuildingProtoConstruction");
+    public bool passable
+        => throw new NotSupportedException("passable called on BuildingProtoConstruction");
+    public bool mineable
+        => throw new NotSupportedException("mineable called on BuildingProtoConstruction");
+    public Tool miningTool
+        => throw new NotSupportedException("miningTool called on BuildingProtoConstruction");
     public IEnumerable<ItemInfo> GetMinedMaterials()
-        => throw new NotSupportedException("GetMinedMaterials called on BuildingVirtual");
+        => throw new NotSupportedException("GetMinedMaterials called on BuildingProtoConstruction");
+    public BuildingBounds bounds
+        => throw new NotSupportedException("bounds called on BuildingProtoConstruction");
+    public RenderFlags renderFlags
+        => throw new NotSupportedException("renderFlags called on BuildingProtoConstruction");
+    public TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
+        => throw new NotSupportedException("GetSprite called on BuildingProtoConstruction");
+    public TileSprite GetSpriteOver(Map map, Vec2I pos)
+        => throw new NotSupportedException("GetSpriteOver called on BuildingProtoConstruction");
 }

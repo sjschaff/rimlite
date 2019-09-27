@@ -11,35 +11,49 @@ using Vec2I = UnityEngine.Vector2Int;
 public class BBTile
 {
     public Terrain terrain;
-    public Building building;
-    public Job activeJob;
-
-    public bool hasJob => activeJob != null;
-    public bool passable => terrain.passable && (building == null ? true : building.passable);
-    public bool hasBuilding => building != null;
-    public bool mineable => building == null ? false : building.mineable;
-
-    // Kinda kludgy but fine for now
-    public T BuildingAs<T>() where T : class
-    {
-        if (building != null)
-        {
-            if (building is T t)
-                return t;
-
-            if (building is BuildingVirtual v)
-                return v.building as T;
-        }
-
-        return null;
-    }
+    private IBuilding bldgMain;
+    private BBTile bldgAdj;
 
     public BBTile(Terrain terrain)
     {
         BB.Assert(terrain != null);
         this.terrain = terrain;
-        building = null;
+        bldgMain = null;
+        bldgAdj = null;
     }
+
+    public IBuilding building
+    {
+        get
+        {
+            if (bldgAdj != null)
+            {
+                BB.AssertNotNull(bldgAdj.bldgMain);
+                return bldgAdj.bldgMain;
+            }
+
+            return bldgMain;
+        }
+    }
+
+    public void K_SetBuilding(IBuilding bldg)
+    {
+        this.bldgMain = bldg;
+    }
+
+    public TBldg GetBuilding<TBldg>() where TBldg : IBuilding
+        => (TBldg)building;
+
+    public Job activeJob;
+
+    public bool hasJob => activeJob != null;
+    public bool passable => terrain.passable && (hasBuilding ? building.passable : true);
+    public bool hasBuilding => bldgMain != null || bldgAdj != null;
+
+    // TODO: also kinda jank, replace with buildings registering for
+    // different functions like mine, deconstruct etc.
+    public bool mineable => hasBuilding ? building.mineable : false;
+
 }
 
 public class Map : MonoBehaviour
@@ -86,11 +100,11 @@ public class Map : MonoBehaviour
             for (int y = 2; y < 5; ++y)
                 tiles[x, y].terrain = water;
 
-        tiles[5, 5].building = new BuildingResource(BuildingResource.Resource.Rock);
-        tiles[6, 5].building = new BuildingResource(BuildingResource.Resource.Tree);
+        tiles[5, 5].K_SetBuilding(BuildingProtoResource.K_Rock.CreateBuilding());
+        tiles[6, 5].K_SetBuilding(BuildingProtoResource.K_Tree.CreateBuilding());
 
         for (int i = 0; i < 16; ++i)
-            tiles[i + 2, 7].building = new BuildingResource(BuildingResource.Resource.Rock);
+            tiles[i + 2, 7].K_SetBuilding(BuildingProtoResource.K_Rock.CreateBuilding());
 
         return tiles;
     }
@@ -103,10 +117,11 @@ public class Map : MonoBehaviour
         nav = new Nav(this);
     }
 
-    private void SetBuilding(Vec2I pos, Building building)
+    private void SetBuilding(Vec2I pos, IBuilding building)
     {
         var tile = Tile(pos);
-        tile.building = building;
+        BB.Assert(building == null || building.bounds == BuildingBounds.Unit);
+        tile.K_SetBuilding(building);
         tiler.UpdateBuilding(pos);
     }
 
@@ -116,13 +131,13 @@ public class Map : MonoBehaviour
         SetBuilding(pos, null);
     }
 
-    public void ReplaceBuilding(Vec2I pos, Building building)
+    public void ReplaceBuilding(Vec2I pos, IBuilding building)
     {
         BB.Assert(Tile(pos).hasBuilding);
         SetBuilding(pos, building);
     }
 
-    public void AddBuilding(Vec2I pos, Building building)
+    public void AddBuilding(Vec2I pos, IBuilding building)
     {
         BB.Assert(!Tile(pos).hasBuilding);
         SetBuilding(pos, building);

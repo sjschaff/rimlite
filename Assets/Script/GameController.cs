@@ -9,7 +9,7 @@ using Vec2I = UnityEngine.Vector2Int;
 public class GameController : MonoBehaviour
 {
     public AssetSrc assets;
-    public Map map; // TODO: this does not need to be a gameobject
+    public Map map; // TODO: this does not need to be a gameobject, also make private, expose Tile() to prevent manipulation w/o going through this
 
     public Transform minionPrefab;
     public Transform itemPrefab;
@@ -111,7 +111,7 @@ public class GameController : MonoBehaviour
         RerouteMinions(pos, passable, tile.passable);
     }
 
-    public void AddBuilding(Vec2I pos, Building building)
+    public void AddBuilding(Vec2I pos, IBuilding building)
     {
         var tile = map.Tile(pos);
         BB.Assert(!tile.hasBuilding);
@@ -121,7 +121,7 @@ public class GameController : MonoBehaviour
         RerouteMinions(pos, passable, tile.passable);
     }
 
-    public void ReplaceBuilding(Vec2I pos, Building building)
+    public void ReplaceBuilding(Vec2I pos, IBuilding building)
     {
         var tile = map.Tile(pos);
         BB.Assert(tile.hasBuilding);
