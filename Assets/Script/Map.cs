@@ -51,18 +51,14 @@ public class Map : MonoBehaviour
     [HideInInspector]
     public readonly Vec2I size = new Vec2I(w, h);
 
-    public Texture2D tileset32;
-    public Texture2D tileset64;
-    public Texture2D sprites32;
-    public Texture2D sprites64;
-
     public Tilemap terrainBase;
     public Tilemap terrainOver;
     public Tilemap buildingBase;
     public Tilemap buildingOver;
 
+    public GameController game { get; private set; }
     private BBTile[,] tiles;
-    public MapTiler tiler; // KLUDGE for sprite access
+    private MapTiler tiler;
 
     public Nav nav { get; private set; }
 
@@ -99,14 +95,9 @@ public class Map : MonoBehaviour
         return tiles;
     }
 
-    private void Awake()
+    public void Init(GameController game)
     {
-        
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
+        this.game = game;
         tiles = GenerateTerrain();
         tiler = new MapTiler(this);
         nav = new Nav(this);

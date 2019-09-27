@@ -41,9 +41,9 @@ public class Item : MonoBehaviour
         switch (info.type)
         {
             case ItemType.Stone:
-                return game.map.tiler.sprites32.GetSprite(Vec2I.zero, new Vec2I(2, 2), Vec2I.one);
+                return game.assets.sprites32.GetSprite(Vec2I.zero, new Vec2I(2, 2), Vec2I.one);
             case ItemType.Wood:
-                return game.map.tiler.sprites32.GetSprite(new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one);
+                return game.assets.sprites32.GetSprite(new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one);
             default:
                 throw new NotImplementedException("Unkown Item Type: " + info.type);
         }

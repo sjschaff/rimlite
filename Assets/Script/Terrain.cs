@@ -7,8 +7,8 @@ using System;
 public interface Terrain
 {
     bool animated { get; }
-    Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile);
-    Sprite[] GetAnimationSprites(MapTiler tiler, Vec2I pos, Vec2I subTile);
+    Sprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
+    Sprite[] GetAnimationSprites(Map map, Vec2I pos, Vec2I subTile);
     bool passable { get; }
 };
 
@@ -174,22 +174,22 @@ public class TerrainStandard : Terrain
         return other == null ? false : other.terrain == terrain;
     }
 
-    public static Sprite GetSprite(MapTiler tiler, Terrain terrain, TileType ttype, int frame)
+    public static Sprite GetSprite(AssetSrc assets, Terrain terrain, TileType ttype, int frame)
     {
         var spritePos = TerrainOrigin(terrain, frame) + SpriteOffset(ttype);
-        return tiler.tileset32.GetSprite(spritePos, Vec2I.one);
+        return assets.tileset32.GetSprite(spritePos, Vec2I.one);
     }
 
-    public Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile)
-        => GetSprite(tiler, pos, subTile, 0);
+    public Sprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
+        => GetSprite(map, pos, subTile, 0);
 
-    private Sprite GetSprite(MapTiler tiler, Vec2I pos, Vec2I subTile, int frame)
+    private Sprite GetSprite(Map map, Vec2I pos, Vec2I subTile, int frame)
     {
         BB.Assert(frame == 0 || animated);
         if (terrain == Terrain.Grass)
             return null;
 
-        TileType ttype = GetTileType(pos, subTile, p => IsSame(tiler.map, p));
+        TileType ttype = GetTileType(pos, subTile, p => IsSame(map, p));
 
         // KLUDGE for water arrangement in atlas
         if (terrain == Terrain.Water)
@@ -203,16 +203,16 @@ public class TerrainStandard : Terrain
             }
         }
 
-        return GetSprite(tiler, terrain, ttype, frame);
+        return GetSprite(map.game.assets, terrain, ttype, frame);
     }
 
-    public Sprite[] GetAnimationSprites(MapTiler tiler, Vec2I pos, Vec2I subTile)
+    public Sprite[] GetAnimationSprites(Map map, Vec2I pos, Vec2I subTile)
     {
         BB.Assert(terrain == Terrain.Water);
 
         var sprites = new Sprite[8];
         for (int i = 0; i < 8; ++i)
-            sprites[i] = GetSprite(tiler, pos, subTile, i);
+            sprites[i] = GetSprite(map, pos, subTile, i);
         return sprites;
     }
 

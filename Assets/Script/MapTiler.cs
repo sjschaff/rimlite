@@ -23,32 +23,6 @@ public struct TileSprite
     public static implicit operator TileSprite(Sprite sprite) => new TileSprite(sprite);
 }
 
-// Could probably just use stock Tile for this instead
-public class BaseTile : TileBase
-{
-    private MapTiler tiler;
-
-    public static BaseTile Create(MapTiler tiler)
-    {
-        BaseTile tile = (BaseTile)CreateInstance(typeof(BaseTile));
-        tile.tiler = tiler;
-        return tile;
-    }
-
-    public override void GetTileData(Vec3I position, ITilemap tilemap, ref TileData tileData)
-    {
-        tileData = new TileData
-        {
-            sprite = TerrainStandard.GetSprite(tiler, TerrainStandard.Terrain.Grass, TerrainStandard.TileType.Base, 0),
-            color = Color.white,
-            transform = Matrix4x4.identity,
-            gameObject = null,
-            flags = TileFlags.None,
-            colliderType = Tile.ColliderType.None
-        };
-    }
-}
-
 public abstract class VirtualTileBase : Tile
 {
     protected abstract bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile);
@@ -56,17 +30,17 @@ public abstract class VirtualTileBase : Tile
 
     public static bool disableRefresh = false;
 
-    protected MapTiler tiler { get; private set; }
+    protected Map map { get; private set; }
     private Tilemap tilemap;
-    public static T Create<T>(Tilemap tilemap, MapTiler tiler) where T : VirtualTileBase
+    public static T Create<T>(Map map, Tilemap tilemap) where T : VirtualTileBase
     {
         T vtile = CreateInstance<T>();
-        vtile.tiler = tiler;
+        vtile.map = map;
         vtile.tilemap = tilemap;
         return vtile;
     }
 
-    protected BBTile GetTile(Vec2I v) => tiler.map.Tile(v);
+    protected BBTile GetTile(Vec2I v) => map.Tile(v);
     protected Vec2I GridToTile(Vec3I v) => new Vec2I(v.x >> 1, v.y >> 1);
     protected Vec2I GridToSubTile(Vec3I v) => new Vec2I(v.x % 2, v.y % 2);
 
@@ -126,7 +100,7 @@ public class VirtualTileTerrainBase : VirtualTileBase
     protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile) => true;
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => TerrainStandard.GetSprite(tiler, TerrainStandard.Terrain.Grass, TerrainStandard.TileType.Base, 0);
+        => TerrainStandard.GetSprite(map.game.assets, TerrainStandard.Terrain.Grass, TerrainStandard.TileType.Base, 0);
 }
 
 public class VirtualTileTerrainOver : VirtualTileBase
@@ -138,7 +112,7 @@ public class VirtualTileTerrainOver : VirtualTileBase
     }
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => tile.terrain.GetSprite(tiler, pos, subTile);
+        => tile.terrain.GetSprite(map, pos, subTile);
 
     public override bool GetTileAnimationData(Vec3I gridPos, ITilemap tilemap, ref TileAnimationData tileAnimationData)
     {
@@ -147,7 +121,7 @@ public class VirtualTileTerrainOver : VirtualTileBase
         if (!terrain.animated)
             return false;
 
-        tileAnimationData.animatedSprites = terrain.GetAnimationSprites(tiler, pos, GridToSubTile(gridPos));
+        tileAnimationData.animatedSprites = terrain.GetAnimationSprites(map, pos, GridToSubTile(gridPos));
         tileAnimationData.animationSpeed = 2;
         tileAnimationData.animationStartTime = 0;
 
@@ -161,7 +135,7 @@ public class VirtualTileBuilding : VirtualTileBase
         => tile.hasBuilding && (tile.building.tiledRender || subTile == Vec2I.zero);
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => tile.building.GetSprite(tiler, pos, subTile);
+        => tile.building.GetSprite(map, pos, subTile);
 }
 
 public class VirtualTileBuildingOver : VirtualTileBase
@@ -170,7 +144,7 @@ public class VirtualTileBuildingOver : VirtualTileBase
         => tile.hasBuilding && tile.building.oversized && subTile == Vec2I.zero;
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => tile.building.GetSpriteOver(tiler, pos);
+        => tile.building.GetSpriteOver(map, pos);
 }
 
 public class MapTiler
@@ -181,11 +155,11 @@ public class MapTiler
         private readonly T vtileA;
         private readonly T vtileB;
 
-        public TilemapUpdater(MapTiler tiler, Tilemap tilemap)
+        public TilemapUpdater(Map map, Tilemap tilemap)
         {
             this.tilemap = tilemap;
-            vtileA = VirtualTileBase.Create<T>(tilemap, tiler);
-            vtileB = VirtualTileBase.Create<T>(tilemap, tiler);
+            vtileA = VirtualTileBase.Create<T>(map, tilemap);
+            vtileB = VirtualTileBase.Create<T>(map, tilemap);
         }
 
         public void InitTilemap(BoundsInt bounds, TileBase[] buffer)
@@ -206,10 +180,6 @@ public class MapTiler
     }
 
     public Map map { get; private set; }
-    public Atlas tileset32 { get; private set; }
-    public Atlas tileset64 { get; private set; }
-    public Atlas sprites32 { get; private set; }
-    public Atlas sprites64 { get; private set; }
 
     private readonly TilemapUpdater<VirtualTileTerrainBase> tilemapTerrain;
     private readonly TilemapUpdater<VirtualTileTerrainOver> tilemapTerrainOver;
@@ -221,15 +191,11 @@ public class MapTiler
         System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
         this.map = map;
-        tileset32 = new Atlas(map.tileset32, 16, 32);
-        tileset64 = new Atlas(map.tileset64, 32, 64);
-        sprites32 = new Atlas(map.sprites32, 8, 32);
-        sprites64 = new Atlas(map.sprites64, 16, 64);
 
-        tilemapTerrain = new TilemapUpdater<VirtualTileTerrainBase>(this, map.terrainBase);
-        tilemapTerrainOver = new TilemapUpdater<VirtualTileTerrainOver>(this, map.terrainOver);
-        tilemapBuilding = new TilemapUpdater<VirtualTileBuilding>(this, map.buildingBase);
-        tilemapBuildingOver = new TilemapUpdater<VirtualTileBuildingOver>(this, map.buildingOver);
+        tilemapTerrain = new TilemapUpdater<VirtualTileTerrainBase>(map, map.terrainBase);
+        tilemapTerrainOver = new TilemapUpdater<VirtualTileTerrainOver>(map, map.terrainOver);
+        tilemapBuilding = new TilemapUpdater<VirtualTileBuilding>(map, map.buildingBase);
+        tilemapBuildingOver = new TilemapUpdater<VirtualTileBuildingOver>(map, map.buildingOver);
 
         sw.Start();
         var bounds = new BoundsInt(0, 0, 0, map.size.x * 2, map.size.y * 2, 1);

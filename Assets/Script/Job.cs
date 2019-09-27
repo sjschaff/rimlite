@@ -142,7 +142,7 @@ public class JobMine : JobStandard
 
     public static Transform CreateOverlay(GameController game, Vec2I pos)
     {
-        return game.CreateJobOverlay(pos, game.map.tiler.sprites32.GetSprite(
+        return game.CreateJobOverlay(pos, game.assets.sprites32.GetSprite(
                 new Vec2I(0, 62), new Vec2I(2, 2), new Vec2I(1, 1)));
     }
 

@@ -8,6 +8,7 @@ using Vec2I = UnityEngine.Vector2Int;
 
 public class GameController : MonoBehaviour
 {
+    public AssetSrc assets;
     public Map map; // TODO: this does not need to be a gameobject
 
     public Transform minionPrefab;
@@ -48,11 +49,14 @@ public class GameController : MonoBehaviour
 
     private void Awake() {
         Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+        assets = new AssetSrc();
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        map.Init(this);
+
         mouseHighlight = CreateMouseHighlight();
         dragOutline = CreateDragOutline();
         dragOutline.enabled = false;
