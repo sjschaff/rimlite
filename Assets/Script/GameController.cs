@@ -9,13 +9,19 @@ using System;
 
 public class GameController : MonoBehaviour
 {
-    public AssetSrc assets;
-    private Map map; // TODO: make private, expose Tile() to prevent manipulation w/o going through this
-
+    // ---- Editor Values ----
     public Transform minionPrefab;
     public Transform itemPrefab;
     public Transform jobOverlayPrefab;
+    // -----------------------
 
+    public AssetSrc assets { get; private set; }
+    public Defs defs { get; private set; }
+    private Map map;
+
+
+
+    // TODO: move this stuff to some ui logic somewhere
     private Transform mouseHighlight;
     private LineRenderer dragOutline;
 
@@ -48,14 +54,16 @@ public class GameController : MonoBehaviour
     private readonly JobWalkDummy walkDummyJob = new JobWalkDummy();
     private UITool tool => currentTool.Value;
 
+    // TODO: figure out what should be in awake and what should be in start
     private void Awake() {
         Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-        assets = new AssetSrc();
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        defs = new Defs();
+        assets = new AssetSrc(defs);
         map = new Map(this);
 
         mouseHighlight = CreateMouseHighlight();

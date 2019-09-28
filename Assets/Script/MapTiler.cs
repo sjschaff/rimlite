@@ -95,18 +95,31 @@ public abstract class VirtualTileBase : TM.Tile
     }
 }
 
+// TODO: this whole thing is a kludge
 public class VirtualTileTerrainBase : VirtualTileBase
 {
+    private static Sprite grassSprite;
+
     protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile) => true;
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => Terrain.GetSprite(map.game.assets, Terrain.TerrainType.Grass, Tiling.TileType.Base, 0);
+    {
+        if (grassSprite == null)
+        {
+            var atlas = map.game.assets.Atlas(Terrain.K_grassDef.atlas);
+            Vec2I spritePos = Terrain.K_grassDef.spriteFrames[0] + Tiling.SpriteOffset(Tiling.TileType.Base);
+            grassSprite = atlas.GetSprite(spritePos, Vec2I.one);
+        }
+
+        return grassSprite;
+    }
 }
 
 public class VirtualTileTerrainOver : VirtualTileBase
 {
+    // TODO:Kludge
     protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-        => tile.terrain.type != Terrain.TerrainType.Grass;
+        => tile.terrain.def != Terrain.K_grassDef;
 
     protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
         => tile.terrain.GetSprite(map, pos, subTile);

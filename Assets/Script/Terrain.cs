@@ -5,59 +5,42 @@ using System;
 
 public struct Terrain
 {
-    // TODO: do away with this enum
-    public enum TerrainType { Grass, Mud, Dirt, Path, Water }
-    public readonly TerrainType type;
+    // TODO: Kludge
+    public static TerrainDef K_grassDef;
+    public static TerrainDef K_waterDef;
 
-    public Terrain(TerrainType type) => this.type = type;
+    public readonly TerrainDef def;
+    public readonly bool passable;
+    public readonly bool animated;
 
-    public bool passable => type != TerrainType.Water;
-    public bool animated => type == TerrainType.Water;
+    private readonly Atlas atlas;
 
-    private static Vec2I TerrainOrigin(TerrainType type, int frame)
+    public Terrain(GameController game, TerrainDef def)
     {
-        if (type == TerrainType.Water)
+        if (K_grassDef == null)
         {
-            BB.Assert(frame >= 0 && frame < 8);
-            return new Vec2I(26, 29) - new Vec2I(0, 3 * frame);
+            K_grassDef = game.defs.Terrain("BB:Grass");
+            K_waterDef = game.defs.Terrain("BB:Water");
         }
 
-        BB.Assert(frame == 0);
-        switch (type)
-        {
-            case TerrainType.Dirt: return new Vec2I(0, 0);
-            case TerrainType.Grass: return new Vec2I(0, 29);
-            case TerrainType.Mud: return new Vec2I(0, 26);
-            case TerrainType.Path: return new Vec2I(0, 23);
-        }
-
-        throw new Exception("Unknown Terrain: " + type);
+        this.def = def;
+        passable = def.passable;
+        animated = def.spriteFrames.Length > 1;
+        atlas = game.assets.Atlas(def.atlas);
     }
 
-    private static bool IsSame(Map map, Vec2I pos, TerrainType type)
-        => map.ValidTile(pos) ? (type == map.Tile(pos).terrain.type) : true;
-
-    // Kludge for terrain base which we should get rid of
-    public static Sprite GetSprite(AssetSrc assets, TerrainType type, Tiling.TileType ttype, int frame)
-    {
-        var spritePos = TerrainOrigin(type, frame) + Tiling.SpriteOffset(ttype);
-        return assets.tileset32.GetSprite(spritePos, Vec2I.one);
-    }
-
-    public Sprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-        => GetSprite(map, pos, subTile, 0);
+    private static bool IsSame(Map map, Vec2I pos, TerrainDef def)
+        => map.ValidTile(pos) ? (def == map.Tile(pos).terrain.def) : true;
 
     private Sprite GetSprite(Map map, Vec2I pos, Vec2I subTile, int frame)
     {
-        BB.Assert(frame == 0 || animated);
-        if (type == TerrainType.Grass)
-            return null;
+        BB.Assert(frame < def.spriteFrames.Length);
 
-        TerrainType lambdaType = type; // C# is dumb
-        Tiling.TileType ttype = Tiling.GetTileType(pos, subTile, p => IsSame(map, p, lambdaType));
+        TerrainDef lambdaDef = def; // C# is dumb
+        Tiling.TileType ttype = Tiling.GetTileType(pos, subTile, p => IsSame(map, p, lambdaDef));
 
-        // KLUDGE for water arrangement in atlas
-        if (type == TerrainType.Water)
+        // TODO: Kludge for water arrangement in atlas
+        if (def == K_waterDef)
         {
             switch (ttype)
             {
@@ -68,15 +51,18 @@ public struct Terrain
             }
         }
 
-        return GetSprite(map.game.assets, type, ttype, frame);
+        var spritePos = def.spriteFrames[frame] + Tiling.SpriteOffset(ttype);
+        return atlas.GetSprite(spritePos, Vec2I.one);
     }
+    public Sprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
+        => GetSprite(map, pos, subTile, 0);
 
     public Sprite[] GetAnimationSprites(Map map, Vec2I pos, Vec2I subTile)
     {
-        BB.Assert(type == TerrainType.Water);
+        BB.Assert(animated);
 
-        var sprites = new Sprite[8];
-        for (int i = 0; i < 8; ++i)
+        var sprites = new Sprite[def.spriteFrames.Length];
+        for (int i = 0; i < def.spriteFrames.Length; ++i)
             sprites[i] = GetSprite(map, pos, subTile, i);
         return sprites;
     }
