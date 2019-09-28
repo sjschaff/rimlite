@@ -4,23 +4,36 @@ using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 
-
-// TODO something more extensible than enum
-public enum ItemType { Stone, Wood }
-
-public struct ItemInfo
+// TODO: can we merge these? (i.e. does ItemInfo need to be mutable?)
+public struct ItemInfoRO
 {
-    public readonly ItemType type;
-    public int amt;
+    public readonly ItemDef def;
+    public readonly int amt;
 
-    public ItemInfo(ItemType type, int amt)
+    public ItemInfoRO(ItemDef def, int amt)
     {
         BB.Assert(amt > 0);
-        this.type = type;
+        this.def = def;
         this.amt = amt;
     }
 
-    public ItemInfo WithNewAmount(int amt) => new ItemInfo(type, amt);
+    public static implicit operator ItemInfo(ItemInfoRO item)
+        => new ItemInfo(item.def, item.amt);
+}
+
+public struct ItemInfo
+{
+    public readonly ItemDef def;
+    public int amt;
+
+    public ItemInfo(ItemDef def, int amt)
+    {
+        BB.Assert(amt > 0);
+        this.def = def;
+        this.amt = amt;
+    }
+
+    public ItemInfo WithNewAmount(int amt) => new ItemInfo(def, amt);
 }
 
 public class Item : MonoBehaviour
@@ -34,20 +47,7 @@ public class Item : MonoBehaviour
     private int amtClaimed;
     public int amtAvailable => info.amt - amtClaimed;
     public int amt => info.amt;
-    public ItemType type => info.type;
-
-    private Sprite GetSprite()
-    {
-        switch (info.type)
-        {
-            case ItemType.Stone:
-                return game.assets.sprites32.GetSprite(Vec2I.zero, new Vec2I(2, 2), Vec2I.one);
-            case ItemType.Wood:
-                return game.assets.sprites32.GetSprite(new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one);
-            default:
-                throw new NotImplementedException("Unkown Item Type: " + info.type);
-        }
-    }
+    public ItemDef def => info.def;
 
     public void Init(GameController game, Vec2I pos, ItemInfo info)
     {
@@ -57,7 +57,7 @@ public class Item : MonoBehaviour
         this.info = info;
         this.amtClaimed = 0;
 
-        spriteRenderer.sprite = GetSprite();
+        spriteRenderer.sprite = game.assets.sprites.Get(info.def.sprite);
         UpdateText();
     }
 

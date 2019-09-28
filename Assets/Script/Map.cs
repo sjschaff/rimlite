@@ -99,22 +99,24 @@ public class Map
 
     private BBTile[,] GenerateTerrain()
     {
-        var grass = new Terrain(game, game.defs.Terrain("BB:Grass"));
+        var grass = new Terrain(game, game.defs.Get<TerrainDef>("BB:Grass"));
         BBTile[,] tiles = new BBTile[w, h];
         for (int x = 0; x < w; ++x)
             for (int y = 0; y < h; ++y)
                 tiles[x, y] = new BBTile(grass);
 
-        var water = new Terrain(game, game.defs.Terrain("BB:Water"));
+        var water = new Terrain(game, game.defs.Get<TerrainDef>("BB:Water"));
         for (int x = 2; x < 5; ++x)
             for (int y = 2; y < 5; ++y)
                 tiles[x, y].terrain = water;
 
-        tiles[5, 5].K_SetBuilding(BuildingProtoResource.K_Rock.CreateBuilding());
-        tiles[6, 5].K_SetBuilding(BuildingProtoResource.K_Tree.CreateBuilding());
+        var rockProto = game.registry.resources.Get(game.defs.Get<BldgMineableDef>("BB:Rock"));
+        var treeProto = game.registry.resources.Get(game.defs.Get<BldgMineableDef>("BB:Tree"));
+        tiles[5, 5].K_SetBuilding(rockProto.CreateBuilding());
+        tiles[6, 5].K_SetBuilding(treeProto.CreateBuilding());
 
         for (int i = 0; i < 16; ++i)
-            tiles[i + 2, 7].K_SetBuilding(BuildingProtoResource.K_Rock.CreateBuilding());
+            tiles[i + 2, 7].K_SetBuilding(rockProto.CreateBuilding());
 
         return tiles;
     }

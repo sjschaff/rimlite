@@ -80,8 +80,8 @@ public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingP
 
     public virtual bool passable => proto.passable;
     public virtual bool K_mineable => proto.K_mineable;
-    public virtual Tool miningTool => proto.miningTool;
-    public virtual IEnumerable<ItemInfo> GetMinedMaterials() => proto.GetMinedMaterials();
+    public virtual Tool miningTool => proto.K_miningTool;
+    public virtual IEnumerable<ItemInfo> GetMinedMaterials() => proto.K_GetMinedMaterials();
 
     public virtual BuildingBounds bounds => proto.bounds;
     public virtual RenderFlags renderFlags => proto.renderFlags;

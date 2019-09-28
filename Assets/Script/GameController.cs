@@ -16,9 +16,10 @@ public class GameController : MonoBehaviour
     // -----------------------
 
     public AssetSrc assets { get; private set; }
-    public Defs defs { get; private set; }
+    public Registry registry { get; private set; }
     private Map map;
 
+    public Defs defs => registry.defs;
 
 
     // TODO: move this stuff to some ui logic somewhere
@@ -62,7 +63,7 @@ public class GameController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        defs = new Defs();
+        registry = new Registry();
         assets = new AssetSrc(defs);
         map = new Map(this);
 
@@ -108,10 +109,10 @@ public class GameController : MonoBehaviour
             RerouteMinions(pos, wasPassable);
     }
 
-    public IEnumerable<Item> FindItems(ItemType type)
+    public IEnumerable<Item> FindItems(ItemDef def)
     {
         foreach (Item item in items)
-            if (item.type == type)
+            if (item.def == def)
                 yield return item;
     }
 
@@ -190,7 +191,7 @@ public class GameController : MonoBehaviour
         else
         {
             item.Remove(amt);
-            return CreateItem(item.pos, new ItemInfo(item.type, amt));
+            return CreateItem(item.pos, new ItemInfo(item.def, amt));
         }
     }
 

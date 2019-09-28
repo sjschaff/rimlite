@@ -19,14 +19,14 @@ public struct Terrain
     {
         if (K_grassDef == null)
         {
-            K_grassDef = game.defs.Terrain("BB:Grass");
-            K_waterDef = game.defs.Terrain("BB:Water");
+            K_grassDef = game.defs.Get<TerrainDef>("BB:Grass");
+            K_waterDef = game.defs.Get<TerrainDef>("BB:Water");
         }
 
         this.def = def;
         passable = def.passable;
         animated = def.spriteFrames.Length > 1;
-        atlas = game.assets.Atlas(def.atlas);
+        atlas = game.assets.atlases.Get(def.atlas);
     }
 
     private static bool IsSame(Map map, Vec2I pos, TerrainDef def)

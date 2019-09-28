@@ -6,36 +6,27 @@ using System.Collections.Generic;
 
 public class BuildingProtoWall : BuildingProtoTiledRender
 {
-    public static BuildingProtoWall K_Stone = new BuildingProtoWall(Wall.StoneBrick);
+    public readonly BldgWallDef def;
 
-    // TODO: get rid of this enum
-    public enum Wall { StoneBrick }
-    private readonly Wall wall;
-
-    public BuildingProtoWall(Wall wall) => this.wall = wall;
+    public BuildingProtoWall(BldgWallDef def) => this.def = def;
 
     public override IBuilding CreateBuilding() => new BuildingWall(this);
 
     public override bool passable => false;
     public override bool K_mineable => false;
-    public override Tool miningTool => throw new NotSupportedException("miningTool called on BuildingWall");
-    public override IEnumerable<ItemInfo> GetMinedMaterials() { yield break; }
-
-    private Vec2I SpriteOrigin()
-    {
-        switch (wall)
-        {
-            case Wall.StoneBrick: return new Vec2I(0, 12);
-        }
-
-        throw new NotImplementedException("Unknown Building: " + wall);
-    }
+    public override Tool K_miningTool => throw new NotSupportedException("miningTool called on BuildingWall");
+    public override IEnumerable<ItemInfo> K_GetMinedMaterials() { yield break; }
 
     private bool IsSame(Map map, Vec2I pos) => GetSame<BuildingProtoWall>(map, pos, out _);
 
     // TODO: so ghetto
     private Vec2I SpriteOffset(bool[,] adj, Tiling.TileType ttype, Vec2I subTile)
     {
+        // TODO: broken in case: (if a and/or b are set
+        //      a x b
+        //      x x x
+        //      - x -
+        
         if (!adj[1, 0])
         {
             if (subTile.y == 0)
@@ -80,13 +71,14 @@ public class BuildingProtoWall : BuildingProtoTiledRender
     {
         bool[,] adj = Tiling.GenAdjData(pos, p => IsSame(map, p));
         Tiling.TileType ttype = Tiling.GetTileType(adj, subTile);
-        Vec2I spritePos = SpriteOrigin() + SpriteOffset(adj, ttype, subTile);
-        return map.game.assets.tileset64.GetSprite(spritePos, Vec2I.one);
+        Vec2I spritePos = def.spriteOrigin + SpriteOffset(adj, ttype, subTile);
+        return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
     }
 
     public override IEnumerable<ItemInfo> GetBuildMaterials()
     {
-        yield return new ItemInfo(ItemType.Stone, 10);
+        foreach (var item in def.materials)
+            yield return item;
     }
 
     private class BuildingWall : BuildingBase<BuildingProtoWall>

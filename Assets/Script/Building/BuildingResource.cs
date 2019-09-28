@@ -6,86 +6,34 @@ using System.Collections.Generic;
 
 public class BuildingProtoResource : IBuildingProto
 {
-    public static readonly BuildingProtoResource K_Rock = new BuildingProtoResource(Resource.Rock);
-    public static readonly BuildingProtoResource K_Tree = new BuildingProtoResource(Resource.Tree);
+    private readonly BldgMineableDef def;
 
-    public enum Resource { Rock, Tree }
-    private readonly Resource resource;
-
-    public BuildingProtoResource(Resource resource) => this.resource = resource;
+    public BuildingProtoResource(BldgMineableDef def) => this.def = def;
 
     public IBuilding CreateBuilding() => new BuildingResource(this);
 
     public bool passable => false;
     public bool K_mineable => true;
-    public Tool miningTool
-    {
-        get
-        {
-            switch (resource)
-            {
-                case Resource.Rock: return Tool.Pickaxe;
-                case Resource.Tree: return Tool.Axe;
-                default: throw new NotImplementedException("Unkown resource: " + resource);
-            }
-        }
-    }
+    public Tool K_miningTool => def.tool;
 
     public BuildingBounds bounds => BuildingBounds.Unit;
 
-    public RenderFlags renderFlags => resource == Resource.Tree ? RenderFlags.Oversized : RenderFlags.None;
+    public RenderFlags renderFlags =>
+        def.spriteOver == null ? RenderFlags.None : RenderFlags.Oversized;
 
     public TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-    {
-        BB.Assert(subTile == Vec2I.zero);
-
-        Atlas atlas;
-        Vec2I spritePos;
-        Vec2I spriteSize;
-
-        switch (resource)
-        {
-            case Resource.Rock:
-                atlas = map.game.assets.sprites32;
-                spritePos = new Vec2I(0, 18);
-                spriteSize = new Vec2I(4, 4);
-                break;
-            case Resource.Tree:
-                atlas = map.game.assets.sprites32;
-                spritePos = new Vec2I(2, 4);
-                spriteSize = new Vec2I(4, 4);
-                break;
-            default:
-                throw new NotImplementedException("Unknown Resource: " + resource);
-        }
-
-        return atlas.GetSprite(spritePos, spriteSize);
-    }
+        => map.game.assets.sprites.Get(def.sprite);
 
     public TileSprite GetSpriteOver(Map map, Vec2I pos)
-    {
-        BB.Assert((renderFlags & RenderFlags.Oversized) != 0);
-
-        switch (resource)
-        {
-            case Resource.Tree:
-                return map.game.assets.sprites32.GetSprite(new Vec2I(0, 8), new Vec2I(8, 10), new Vec2I(2, -4));
-            default:
-                throw new NotImplementedException("Unhandled Resource: " + resource);
-        }
-    }
+        => map.game.assets.sprites.Get(def.spriteOver);
 
     public IEnumerable<ItemInfo> GetBuildMaterials()
         => throw new NotSupportedException("GetBuildMaterials called on BuildingResource");
 
-    public IEnumerable<ItemInfo> GetMinedMaterials()
+    public IEnumerable<ItemInfo> K_GetMinedMaterials()
     {
-        switch (resource)
-        {
-            case Resource.Rock: yield return new ItemInfo(ItemType.Stone, 36); break;
-            case Resource.Tree: yield return new ItemInfo(ItemType.Wood, 25); break;
-            default: throw new NotImplementedException("Unknown resource: " + resource);
-        }
+        foreach (var item in def.resources)
+            yield return item;
     }
 
     public class BuildingResource : BuildingBase<BuildingProtoResource>

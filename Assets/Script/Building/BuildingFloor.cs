@@ -6,29 +6,16 @@ using System.Collections.Generic;
 
 public class BuildingProtoFloor : BuildingProtoTiledRender
 {
-    public static BuildingProtoFloor K_Stone = new BuildingProtoFloor(Floor.StoneBrick);
+    public readonly BldgFloorDef def;
 
-    public enum Floor { StoneBrick } // TODO: get rid of this enum
-    public readonly Floor floor;
-
-    public BuildingProtoFloor(Floor floor) => this.floor = floor;
+    public BuildingProtoFloor(BldgFloorDef def) => this.def = def;
 
     public override IBuilding CreateBuilding() => new BuildingFloor(this);
 
     public override bool passable => true;
     public override bool K_mineable => false;
-    public override Tool miningTool => throw new NotSupportedException("miningTool called on BuildingProtoFloor");
-    public override IEnumerable<ItemInfo> GetMinedMaterials() { yield break; }
-
-    private Vec2I SpriteOrigin()
-    {
-        switch (floor)
-        {
-            case Floor.StoneBrick: return new Vec2I(0, 9);
-            default:
-                throw new NotImplementedException("Unknown Floor: " + floor);
-        }
-    }
+    public override Tool K_miningTool => throw new NotSupportedException("miningTool called on BuildingProtoFloor");
+    public override IEnumerable<ItemInfo> K_GetMinedMaterials() { yield break; }
 
     private bool IsSame(Map map, Vec2I pos)
     {
@@ -40,13 +27,14 @@ public class BuildingProtoFloor : BuildingProtoTiledRender
     public override TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
     {
         var ttype = Tiling.GetTileType(pos, subTile, p => IsSame(map, p));
-        Vec2I spritePos = SpriteOrigin() + Tiling.SpriteOffset(ttype);
-        return map.game.assets.tileset64.GetSprite(spritePos, Vec2I.one);
+        Vec2I spritePos = def.spriteOrigin + Tiling.SpriteOffset(ttype);
+        return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
     }
 
     public override IEnumerable<ItemInfo> GetBuildMaterials()
     {
-        yield return new ItemInfo(ItemType.Stone, 5);
+        foreach (var item in def.materials)
+            yield return item;
     }
 
     private class BuildingFloor : BuildingBase<BuildingProtoFloor>

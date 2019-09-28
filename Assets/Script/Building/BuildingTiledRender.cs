@@ -12,7 +12,7 @@ public abstract class BuildingProtoTiledRender : IBuildingProto
     public abstract IEnumerable<ItemInfo> GetBuildMaterials();
     public abstract bool passable { get; }
     public abstract bool K_mineable { get; }
-    public abstract Tool miningTool { get; }
+    public abstract Tool K_miningTool { get; }
     public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
 
     public BuildingBounds bounds => BuildingBounds.Unit;
@@ -37,5 +37,5 @@ public abstract class BuildingProtoTiledRender : IBuildingProto
         return proto != null;
     }
 
-    public abstract IEnumerable<ItemInfo> GetMinedMaterials();
+    public abstract IEnumerable<ItemInfo> K_GetMinedMaterials();
 }

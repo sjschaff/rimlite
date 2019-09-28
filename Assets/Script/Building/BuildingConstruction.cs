@@ -50,9 +50,9 @@ public class BuildingProtoConstruction : IBuildingProto
         => throw new NotSupportedException("passable called on BuildingProtoConstruction");
     public bool K_mineable
         => throw new NotSupportedException("mineable called on BuildingProtoConstruction");
-    public Tool miningTool
+    public Tool K_miningTool
         => throw new NotSupportedException("miningTool called on BuildingProtoConstruction");
-    public IEnumerable<ItemInfo> GetMinedMaterials()
+    public IEnumerable<ItemInfo> K_GetMinedMaterials()
         => throw new NotSupportedException("GetMinedMaterials called on BuildingProtoConstruction");
     public BuildingBounds bounds
         => throw new NotSupportedException("bounds called on BuildingProtoConstruction");

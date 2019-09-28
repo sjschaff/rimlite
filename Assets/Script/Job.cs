@@ -140,10 +140,7 @@ public class JobMine : JobStandard
     private bool claimed;
 
     public static Transform CreateOverlay(GameController game, Vec2I pos)
-    {
-        return game.CreateJobOverlay(pos, game.assets.sprites32.GetSprite(
-                new Vec2I(0, 62), new Vec2I(2, 2), new Vec2I(1, 1)));
-    }
+        => game.CreateJobOverlay(pos, game.assets.sprites.Get(game.defs.Get<SpriteDef>("BB:MineOverlay")));
 
     public JobMine(GameController game, Vec2I pos) : base(game, pos)
     {
@@ -285,7 +282,7 @@ public class JobBuild : JobStandard
         {
             if (haul.amtRemaining > 0)
             {
-                var items = new List<Item>(game.FindItems(haul.info.type));
+                var items = new List<Item>(game.FindItems(haul.info.def));
                 if (items.Count == 0)
                     continue;
 

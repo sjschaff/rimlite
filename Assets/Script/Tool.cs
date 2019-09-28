@@ -135,8 +135,8 @@ public class ToolBuild : UITool
             IBuildingProto proto = null;
             switch (currentBuild)
             {
-                case 0: proto = BuildingProtoWall.K_Stone; break;
-                case 1: proto = BuildingProtoFloor.K_Stone; break;
+                case 0: proto = game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick")); break;
+                case 1: proto = game.registry.floors.Get(game.defs.Get<BldgFloorDef>("BB:StoneBrick")); break;
             }
             game.AddJob(new JobBuild(game, pos, proto));
         }
@@ -155,6 +155,6 @@ public class ToolPlace : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        game.ModifyTerrain(pos, new Terrain(game, game.defs.Terrain("BB:Path")));
+        game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
     }
 }

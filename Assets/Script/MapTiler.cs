@@ -106,7 +106,7 @@ public class VirtualTileTerrainBase : VirtualTileBase
     {
         if (grassSprite == null)
         {
-            var atlas = map.game.assets.Atlas(Terrain.K_grassDef.atlas);
+            var atlas = map.game.assets.atlases.Get(Terrain.K_grassDef.atlas);
             Vec2I spritePos = Terrain.K_grassDef.spriteFrames[0] + Tiling.SpriteOffset(Tiling.TileType.Base);
             grassSprite = atlas.GetSprite(spritePos, Vec2I.one);
         }

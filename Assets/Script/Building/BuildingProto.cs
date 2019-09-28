@@ -11,8 +11,8 @@ public interface IBuildingProto
 
     bool passable { get; }
     bool K_mineable { get; }
-    Tool miningTool { get; }
-    IEnumerable<ItemInfo> GetMinedMaterials();
+    Tool K_miningTool { get; }
+    IEnumerable<ItemInfo> K_GetMinedMaterials();
 
     BuildingBounds bounds { get; }
     RenderFlags renderFlags { get; }
