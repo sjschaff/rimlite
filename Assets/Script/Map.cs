@@ -56,25 +56,25 @@ public class BBTile
 
 }
 
-public class Map : MonoBehaviour
+public class Map
 {
-    [HideInInspector]
     private const int w = 128;
-    [HideInInspector]
     private const int h = 128;
-    [HideInInspector]
     public readonly Vec2I size = new Vec2I(w, h);
 
-    public Tilemap terrainBase;
-    public Tilemap terrainOver;
-    public Tilemap buildingBase;
-    public Tilemap buildingOver;
+    public readonly GameController game;
+    public readonly Nav nav;
 
-    public GameController game { get; private set; }
-    private BBTile[,] tiles;
-    private MapTiler tiler;
+    private readonly MapTiler tiler;
+    private readonly BBTile[,] tiles;
 
-    public Nav nav { get; private set; }
+    public Map(GameController game)
+    {
+        this.game = game;
+        tiles = GenerateTerrain();
+        tiler = new MapTiler(this);
+        nav = new Nav(this);
+    }
 
     public bool ValidTile(Vec2I tile) => BB.InGrid(size, tile);
 
@@ -107,14 +107,6 @@ public class Map : MonoBehaviour
             tiles[i + 2, 7].K_SetBuilding(BuildingProtoResource.K_Rock.CreateBuilding());
 
         return tiles;
-    }
-
-    public void Init(GameController game)
-    {
-        this.game = game;
-        tiles = GenerateTerrain();
-        tiler = new MapTiler(this);
-        nav = new Nav(this);
     }
 
     private void SetBuilding(Vec2I pos, IBuilding building)

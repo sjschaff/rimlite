@@ -8,6 +8,18 @@ using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 using System;
 
+public struct RenderLayer
+{
+    public readonly string layer;
+    public readonly int order;
+
+    public RenderLayer(string layer, int order)
+    {
+        this.layer = layer;
+        this.order = order;
+    }
+}
+
 public static class BB
 {
     public static void Assert(bool a, string msg = null)
@@ -35,12 +47,15 @@ public static class BB
     public static Transform Instantiate(this Transform prefab, Vec2 pos, Transform parent) =>
         UnityEngine.Object.Instantiate(prefab, pos.Vec3(), Quaternion.identity, parent);
 
-    public static void SetLayer(this Renderer renderer, string layerName, int order = 0)
+    public static void SetLayer(this Renderer renderer, RenderLayer layer)
     {
-        renderer.sortingLayerName = layerName;
-        renderer.sortingLayerID = SortingLayer.NameToID(layerName);
-        renderer.sortingOrder = order;
+        renderer.sortingLayerName = layer.layer;
+        renderer.sortingLayerID = SortingLayer.NameToID(layer.layer);
+        renderer.sortingOrder = layer.order;
     }
+
+    public static void SetLayer(this Renderer renderer, string name, int layer = 0)
+        => renderer.SetLayer(new RenderLayer(name, layer));
 
     public static bool InGrid(Vec2I gridSize, Vec2I pt) =>
         pt.x >= 0 && pt.y >= 0 && pt.x < gridSize.x && pt.y < gridSize.y;

@@ -9,7 +9,7 @@ using Vec2I = UnityEngine.Vector2Int;
 public class GameController : MonoBehaviour
 {
     public AssetSrc assets;
-    public Map map; // TODO: this does not need to be a gameobject, also make private, expose Tile() to prevent manipulation w/o going through this
+    public Map map; // TODO: make private, expose Tile() to prevent manipulation w/o going through this
 
     public Transform minionPrefab;
     public Transform itemPrefab;
@@ -55,7 +55,7 @@ public class GameController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        map.Init(this);
+        map = new Map(this);
 
         mouseHighlight = CreateMouseHighlight();
         dragOutline = CreateDragOutline();
