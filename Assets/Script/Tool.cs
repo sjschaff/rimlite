@@ -155,6 +155,6 @@ public class ToolPlace : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        game.ModifyTerrain(pos, new TerrainStandard(TerrainStandard.Terrain.Path));
+        game.ModifyTerrain(pos, new Terrain(Terrain.TerrainType.Path));
     }
 }

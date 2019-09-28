@@ -25,7 +25,6 @@ public class BBTile : ITile
 
     public BBTile(Terrain terrain)
     {
-        BB.Assert(terrain != null);
         this.terrain = terrain;
         bldgMain = null;
         bldgAdj = null;
@@ -100,13 +99,13 @@ public class Map
 
     private BBTile[,] GenerateTerrain()
     {
-        var grass = new TerrainStandard(TerrainStandard.Terrain.Grass);
+        var grass = new Terrain(Terrain.TerrainType.Grass);
         BBTile[,] tiles = new BBTile[w, h];
         for (int x = 0; x < w; ++x)
             for (int y = 0; y < h; ++y)
                 tiles[x, y] = new BBTile(grass);
 
-        var water = new TerrainStandard(TerrainStandard.Terrain.Water);
+        var water = new Terrain(Terrain.TerrainType.Water);
         for (int x = 2; x < 5; ++x)
             for (int y = 2; y < 5; ++y)
                 tiles[x, y].terrain = water;
