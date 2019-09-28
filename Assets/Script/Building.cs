@@ -48,7 +48,7 @@ public interface IBuilding
     IBuildingProto prototype { get; }
 
     bool passable { get; }
-    bool mineable { get; }
+    bool K_mineable { get; }
     Tool miningTool { get; }
     IEnumerable<ItemInfo> GetMinedMaterials();
 
@@ -79,7 +79,7 @@ public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingP
     protected BuildingBase(TProto proto) => this.proto = proto;
 
     public virtual bool passable => proto.passable;
-    public virtual bool mineable => proto.mineable;
+    public virtual bool K_mineable => proto.K_mineable;
     public virtual Tool miningTool => proto.miningTool;
     public virtual IEnumerable<ItemInfo> GetMinedMaterials() => proto.GetMinedMaterials();
 
@@ -97,7 +97,7 @@ public interface IBuildingProto
     IEnumerable<ItemInfo> GetBuildMaterials();
 
     bool passable { get; }
-    bool mineable { get; }
+    bool K_mineable { get; }
     Tool miningTool { get; }
     IEnumerable<ItemInfo> GetMinedMaterials();
 
@@ -114,7 +114,7 @@ public abstract class BuildingProtoTiledRender : IBuildingProto
     public abstract IBuilding CreateBuilding();
     public abstract IEnumerable<ItemInfo> GetBuildMaterials();
     public abstract bool passable { get; }
-    public abstract bool mineable { get; }
+    public abstract bool K_mineable { get; }
     public abstract Tool miningTool { get; }
     public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
 
@@ -155,7 +155,7 @@ public class BuildingProtoFloor : BuildingProtoTiledRender
     public override IBuilding CreateBuilding() => new BuildingFloor(this);
 
     public override bool passable => true;
-    public override bool mineable => false;
+    public override bool K_mineable => false;
     public override Tool miningTool => throw new NotSupportedException("miningTool called on BuildingProtoFloor");
     public override IEnumerable<ItemInfo> GetMinedMaterials() { yield break; }
 
@@ -207,7 +207,7 @@ public class BuildingProtoWall : BuildingProtoTiledRender
     public override IBuilding CreateBuilding() => new BuildingWall(this);
 
     public override bool passable => false;
-    public override bool mineable => false;
+    public override bool K_mineable => false;
     public override Tool miningTool => throw new NotSupportedException("miningTool called on BuildingWall");
     public override IEnumerable<ItemInfo> GetMinedMaterials() { yield break; }
 
@@ -298,7 +298,7 @@ public class BuildingProtoResource : IBuildingProto
     public IBuilding CreateBuilding() => new BuildingResource(this);
 
     public bool passable => false;
-    public bool mineable => true;
+    public bool K_mineable => true;
     public Tool miningTool
     {
         get
@@ -400,7 +400,7 @@ public class BuildingProtoConstruction : IBuildingProto
         }
 
         public override bool passable => true;
-        public override bool mineable => false;
+        public override bool K_mineable => false;
 
         public override BuildingBounds bounds => job.prototype.bounds;
         public override RenderFlags renderFlags => job.prototype.renderFlags;
@@ -421,7 +421,7 @@ public class BuildingProtoConstruction : IBuildingProto
         => throw new NotSupportedException("GetBuildMaterials called on BuildingProtoConstruction");
     public bool passable
         => throw new NotSupportedException("passable called on BuildingProtoConstruction");
-    public bool mineable
+    public bool K_mineable
         => throw new NotSupportedException("mineable called on BuildingProtoConstruction");
     public Tool miningTool
         => throw new NotSupportedException("miningTool called on BuildingProtoConstruction");

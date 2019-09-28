@@ -8,7 +8,16 @@ using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
-public class BBTile
+public interface ITile
+{
+    bool K_mineable { get; }
+    Job K_activeJob { get; set; }
+    bool passable { get; }
+    bool hasBuilding { get; }
+    IBuilding building { get; }
+}
+
+public class BBTile : ITile
 {
     public Terrain terrain;
     private IBuilding bldgMain;
@@ -36,6 +45,8 @@ public class BBTile
         }
     }
 
+    public Job K_activeJob { get; set; }
+
     public void K_SetBuilding(IBuilding bldg)
     {
         this.bldgMain = bldg;
@@ -52,7 +63,7 @@ public class BBTile
 
     // TODO: also kinda jank, replace with buildings registering for
     // different functions like mine, deconstruct etc.
-    public bool mineable => hasBuilding ? building.mineable : false;
+    public bool K_mineable => hasBuilding ? building.K_mineable : false;
 
 }
 

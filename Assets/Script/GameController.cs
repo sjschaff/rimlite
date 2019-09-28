@@ -5,11 +5,12 @@ using UnityEngine;
 using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
+using System;
 
 public class GameController : MonoBehaviour
 {
     public AssetSrc assets;
-    public Map map; // TODO: make private, expose Tile() to prevent manipulation w/o going through this
+    private Map map; // TODO: make private, expose Tile() to prevent manipulation w/o going through this
 
     public Transform minionPrefab;
     public Transform itemPrefab;
@@ -73,6 +74,11 @@ public class GameController : MonoBehaviour
         tools = UITool.RegisterTools(this);
         currentTool = tools.First;
     }
+
+    public Vec2I[] GetPath(Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFn)
+        => map.nav.GetPath(start, endHint, dstFn);
+
+    public ITile Tile(Vec2I pos) => map.Tile(pos);
 
     // required:  true if pos is no longer passable, false if pos is now passable
     public void RerouteMinions(Vec2I pos, bool required)

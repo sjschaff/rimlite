@@ -247,7 +247,7 @@ public class Minion : MonoBehaviour
         }
     }
 
-    private Vec2I[] PathToTask(Task task) => task.GetPath(game.map, pos.Floor());
+    private Vec2I[] PathToTask(Task task) => task.GetPath(game, pos.Floor());
 
     private void FollowPath(Vec2I[] pts)
     {

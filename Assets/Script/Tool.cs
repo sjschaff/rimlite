@@ -58,7 +58,7 @@ public class ToolControlMinion : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        if (game.map.Tile(pos).passable)
+        if (game.Tile(pos).passable)
             game.K_MoveMinion(pos);
     }
 }
@@ -71,8 +71,8 @@ public class ToolMine : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        var tile = game.map.Tile(pos);
-        if (tile.mineable && !tile.hasJob)
+        var tile = game.Tile(pos);
+        if (tile.K_mineable && tile.K_activeJob == null)
             game.AddJob(new JobMine(game, pos));
     }
 
@@ -95,7 +95,7 @@ public class ToolMine : UITool
         {
             if (!activeOverlays.ContainsKey(v))
             {
-                if (game.map.Tile(v).mineable)
+                if (game.Tile(v).K_mineable)
                 {
                     var o = JobMine.CreateOverlay(game, v);
                     activeOverlays.Add(v, o);
@@ -130,7 +130,7 @@ public class ToolBuild : UITool
 
     public override void OnClick(Vec2I pos)
     {
-        if (!game.map.Tile(pos).hasBuilding)
+        if (!game.Tile(pos).hasBuilding)
         {
             IBuildingProto proto = null;
             switch (currentBuild)

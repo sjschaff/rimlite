@@ -37,21 +37,20 @@ public abstract class JobStandard : Job
 {
     protected GameController game { get; private set; }
     protected Vec2I pos { get; private set; }
-    protected BBTile tile { get; private set; }
+    protected ITile tile { get; private set; }
 
     protected JobStandard(GameController game, Vec2I pos)
     {
         this.game = game;
         this.pos = pos;
-        tile = game.map.Tile(pos);
-        tile.activeJob = this;
+        tile = game.Tile(pos);
+        tile.K_activeJob = this;
     }
 
     private Task Finish()
     {
-        BB.Assert(tile.hasJob);
-        BB.Assert(tile.activeJob == this);
-        tile.activeJob = null;
+        BB.Assert(tile.K_activeJob == this);
+        tile.K_activeJob = null;
         game.RemoveJob(this);
         return null;
     }
@@ -149,7 +148,7 @@ public class JobMine : JobStandard
     public JobMine(GameController game, Vec2I pos) : base(game, pos)
     {
         BB.Assert(tile.hasBuilding);
-        BB.Assert(tile.building.mineable);
+        BB.Assert(tile.building.K_mineable);
 
         task = new Task(this, null, pos, v => v.Adjacent(pos), tile.building.miningTool, MinionAnim.Slash, 2);
         claimed = false;
@@ -463,7 +462,7 @@ public class Task
 
     public bool CanWorkFrom(Vec2I tile) => workFromFn(tile);
 
-    public Vec2I[] GetPath(Map map, Vec2I start) => map.nav.GetPath(start, pos, workFromFn);
+    public Vec2I[] GetPath(GameController game, Vec2I start) => game.GetPath(start, pos, workFromFn);
 
     // Returns true if complete
     public void PerformWork(float amt)
