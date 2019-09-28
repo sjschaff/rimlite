@@ -1,8 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
-using System;
-using System.Collections.Generic;
 
 public struct BuildingBounds
 {

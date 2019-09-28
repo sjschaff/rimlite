@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
-using System;
 
 public class GameController : MonoBehaviour
 {
@@ -51,7 +50,7 @@ public class GameController : MonoBehaviour
     private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
     private Minion D_minionNoTask;
     private readonly LinkedList<Item> items = new LinkedList<Item>();
-    private readonly LinkedList<Job> currentJobs = new LinkedList<Job>();
+    private readonly LinkedList<IJob> currentJobs = new LinkedList<IJob>();
     private readonly JobWalkDummy walkDummyJob = new JobWalkDummy();
     private UITool tool => currentTool.Value;
 
@@ -64,7 +63,7 @@ public class GameController : MonoBehaviour
     void Start()
     {
         registry = new Registry();
-        assets = new AssetSrc(defs);
+        assets = new AssetSrc();
         map = new Map(this);
 
         mouseHighlight = CreateMouseHighlight();
@@ -197,13 +196,13 @@ public class GameController : MonoBehaviour
 
     public void K_MoveMinion(Vec2I pos) => D_minionNoTask.AssignTask(walkDummyJob.CreateWalkTask(pos));
 
-    public void AddJob(Job job)
+    public void AddJob(IJob job)
     {
         Debug.Log("Added Job: " + job + "(" + job.GetHashCode() + ")");
         currentJobs.AddLast(job);
     }
 
-    public void RemoveJob(Job job)
+    public void RemoveJob(IJob job)
     {
         currentJobs.Remove(job);
     }
@@ -231,6 +230,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // TODO: move to ui code somewhere
     float time = 0;
     bool isDraging = false;
     Vec2 clickStart;
@@ -256,7 +256,6 @@ public class GameController : MonoBehaviour
         });
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown("tab"))
@@ -287,13 +286,11 @@ public class GameController : MonoBehaviour
         {
             if (!isDraging)
             {
-                //Debug.Log("OnClick: " + time);
                 if (map.ValidTile(clickStart.Floor()))
                     tool.OnClick(clickStart.Floor());
             }
             else
             {
-                //Debug.Log("OnDragEnd");
                 tool.OnDragEnd(clickStart, mousePos);
                 dragOutline.enabled = false;
             }
@@ -307,7 +304,6 @@ public class GameController : MonoBehaviour
 
         if (time > dragTime && !isDraging)
         {
-            //Debug.Log("OnDragStart");
             isDraging = true;
             tool.OnDragStart(clickStart, mousePos);
             dragOutline.enabled = true;

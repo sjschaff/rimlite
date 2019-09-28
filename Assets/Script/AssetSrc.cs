@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class AssetSrc
 {
     public readonly Cache<AtlasDef, Atlas> atlases;
     public readonly Cache<SpriteDef, Sprite> sprites;
 
-    public AssetSrc(Defs defs)
+    public AssetSrc()
     {
         atlases = new Cache<AtlasDef, Atlas>(
             def => new Atlas(Resources.Load<Texture2D>(def.file), def.pixelsPerTile, def.pixelsPerUnit));

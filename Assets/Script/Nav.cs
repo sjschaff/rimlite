@@ -1,21 +1,19 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
 public class Nav
 {
-    private readonly Map map;
     private readonly AStar.ISearchCache searchCache;
     private readonly Func<Vec2I, bool> passFn;
 
     public Nav(Map map)
     {
-        this.map = map;
-        this.searchCache = AStar.CreateSearchCache(map.size);
-        this.passFn = pt => map.Tile(pt).passable;
+       searchCache = AStar.CreateSearchCache(map.size);
+       passFn = pt => map.Tile(pt).passable;
     }
 
     public Vec2I[] GetPath(Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFn)
@@ -47,7 +45,7 @@ public class Nav__Unfinished
     {
         private struct Path
         {
-            public readonly Vec2I[] pts;
+            //public readonly Vec2I[] pts;
         }
 
         public readonly Func<Vec2I, bool> passFn;

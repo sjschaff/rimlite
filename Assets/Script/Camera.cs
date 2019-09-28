@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 using Vec3 = UnityEngine.Vector3;
@@ -28,13 +26,11 @@ public class Camera : MonoBehaviour
     Vector3 dragStart;
     Vector3 transStart;
 
-    // Start is called before the first frame update
     public void Start()
     {
         cam = GetComponent<UnityEngine.Camera>();
     }
 
-    // Update is called once per frame
     public void Update()
     {
         float scroll = Input.mouseScrollDelta.y;

@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
-using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -38,7 +38,6 @@ public struct ItemInfo
 
 public class Item : MonoBehaviour
 {
-    private GameController game;
     public SpriteRenderer spriteRenderer;
     public Text text;
 
@@ -52,7 +51,6 @@ public class Item : MonoBehaviour
     public void Init(GameController game, Vec2I pos, ItemInfo info)
     {
         BB.Assert(info.amt > 0);
-        this.game = game;
         this.pos = pos;
         this.info = info;
         this.amtClaimed = 0;

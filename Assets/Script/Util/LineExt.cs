@@ -1,9 +1,7 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Linq;
+using UnityEngine;
 
-using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
-using System.Linq;
 
 public static class LineExt
 {

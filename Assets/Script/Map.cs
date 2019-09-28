@@ -1,17 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-using Vec3 = UnityEngine.Vector3;
-using Vec3I = UnityEngine.Vector3Int;
-using Vec2 = UnityEngine.Vector2;
-using Vec2I = UnityEngine.Vector2Int;
+﻿using Vec2I = UnityEngine.Vector2Int;
 
 public interface ITile
 {
     bool K_mineable { get; }
-    Job K_activeJob { get; set; }
+    IJob K_activeJob { get; set; }
     bool passable { get; }
     bool hasBuilding { get; }
     IBuilding building { get; }
@@ -44,7 +36,7 @@ public class BBTile : ITile
         }
     }
 
-    public Job K_activeJob { get; set; }
+    public IJob K_activeJob { get; set; }
 
     public void K_SetBuilding(IBuilding bldg)
     {
@@ -54,7 +46,7 @@ public class BBTile : ITile
     public TBldg GetBuilding<TBldg>() where TBldg : IBuilding
         => (TBldg)building;
 
-    public Job activeJob;
+    public IJob activeJob;
 
     public bool hasJob => activeJob != null;
     public bool passable => terrain.passable && (hasBuilding ? building.passable : true);

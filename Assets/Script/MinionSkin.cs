@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using Vec3 = UnityEngine.Vector3;
-using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -128,7 +127,6 @@ public class MinionSkin : MonoBehaviour
         K_SetOutfit(0);
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         spriteLayers = new Dictionary<string, SpriteRenderer>();
@@ -191,7 +189,7 @@ public class MinionSkin : MonoBehaviour
 
     public bool PlayAnimOnce(MinionAnim anim)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("anim once not implemented for " + anim);
         /*
             animator.SetTrigger("slash");
             animator.SetTrigger("thrust");
@@ -277,17 +275,13 @@ public class MinionSkin : MonoBehaviour
             K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
     }
 
-    //float timeBetweenFrames = 0;
     private void LateUpdate()
     {
-       // timeBetweenFrames += Time.deltaTime;
         if (animDummy.sprite != null)
         {
             string spriteName = animDummy.sprite.name;
             if (lastSprite != spriteName)
             {
-               // Debug.Log("frame time: " + timeBetweenFrames);
-                //timeBetweenFrames = 0;
                 lastSprite = animDummy.sprite.name;
                 var vals = spriteName.Split('_');
                 BB.Assert(vals.Length == 2);

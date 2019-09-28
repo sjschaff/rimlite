@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System;
+using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
-using System;
-using System.Collections.Generic;
 
 public class BuildingProtoConstruction : IBuildingProto
 {

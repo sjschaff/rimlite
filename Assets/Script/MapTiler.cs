@@ -1,11 +1,10 @@
-﻿using UnityEngine;
-using TM = UnityEngine.Tilemaps;
+﻿using System;
+using UnityEngine;
 
+using TM = UnityEngine.Tilemaps;
 using Vec3 = UnityEngine.Vector3;
 using Vec3I = UnityEngine.Vector3Int;
-using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
-using System;
 
 public struct TileSprite
 {

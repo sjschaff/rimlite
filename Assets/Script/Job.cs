@@ -1,15 +1,14 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using UnityEngine;
+using Priority_Queue;
 
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
-using Priority_Queue;
 
 public enum Tool { None, Hammer, Pickaxe, Axe };
 
-public interface Job
+public interface IJob
 {
     IEnumerable<Task> AvailableTasks();
     void ClaimTask(Minion minion, Task task);
@@ -19,7 +18,7 @@ public interface Job
     Task CompleteTask(Minion minion, Task task);
 }
 
-public class JobWalkDummy : Job
+public class JobWalkDummy : IJob
 {
     public IEnumerable<Task> AvailableTasks() => throw new NotImplementedException();
     public void ClaimTask(Minion minion, Task task) { }
@@ -33,7 +32,7 @@ public class JobWalkDummy : Job
         => new Task(this, null, pos, v => v != pos, Tool.None, MinionAnim.None, 0);
 }
 
-public abstract class JobStandard : Job
+public abstract class JobStandard : IJob
 {
     protected GameController game { get; private set; }
     protected Vec2I pos { get; private set; }
@@ -193,7 +192,7 @@ public class JobMine : JobStandard
 // TODO: support hualing to multiple jobs
 public class JobBuild : JobStandard
 {
-    private class HaulTaskInfo : TaskInfo
+    private class HaulTaskInfo : ITaskInfo
     {
         public readonly HaulInfo haul;
         public readonly int amt;
@@ -423,12 +422,12 @@ public class JobBuild : JobStandard
     }
 }
 
-public interface TaskInfo {}
+public interface ITaskInfo {}
 
 public class Task
 {
-    private readonly Job job;
-    public readonly TaskInfo info;
+    private readonly IJob job;
+    public readonly ITaskInfo info;
     private readonly Func<Vec2I, bool> workFromFn;
 
     public readonly Vec2I pos;
@@ -438,7 +437,7 @@ public class Task
 
     private float workRemaining;
 
-    public Task(Job job, TaskInfo info, Vec2I pos, Func<Vec2I, bool> workFromFn, Tool tool, MinionAnim anim, float workAmt)
+    public Task(IJob job, ITaskInfo info, Vec2I pos, Func<Vec2I, bool> workFromFn, Tool tool, MinionAnim anim, float workAmt)
     {
         BB.Assert(job != null);
 

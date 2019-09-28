@@ -1,9 +1,8 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 using Priority_Queue;
 
 using Vec2I = UnityEngine.Vector2Int;
-using System;
 
 public class AStar 
 {

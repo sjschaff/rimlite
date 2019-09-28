@@ -1,12 +1,10 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 using Vec3 = UnityEngine.Vector3;
-using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
-using System.Collections.Generic;
-using System.Linq;
 
 public class Minion : MonoBehaviour
 {
@@ -41,7 +39,6 @@ public class Minion : MonoBehaviour
         line = gameObject.AddLineRenderer("Default", 1000, new Color(.2f, .2f, .2f, .5f), 1/32f, false, true, null);
     }
 
-    // Use this for initialization
     void Start()
     {
     }
@@ -132,7 +129,6 @@ public class Minion : MonoBehaviour
         skin.SetAnimLoop(MinionAnim.None);
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (path != null)
