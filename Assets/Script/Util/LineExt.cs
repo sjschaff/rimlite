@@ -7,7 +7,8 @@ using System.Linq;
 
 public static class LineExt
 {
-    private static Dictionary<Color, Material> materials = new Dictionary<Color, Material>();
+    private static readonly Dictionary<Color, Material> materials
+        = new Dictionary<Color, Material>();
 
     private static Material CreateMaterial(Color color)
     {
@@ -15,9 +16,11 @@ public static class LineExt
         texture.SetPixel(0, 0, color);
         texture.Apply();
 
-        var material = new Material(Shader.Find("Unlit/Transparent"));
-        material.renderQueue = 3000;
-        material.mainTexture = texture;
+        var material = new Material(Shader.Find("Unlit/Transparent"))
+        {
+            renderQueue = 3000,
+            mainTexture = texture
+        };
 
         return material;
     }
