@@ -233,7 +233,8 @@ public class Defs
                 if (defs.TryGetValue(defName, out TDef def))
                     return def;
 
-                throw new KeyNotFoundException("Missing " + typeof(TDef).FullName + " for '" + defName + "'");
+                Debug.LogError("Missing " + typeof(TDef).FullName + " for '" + defName + "'");
+                return null;
             }
         }
     }

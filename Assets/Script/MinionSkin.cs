@@ -11,17 +11,49 @@ public class MetaAtlas
 {
     private struct AnimKey
     {
-        public string anim;
-        public string dir;
-        public string frame;
+        public readonly string anim;
+        public readonly string dir;
+        public readonly string frame;
+
+        public AnimKey(string anim, string dir, string frame)
+        {
+            this.anim = anim;
+            this.dir = dir;
+            this.frame = frame;
+        }
     }
 
-    private readonly Dictionary<AnimKey, Atlas.Key> keys = new Dictionary<AnimKey, Atlas.Key>();
-    private readonly Dictionary<string, Atlas> atlases = new Dictionary<string, Atlas>();
+    private readonly Cache<AnimKey, Atlas.Key> keys;
+    private readonly Cache<string, Atlas> atlases;
 
-    public MetaAtlas() { }
+    public MetaAtlas()
+    {
+        keys = new Cache<AnimKey, Atlas.Key>(
+            animKey =>
+            {
+                var origin = new Vec2I(
+                    OffsetFrame(animKey.frame),
+                    20 - (OriginAnim(animKey.anim) + OffsetDir(animKey.dir)));
 
-    private int OriginAnim(string anim)
+                return new Atlas.Key(
+                    origin * 2,
+                    new Vec2I(2, 2),
+                    new Vec2I(1, 0));
+            });
+
+        atlases = new Cache<string, Atlas>(
+            path =>
+            {
+                Texture2D tex = Resources.Load<Texture2D>(path);
+                if (tex == null)
+                    Debug.LogError("No texture: " + path);
+
+                tex.filterMode = FilterMode.Point;
+                return new Atlas(tex, 32, 64);
+            });
+    }
+
+    private static int OriginAnim(string anim)
     {
         switch (anim)
         {
@@ -36,7 +68,7 @@ public class MetaAtlas
         throw new Exception("unknown anim: " + anim);
     }
 
-    private int OffsetDir(string dir)
+    private static int OffsetDir(string dir)
     {
         switch (dir)
         {
@@ -49,27 +81,7 @@ public class MetaAtlas
         throw new Exception("unknown dir: " + dir);
     }
 
-    private int OffsetFrame(string frame) => Int32.Parse(frame);
-
-    private Atlas.Key GetKey(string anim, string dir, string frame)
-    {
-        AnimKey animKey;
-        animKey.anim = anim;
-        animKey.dir = dir;
-        animKey.frame = frame;
-        if (keys.TryGetValue(animKey, out var key))
-            return key;
-
-        var origin = new Vec2I(OffsetFrame(frame), 20 - (OriginAnim(anim) + OffsetDir(dir)));
-
-        key = new Atlas.Key(
-            origin * 2,
-            new Vec2I(2, 2),
-            new Vec2I(1, 0));
-
-        keys.Add(animKey, key);
-        return key;
-    }
+    private static int OffsetFrame(string frame) => Int32.Parse(frame);
 
     public Sprite GetSprite(string type, bool male, string name, string anim, string dir, string frame)
     {
@@ -80,16 +92,7 @@ public class MetaAtlas
             path += (male ? "male" : "female") + "/";
         path += name;
 
-        if (!atlases.TryGetValue(path, out var atlas))
-        {
-            Texture2D tex = Resources.Load<Texture2D>(path);
-            BB.Assert(tex != null, "no texture: " + path);
-            tex.filterMode = FilterMode.Point;
-            atlas = new Atlas(tex, 32, 64);
-            atlases.Add(path, atlas);
-        }
-
-        return atlas.GetSprite(GetKey(anim, dir, frame));
+        return atlases.Get(path).GetSprite(keys.Get(new AnimKey(anim, dir, frame)));
     }
 }
 

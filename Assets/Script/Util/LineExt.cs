@@ -7,8 +7,8 @@ using System.Linq;
 
 public static class LineExt
 {
-    private static readonly Dictionary<Color, Material> materials
-        = new Dictionary<Color, Material>();
+    private static readonly Cache<Color, Material> materials
+        = new Cache<Color, Material>(color => CreateMaterial(color));
 
     private static Material CreateMaterial(Color color)
     {
@@ -25,23 +25,13 @@ public static class LineExt
         return material;
     }
 
-    private static Material GetMaterial(Color color)
-    {
-        if (materials.TryGetValue(color, out var mat))
-            return mat;
-
-        mat = CreateMaterial(color);
-        materials.Add(color, mat);
-        return mat;
-    }
-
     public static LineRenderer AddLineRenderer(this GameObject o,
         string sortingLayer, int sortingOrder, Color color,
         float width, bool loop, bool useWorldspace, Vec2[] pts)
     {
         var line = o.AddComponent<LineRenderer>();
         line.loop = loop;
-        line.material = GetMaterial(color);
+        line.material = materials.Get(color);
         line.SetLayer(sortingLayer, sortingOrder);
         line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         line.receiveShadows = false;

@@ -22,14 +22,14 @@ public class Atlas
     }
 
     private readonly Texture2D atlas;
-    private readonly Dictionary<Key, Sprite> spriteCache;
+    private readonly Cache<Key, Sprite> spriteCache;
     private readonly int tileSize;
     private readonly int ppu;
 
     public Atlas(Texture2D atlas, int tileSize, int ppu)
     {
         this.atlas = atlas;
-        spriteCache = new Dictionary<Key, Sprite>();
+        spriteCache = new Cache<Key, Sprite>(key => CreateSprite(key));
         this.tileSize = tileSize;
         this.ppu = ppu;
     }
@@ -40,15 +40,7 @@ public class Atlas
     public Sprite GetSprite(Vec2I origin, Vec2I size, Vec2I anchor)
         => GetSprite(new Key(origin, size, anchor));
 
-    public Sprite GetSprite(Key key)
-    {
-        if (spriteCache.TryGetValue(key, out var ret))
-            return ret;
-
-        ret = CreateSprite(key);
-        spriteCache.Add(key, ret);
-        return ret;
-    }
+    public Sprite GetSprite(Key key) => spriteCache.Get(key);
 
     private Sprite CreateSprite(Key key)
     {
