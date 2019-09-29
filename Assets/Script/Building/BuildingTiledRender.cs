@@ -3,6 +3,8 @@ using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public abstract class BuildingProtoTiledRender : IBuildingProto
 {
     protected BuildingProtoTiledRender() { }
@@ -37,4 +39,6 @@ public abstract class BuildingProtoTiledRender : IBuildingProto
     }
 
     public abstract IEnumerable<ItemInfo> K_GetMinedMaterials();
+}
+
 }

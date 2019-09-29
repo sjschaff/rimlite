@@ -3,6 +3,8 @@ using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public struct BuildingBounds
 {
     public readonly Vec2I size;
@@ -88,4 +90,6 @@ public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingP
         => proto.GetSprite(map, pos, subTile);
     public virtual TileSprite GetSpriteOver(Map map, Vec2I pos)
         => proto.GetSpriteOver(map, pos);
+}
+
 }

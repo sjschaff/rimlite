@@ -6,6 +6,8 @@ using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class MetaAtlas
 {
     private struct AnimKey
@@ -365,4 +367,6 @@ public class MinionSkin : MonoBehaviour
 
     private static readonly List<Dictionary<string, string>> K_outfits =
         new List<Dictionary<string, string>>() { K_clothed, K_monk, K_plate };
+}
+
 }

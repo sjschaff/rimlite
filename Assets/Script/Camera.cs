@@ -3,6 +3,8 @@
 using Vec2 = UnityEngine.Vector2;
 using Vec3 = UnityEngine.Vector3;
 
+namespace BB {
+
 public static class VecExt
 {
    public static Vector3 OrthoScale(this UnityEngine.Camera c)
@@ -69,4 +71,6 @@ public class Camera : MonoBehaviour
             cam.transform.localPosition = new Vec3(pos.x, pos.y, -11);
         }
     }
+}
+
 }

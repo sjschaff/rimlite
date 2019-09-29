@@ -6,6 +6,8 @@ using Vec3 = UnityEngine.Vector3;
 using Vec3I = UnityEngine.Vector3Int;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public struct TileSprite
 {
     public readonly Sprite sprite;
@@ -380,4 +382,6 @@ public static class Tiling
 
         throw new Exception("unkown ttype: " + ttype);
     }
+}
+
 }

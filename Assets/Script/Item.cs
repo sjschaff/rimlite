@@ -4,6 +4,8 @@ using UnityEngine.UI;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 // TODO: can we merge these? (i.e. does ItemInfo need to be mutable?)
 public struct ItemInfoRO
 {
@@ -106,4 +108,6 @@ public class Item : MonoBehaviour
     private void UpdateText() => text.text = info.amt.ToString();
 
     public void Place(Vec2I pos) => this.pos = pos;
+}
+
 }

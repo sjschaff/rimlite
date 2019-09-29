@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
 
+namespace BB {
+
 public class Cache<TKey, TValue>
 {
     private readonly Func<TKey, TValue> createFn;
@@ -19,5 +21,6 @@ public class Cache<TKey, TValue>
 
         return val;
     }
-    
+}
+
 }

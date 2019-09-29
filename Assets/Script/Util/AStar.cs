@@ -4,6 +4,8 @@ using Priority_Queue;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class AStar 
 {
     private class Node : FastPriorityQueueNode
@@ -183,4 +185,6 @@ public class AStar
 
         return null;
     }
+}
+
 }

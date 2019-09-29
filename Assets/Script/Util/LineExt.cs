@@ -3,6 +3,8 @@ using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 
+namespace BB {
+
 public static class LineExt
 {
     private static readonly Cache<Color, Material> materials
@@ -46,4 +48,6 @@ public static class LineExt
         line.positionCount = pts.Length;
         line.SetPositions(pts.Select(v => v.Vec3()).ToArray());
     }
+}
+
 }

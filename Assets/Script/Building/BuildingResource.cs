@@ -3,6 +3,8 @@ using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class BuildingProtoResource : IBuildingProto
 {
     private readonly BldgMineableDef def;
@@ -41,4 +43,6 @@ public class BuildingProtoResource : IBuildingProto
 
         public BuildingResource(BuildingProtoResource proto) : base(proto) => minedAmt = 0;
     }
+}
+
 }

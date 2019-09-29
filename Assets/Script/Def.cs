@@ -4,6 +4,8 @@ using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public abstract class Def
 {
     public readonly string defType;
@@ -264,4 +266,6 @@ public class Defs
 
     public TDef Get<TDef>(string name) where TDef : Def
         => GetList<TDef>()[name];
+}
+
 }

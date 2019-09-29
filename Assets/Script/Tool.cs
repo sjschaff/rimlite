@@ -4,6 +4,8 @@ using UnityEngine;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public abstract class UITool
 {
     public static LinkedList<UITool> RegisterTools(GameController game)
@@ -156,4 +158,6 @@ public class ToolPlace : UITool
     {
         game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
     }
+}
+
 }

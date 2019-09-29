@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 
+namespace BB {
+
 public class AssetSrc
 {
     public readonly Cache<AtlasDef, Atlas> atlases;
@@ -13,4 +15,6 @@ public class AssetSrc
         sprites = new Cache<SpriteDef, Sprite>(
             def => atlases.Get(def.atlas).GetSprite(def.key));
     }
+}
+
 }

@@ -6,6 +6,37 @@ using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+/* Ideas/concepts *
+   multi-levels
+        reuire walls/supports underneath other walls suppors
+   schools of magic -> schools of research
+        specialized mages req. to research different trees
+   portals to other planes/dimensions possible based on schools of magic
+        rare / lategame resources found in planes, unlocks high tier research
+        example, capture elementals and study them or something
+        maybe early usage allows limited access, i.e planes touch but dont connect
+            to allow for heaters/coolers, then later access allows travel between,
+            dangerous but allows cooler stuff
+   send adventuring parties to explore planes, caves, mines, dungeons, all on 1 map
+   lots of concepts from dnd
+        stock adventuring kits for sale
+        sell magic items, potions etc.
+        sell access to teleportaion circle
+            private/public circles?
+        library access
+            buy books from travelers, advance research or maybe unlock special things
+   ability to house travelers/adventurers
+   random events
+        mine infestations
+        portal breach
+        angry peasants
+        attack via tele. circle.
+        cave ins
+        later game magical beasts attack, eventually dragons
+*/
+
+namespace BB {
+
 public class GameController : MonoBehaviour
 {
     // ---- Editor Values ----
@@ -334,4 +365,6 @@ public class GameController : MonoBehaviour
             }
         }
     }
+}
+
 }

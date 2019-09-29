@@ -6,6 +6,8 @@ using Priority_Queue;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public enum Tool { None, Hammer, Pickaxe, Axe };
 
 public interface IJob
@@ -478,4 +480,6 @@ public class Task
     }
 
     public override string ToString() => "Task{" + job + ", " + info + "}";
+}
+
 }

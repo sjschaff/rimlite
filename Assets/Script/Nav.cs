@@ -5,6 +5,8 @@ using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class Nav
 {
     private readonly AStar.ISearchCache searchCache;
@@ -313,4 +315,6 @@ public class Nav__Unfinished
         // 2        0 -
         // 1        0
     }
+}
+
 }

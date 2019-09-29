@@ -7,6 +7,8 @@ using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public struct RenderLayer
 {
     public readonly string layer;
@@ -83,4 +85,6 @@ public static class MathExt {
             for (int y = 0; y < rect.height; ++y)
                 yield return new Vec2I(rect.x + x, rect.y + y);
     }
+}
+
 }

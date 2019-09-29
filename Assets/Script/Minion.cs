@@ -6,6 +6,8 @@ using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class Minion : MonoBehaviour
 {
     const float speed = 2;
@@ -263,4 +265,6 @@ public class Minion : MonoBehaviour
         line.enabled = false;
         skin.SetAnimLoop(MinionAnim.None);
     }
+}
+
 }

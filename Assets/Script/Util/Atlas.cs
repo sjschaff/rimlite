@@ -3,6 +3,8 @@
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class Atlas
 {
     public struct Key
@@ -54,3 +56,4 @@ public class Atlas
     }
 }
 
+}

@@ -1,5 +1,7 @@
 ﻿using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public interface ITile
 {
     bool K_mineable { get; }
@@ -156,4 +158,6 @@ public class Map
         AssertValidTile(start);
         AssertValidTile(end);
     }
+}
+
 }

@@ -1,4 +1,7 @@
-﻿
+﻿using System;
+
+namespace BB {
+
 public class Registry
 {
     public readonly Defs defs;
@@ -19,5 +22,17 @@ public class Registry
             def => new BuildingProtoFloor(def));
         walls = new Cache<BldgWallDef, BuildingProtoWall>(
             def => new BuildingProtoWall(def));
+
+        // test
+        var t = typeof(BuildingProtoResource);
+        UnityEngine.Debug.Log("assembly: " + t.Assembly);
+        UnityEngine.Debug.Log("name: " + t.Name);
+        UnityEngine.Debug.Log("name: " + t.FullName);
+        UnityEngine.Debug.Log("full name:" + t.AssemblyQualifiedName);
+        string typeName = t.AssemblyQualifiedName;
+        UnityEngine.Debug.Log("type: " + Type.GetType(typeName));
+       // BuildingProtoResource b = (BuildingProtoResource)Activator.CreateInstance(Type.GetType(typeName));
     }
+}
+
 }

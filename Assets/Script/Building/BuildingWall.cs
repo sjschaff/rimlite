@@ -3,6 +3,8 @@ using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public class BuildingProtoWall : BuildingProtoTiledRender
 {
     public readonly BldgWallDef def;
@@ -84,4 +86,7 @@ public class BuildingProtoWall : BuildingProtoTiledRender
     {
         public BuildingWall(BuildingProtoWall proto) : base(proto) { }
     }
+}
+
+
 }

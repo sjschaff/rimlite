@@ -2,6 +2,8 @@
 
 using Vec2I = UnityEngine.Vector2Int;
 
+namespace BB {
+
 public struct Terrain
 {
     // TODO: Kludge
@@ -67,4 +69,4 @@ public struct Terrain
     }
 };
 
-
+}
