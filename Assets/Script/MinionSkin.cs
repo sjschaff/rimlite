@@ -8,7 +8,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public class MetaAtlas
     {
         private struct AnimKey
@@ -227,27 +226,27 @@ namespace BB
 
         static readonly string[] layers =
         {
-        // "cape back"
-        // "quiver"
-        "body/base",
-        "body/eyes",
-        "body/nose",
-        "feet",
-        "legs",
-        "wrist",
-        "hands",
-        "torso",
-        "tabbard",
-        "shoulders",
-        "belt",
-        //"back",
-        //"cape neck",
-        "face",
-        "hair",
-        "head",
-        "body/ears",
-        "weapon",
-    };
+            // "cape back"
+            // "quiver"
+            "body/base",
+            "body/eyes",
+            "body/nose",
+            "feet",
+            "legs",
+            "wrist",
+            "hands",
+            "torso",
+            "tabbard",
+            "shoulders",
+            "belt",
+            //"back",
+            //"cape neck",
+            "face",
+            "hair",
+            "head",
+            "body/ears",
+            "weapon",
+        };
 
         private SpriteRenderer CreateSpriteLayer(string name, int renderLayer)
         {
@@ -256,7 +255,7 @@ namespace BB
             layer.transform.localPosition = Vec3.zero;
 
             var sprite = layer.AddComponent<SpriteRenderer>();
-            sprite.SetLayer("Player", renderLayer);
+            sprite.SetLayer(RenderLayer.Minion.Layer(renderLayer));
 
             return sprite;
         }

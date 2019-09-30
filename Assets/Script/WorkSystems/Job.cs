@@ -142,7 +142,7 @@ namespace BB
         private bool claimed;
 
         public static Transform CreateOverlay(GameController game, Vec2I pos)
-            => game.CreateJobOverlay(pos, game.assets.sprites.Get(game.defs.Get<SpriteDef>("BB:MineOverlay")));
+            => game.assets.CreateJobOverlay(game.transform, pos, game.defs.Get<SpriteDef>("BB:MineOverlay")).transform;
 
         public JobMine(GameController game, Vec2I pos) : base(game, pos)
         {

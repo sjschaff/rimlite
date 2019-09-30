@@ -81,7 +81,7 @@ namespace BB
             nav = new Nav(this);
         }
 
-        public bool ValidTile(Vec2I tile) => BB.InGrid(size, tile);
+        public bool ValidTile(Vec2I tile) => MathExt.InGrid(size, tile);
 
         public void AssertValidTile(Vec2I tile) => BB.Assert(ValidTile(tile));
 

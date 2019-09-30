@@ -41,10 +41,10 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Player
+  - name: Minion
     uniqueID: 504554341
     locked: 0
-  - name: Over Player
+  - name: Over Minion
     uniqueID: 1930512875
     locked: 0
   - name: Over Map

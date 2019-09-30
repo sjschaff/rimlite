@@ -155,7 +155,7 @@ namespace BB
                 foreach (Vec2I dir in directions)
                 {
                     Vec2I pos = n.pos + dir;
-                    if (!BB.InGrid(cache.size, pos) || cache.Closed(pos) || !passFn(pos))
+                    if (!MathExt.InGrid(cache.size, pos) || cache.Closed(pos) || !passFn(pos))
                         continue;
 
                     if (dir.x != 0 && dir.y != 0)

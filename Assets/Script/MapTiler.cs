@@ -211,7 +211,6 @@ namespace BB
 
         public Map map { get; private set; }
         private readonly Transform layout;
-        private readonly Material material;
 
         //private readonly Tilemap<VirtualTileTerrainBase> tilemapTerrain;
         private readonly Tilemap<VirtualTileTerrainOver> tilemapTerrainOver;
@@ -226,16 +225,15 @@ namespace BB
 
             sw.Start();
             this.layout = CreateGridLayout();
-            this.material = new Material(Shader.Find("Sprites/Default"));
 
+            var material = map.game.assets.spriteMaterial;
             var bounds = new BoundsInt(0, 0, 0, map.size.x * 2, map.size.y * 2, 1);
             var tileBuffer = new TM.TileBase[bounds.size.x * bounds.size.y];
 
-            /*tilemapTerrain =*/
-            new Tilemap<VirtualTileTerrainBase>(map, layout, material, new RenderLayer("Default", 0), bounds, tileBuffer);
-            tilemapTerrainOver = new Tilemap<VirtualTileTerrainOver>(map, layout, material, new RenderLayer("Default", 1), bounds, tileBuffer);
-            tilemapBuilding = new Tilemap<VirtualTileBuilding>(map, layout, material, new RenderLayer("Default", 2), bounds, tileBuffer);
-            tilemapBuildingOver = new Tilemap<VirtualTileBuildingOver>(map, layout, material, new RenderLayer("Over Map", 0), bounds, tileBuffer);
+            /*tilemapTerrain =*/new Tilemap<VirtualTileTerrainBase>(map, layout, material, RenderLayer.Default.Layer(0), bounds, tileBuffer);
+            tilemapTerrainOver = new Tilemap<VirtualTileTerrainOver>(map, layout, material, RenderLayer.Default.Layer(1), bounds, tileBuffer);
+            tilemapBuilding = new Tilemap<VirtualTileBuilding>(map, layout, material, RenderLayer.Default.Layer(2), bounds, tileBuffer);
+            tilemapBuildingOver = new Tilemap<VirtualTileBuildingOver>(map, layout, material, RenderLayer.OverMap.Layer(0), bounds, tileBuffer);
 
             sw.Stop();
             Debug.Log("tiles took " + sw.ElapsedMilliseconds + "ms");

@@ -92,15 +92,15 @@ namespace BB
             if (config == Config.Ground)
             {
                 text.enabled = true;
-                spriteRenderer.SetLayer("Default", 1000);
+                spriteRenderer.SetLayer(RenderLayer.Default.Layer(1000));
             }
             else
             {
                 text.enabled = false;
                 if (config == Config.PlayerAbove)
-                    spriteRenderer.SetLayer("Over Player");
+                    spriteRenderer.SetLayer(RenderLayer.OverMinion);
                 else if (config == Config.PlayerBelow)
-                    spriteRenderer.SetLayer("Default", 1000);
+                    spriteRenderer.SetLayer(RenderLayer.Default.Layer(1000));
                 else
                     throw new NotSupportedException("Unknown Item Config: " + config);
             }

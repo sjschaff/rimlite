@@ -43,7 +43,6 @@ namespace BB
         // ---- Editor Values ----
         public Transform minionPrefab;
         public Transform itemPrefab;
-        public Transform jobOverlayPrefab;
         // -----------------------
 
         public AssetSrc assets { get; private set; }
@@ -56,26 +55,6 @@ namespace BB
         // TODO: move this stuff to some ui logic somewhere
         private Transform mouseHighlight;
         private LineRenderer dragOutline;
-
-        public Transform CreateJobOverlay(Vec2I pos, Sprite sprite)
-        {
-            var overlay = jobOverlayPrefab.Instantiate(pos + new Vec2(.5f, .5f), transform);
-            overlay.GetComponent<SpriteRenderer>().sprite = sprite;
-            return overlay;
-        }
-
-        public LineRenderer CreateDragOutline()
-            => new GameObject("Drag Outline").AddLineRenderer("Highlight", 0, Color.white, 1, true, true, null);
-
-        public Transform CreateMouseHighlight()
-            => new GameObject("Mouse Highlight").AddLineRenderer(
-                "Highlight", 0,
-                new Color(.2f, .2f, .2f, .5f), 1 / 32f, true, false, new Vec2[] {
-                new Vec2(0, 0),
-                new Vec2(1, 0),
-                new Vec2(1, 1),
-                new Vec2(0, 1)
-                }).transform;
 
         private LinkedList<UITool> tools;
         private LinkedListNode<UITool> currentTool;
@@ -99,10 +78,21 @@ namespace BB
             assets = new AssetSrc();
             map = new Map(this);
 
-            mouseHighlight = CreateMouseHighlight();
-            dragOutline = CreateDragOutline();
+            mouseHighlight = assets.CreateLine(
+                transform, Vec2.zero, "Mouse Highlight",
+                RenderLayer.Highlight, new Color(.2f, .2f, .2f, .5f),
+                1 / 32f, true, false, new Vec2[] {
+                    new Vec2(0, 0),
+                    new Vec2(1, 0),
+                    new Vec2(1, 1),
+                    new Vec2(0, 1)
+                }).transform;
+
+            dragOutline = assets.CreateLine(
+                transform, Vec2.zero, "DragOutline",
+                RenderLayer.Highlight.Layer(1), Color.white,
+                1, true, true, null);
             dragOutline.enabled = false;
-            dragOutline.sortingOrder = 1;
 
             for (int i = 0; i < 10; ++i)
             {

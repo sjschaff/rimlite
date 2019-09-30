@@ -37,13 +37,13 @@ namespace BB
             this.game = game;
         }
 
-        void Awake()
-        {
-            line = gameObject.AddLineRenderer("Default", 1000, new Color(.2f, .2f, .2f, .5f), 1 / 32f, false, true, null);
-        }
-
         void Start()
         {
+            line = game.assets.CreateLine(
+                transform, Vec2.zero, "MinionPath",
+                RenderLayer.Default.Layer(1000),
+                new Color(.2f, .2f, .2f, .5f),
+                1 / 32f, false, true, null);
         }
 
         private void SetDir(Vec2 dir)
