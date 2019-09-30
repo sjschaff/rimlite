@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -39,10 +40,11 @@ namespace BB
         public ItemInfo WithNewAmount(int amt) => new ItemInfo(def, amt);
     }
 
-    public class Item : MonoBehaviour
+    public class Item
     {
-        public SpriteRenderer spriteRenderer;
-        public Text text;
+        private readonly GameObject gameObject;
+        private readonly SpriteRenderer spriteRenderer;
+        private readonly Text text;
 
         public Vec2I pos { get; private set; }
         private ItemInfo info { get; set; } // TODO: make this normal? figure out publicicty
@@ -51,18 +53,69 @@ namespace BB
         public int amt => info.amt;
         public ItemDef def => info.def;
 
-        public void Init(GameController game, Vec2I pos, ItemInfo info)
+        public Item(GameController game, Vec2I pos, ItemInfo info)
         {
             BB.Assert(info.amt > 0);
             this.pos = pos;
             this.info = info;
             this.amtClaimed = 0;
 
-            spriteRenderer.sprite = game.assets.sprites.Get(info.def.sprite);
+            gameObject = new GameObject("Item:" + info.def.defName);
+            ReParent(game.transform, pos);
+
+            spriteRenderer = game.assets.CreateSpriteObject(
+                gameObject.transform, new Vec2(.5f, .5f), "icon",
+                info.def.sprite, Color.white, RenderLayer.Default.Layer(100));
+
+            // TODO: figure out htf text works
+            var canvasObj = new GameObject("canvas", typeof(RectTransform));
+            var canvasTrans = (RectTransform)canvasObj.transform;
+            canvasTrans.SetParent(gameObject.transform, false);
+            canvasTrans.localPosition = new Vec2(.5f, .228f);
+
+            canvasTrans.offsetMin = new Vec2(0, -.3f);
+            canvasTrans.offsetMax = new Vec2(1, .7f);
+            canvasTrans.sizeDelta = Vec2.one;
+            canvasTrans.anchorMin = Vec2.zero;
+            canvasTrans.anchorMax = Vec2.zero;
+            canvasTrans.localPosition = new Vec2(.5f, .228f); // has to be last for some reason
+
+            var canvas = canvasObj.AddComponent<Canvas>();
+            canvas.SetLayer(RenderLayer.Default.Layer(101));
+
+            var scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.dynamicPixelsPerUnit = 10;
+            scaler.referencePixelsPerUnit = 1;
+
+            var textObj = new GameObject("text", typeof(RectTransform));
+            var textTrans = (RectTransform)textObj.transform;
+            textTrans.SetParent(canvasObj.transform, false);
+            textTrans.localScale = new Vector3(0.004753981f, 0.004753981f, 1);
+            textTrans.offsetMin = new Vec2(-.5f, -.5f);
+            textTrans.offsetMax = new Vec2(.5f, .5f);
+            textTrans.sizeDelta = Vec2.one;
+
+            textObj.AddComponent<CanvasRenderer>();
+            text = textObj.AddComponent<Text>();
+            text.font = game.assets.fonts.Get("Arial.ttf");
+            text.fontSize = 30;
+            text.fontStyle = FontStyle.Bold;
+            text.alignment = TextAnchor.UpperCenter;
+            text.raycastTarget = false;
+            text.supportRichText = false;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+
             UpdateText();
         }
 
-        public void Destroy() => Destroy(gameObject);
+        public void ReParent(Transform parent, Vec2 pos)
+        {
+            gameObject.transform.parent = parent;
+            gameObject.transform.localPosition = pos;
+        }
+
+        public void Destroy() => gameObject.Destroy();
 
         public void Claim(int amt)
         {

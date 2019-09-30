@@ -2,7 +2,6 @@
 using System;
 using UnityEngine;
 
-using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -39,10 +38,6 @@ namespace BB
 {
     public class GameController : MonoBehaviour
     {
-        // ---- Editor Values ----
-        public Transform itemPrefab;
-        // -----------------------
-
         public AssetSrc assets { get; private set; }
         public Registry registry { get; private set; }
         private Map map;
@@ -179,21 +174,13 @@ namespace BB
         public void DropItem(Vec2I pos, Item item)
         {
             BB.AssertNotNull(item);
-            item.transform.parent = transform;
-            item.transform.localPosition = pos.Vec3();
+            item.ReParent(transform, pos);
             item.Place(pos);
             item.Configure(Item.Config.Ground);
             items.AddLast(item);
         }
 
-        public void DropItem(Vec2I pos, ItemInfo info) => DropItem(pos, CreateItem(pos, info));
-
-        private Item CreateItem(Vec2I pos, ItemInfo info)
-        {
-            var item = itemPrefab.Instantiate(pos, transform).GetComponent<Item>();
-            item.Init(this, pos, info);
-            return item;
-        }
+        public void DropItem(Vec2I pos, ItemInfo info) => DropItem(pos, new Item(this, pos, info));
 
         public Item TakeItem(Item item, int amt)
         {
@@ -209,7 +196,7 @@ namespace BB
             else
             {
                 item.Remove(amt);
-                return CreateItem(item.pos, new ItemInfo(item.def, amt));
+                return new Item(this, item.pos, new ItemInfo(item.def, amt));
             }
         }
 
@@ -266,12 +253,11 @@ namespace BB
 
             var a = clickStart;
             var b = end;
-            dragOutline.positionCount = 4;
-            dragOutline.SetPositions(new Vec3[] {
-                new Vec3(a.x, a.y),
-                new Vec3(b.x, a.y),
-                new Vec3(b.x, b.y),
-                new Vec3(a.x, b.y)
+            dragOutline.SetPts(new Vec2[] {
+                new Vec2(a.x, a.y),
+                new Vec2(b.x, a.y),
+                new Vec2(b.x, b.y),
+                new Vec2(a.x, b.y)
             });
         }
 

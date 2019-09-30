@@ -2,7 +2,6 @@
 using System.Linq;
 using UnityEngine;
 
-using Vec3 = UnityEngine.Vector3;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -27,7 +26,7 @@ namespace BB
         public Vec2 pos
         {
             get => skin.transform.position.xy();
-            private set => skin.transform.position = new Vec3(value.x, value.y, 0);
+            private set => skin.transform.position = value;
         }
 
         public bool HasTask() => currentTask != null;
@@ -67,14 +66,13 @@ namespace BB
         {
             BB.Assert(!carryingItem);
             carriedItem = item;
-            carriedItem.transform.parent = skin.transform;
-            carriedItem.transform.localPosition = new Vec3(0, .2f, 0);
+            carriedItem.ReParent(skin.transform, new Vec2(0, .2f));
             ReconfigureItem();
         }
 
         public Item RemoveItem()
         {
-            BB.Assert(carriedItem);
+            BB.AssertNotNull(carriedItem);
             Item ret = carriedItem;
             carriedItem = null;
             return ret;
@@ -253,7 +251,7 @@ namespace BB
         {
             path = new LinkedList<Vec2I>(pts);
             var dir = pts[0] - pos;
-            if (dir.magnitude < float.Epsilon || Vec2.Dot(dir, pts[1] - pts[0]) < -float.Epsilon)
+            if (pts.Length > 1 && (dir.magnitude < float.Epsilon || Vec2.Dot(dir, pts[1] - pts[0]) < -float.Epsilon))
                 path.RemoveFirst();
 
             UpdatePathVis();

@@ -9,6 +9,7 @@ namespace BB
     {
         public readonly Cache<AtlasDef, Atlas> atlases;
         public readonly Cache<SpriteDef, Sprite> sprites;
+        public readonly Cache<string, Font> fonts;
 
         private readonly Shader spriteShader;
         public readonly Material spriteMaterial;
@@ -23,6 +24,9 @@ namespace BB
 
             sprites = new Cache<SpriteDef, Sprite>(
                 def => atlases.Get(def.atlas).GetSprite(def.key));
+
+            fonts = new Cache<string, Font>(
+                font => Resources.GetBuiltinResource<Font>(font));
 
             spriteShader = Shader.Find("Sprites/Default");
             spriteMaterial = new Material(spriteShader);
@@ -45,7 +49,7 @@ namespace BB
                 });
         }
 
-        private T CreateObjectWithRenderer<T>(Transform parent, Vec2 pos, string name, RenderLayer layer)
+        public T CreateObjectWithRenderer<T>(Transform parent, Vec2 pos, string name, RenderLayer layer)
             where T : Renderer
         {
             var node = new GameObject(name);

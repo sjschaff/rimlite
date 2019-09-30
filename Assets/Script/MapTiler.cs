@@ -2,8 +2,8 @@
 using UnityEngine;
 
 using TM = UnityEngine.Tilemaps;
-using Vec3 = UnityEngine.Vector3;
 using Vec3I = UnityEngine.Vector3Int;
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -174,7 +174,7 @@ namespace BB
                 tilemap = node.AddComponent<TM.Tilemap>();
                 tilemap.origin = Vec3I.zero;
                 tilemap.size = new Vec3I(bounds.size.x, bounds.size.y, bounds.size.z);
-                tilemap.tileAnchor = Vec3.zero;
+                tilemap.tileAnchor = Vec2.zero;
 
                 var render = node.AddComponent<TM.TilemapRenderer>();
                 render.sortOrder = TM.TilemapRenderer.SortOrder.TopRight;
@@ -243,8 +243,8 @@ namespace BB
         {
             var node = new GameObject("Tilemap");
             var grid = node.AddComponent<Grid>();
-            grid.cellSize = new Vec3(.5f, .5f, 0);
-            grid.cellGap = Vec3.zero;
+            grid.cellSize = new Vec2(.5f, .5f);
+            grid.cellGap = Vec2.zero;
             grid.cellLayout = GridLayout.CellLayout.Rectangle;
             grid.cellSwizzle = GridLayout.CellSwizzle.XYZ;
             return node.transform;
