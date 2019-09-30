@@ -6,7 +6,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public abstract class Def
     {
         public readonly string defType;
@@ -165,33 +164,32 @@ namespace BB
         public Defs()
         {
             // TODO: something neat where these are loaded dynamically
-            Register(new AtlasDef("BB:tileset32", "tileset32", 16, 32));
-            Register(new AtlasDef("BB:tileset64", "tileset64", 32, 64));
-            Register(new AtlasDef("BB:sprites32", "sprites32", 8, 32));
+            var tileset32 = Register(new AtlasDef("BB:tileset32", "tileset32", 16, 32));
+            var tileset64 = Register(new AtlasDef("BB:tileset64", "tileset64", 32, 64));
+            var sprites32 = Register(new AtlasDef("BB:sprites32", "sprites32", 8, 32));
             Register(new AtlasDef("BB:sprites64", "sprites64", 16, 64));
 
-            Register(new TerrainDef("BB:Grass", "Grass", Get<AtlasDef>("BB:tileset32"), new Vec2I(0, 29)));
-            Register(new TerrainDef("BB:Dirt", "Dirt", Get<AtlasDef>("BB:tileset32"), new Vec2I(0, 0)));
-            Register(new TerrainDef("BB:Mud", "Mud", Get<AtlasDef>("BB:tileset32"), new Vec2I(0, 26)));
-            Register(new TerrainDef("BB:Path", "Path", Get<AtlasDef>("BB:tileset32"), new Vec2I(0, 23)));
-            Register(new TerrainDef("BB:Water", "Water", Get<AtlasDef>("BB:tileset32"), new Vec2I[]
-            {
-            new Vec2I(26, 29),
-            new Vec2I(26, 26),
-            new Vec2I(26, 23),
-            new Vec2I(26, 20),
-            new Vec2I(26, 17),
-            new Vec2I(26, 14),
-            new Vec2I(26, 11),
-            new Vec2I(26, 8),
-            }, false));
+            Register(new TerrainDef("BB:Grass", "Grass", tileset32, new Vec2I(0, 29)));
+            Register(new TerrainDef("BB:Dirt", "Dirt", tileset32, new Vec2I(0, 0)));
+            Register(new TerrainDef("BB:Mud", "Mud", tileset32, new Vec2I(0, 26)));
+            Register(new TerrainDef("BB:Path", "Path", tileset32, new Vec2I(0, 23)));
+            Register(new TerrainDef("BB:Water", "Water", tileset32, new Vec2I[] {
+                    new Vec2I(26, 29),
+                    new Vec2I(26, 26),
+                    new Vec2I(26, 23),
+                    new Vec2I(26, 20),
+                    new Vec2I(26, 17),
+                    new Vec2I(26, 14),
+                    new Vec2I(26, 11),
+                    new Vec2I(26, 8),
+                }, false));
 
-            Register(new SpriteDef("BB:Stone", Get<AtlasDef>("BB:sprites32"), Vec2I.zero, new Vec2I(2, 2), Vec2I.one));
-            Register(new SpriteDef("BB:Wood", Get<AtlasDef>("BB:sprites32"), new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
-            Register(new SpriteDef("BB:BldgRock", Get<AtlasDef>("BB:sprites32"), new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
-            Register(new SpriteDef("BB:BldgTree", Get<AtlasDef>("BB:sprites32"), new Vec2I(2, 4), new Vec2I(4, 4), Vec2I.zero));
-            Register(new SpriteDef("BB:BldgTreeOver", Get<AtlasDef>("BB:sprites32"), new Vec2I(0, 8), new Vec2I(8, 10), new Vec2I(2, -4)));
-            Register(new SpriteDef("BB:MineOverlay", Get<AtlasDef>("BB:sprites32"), new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:Stone", sprites32, Vec2I.zero, new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:Wood", sprites32, new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:BldgRock", sprites32, new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
+            Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(2, 4), new Vec2I(4, 4), Vec2I.zero));
+            Register(new SpriteDef("BB:BldgTreeOver", sprites32, new Vec2I(0, 8), new Vec2I(8, 10), new Vec2I(2, -4)));
+            Register(new SpriteDef("BB:MineOverlay", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
             Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood")));
@@ -208,14 +206,12 @@ namespace BB
 
             Register(new BldgFloorDef("BB:StoneBrick", "Stone Brick Floor",
                 new ItemInfoRO(Get<ItemDef>("BB:Stone"), 5),
-                Get<AtlasDef>("BB:tileset64"), new Vec2I(0, 9)));
+               tileset64, new Vec2I(0, 9)));
 
             Register(new BldgWallDef("BB:StoneBrick", "Stone Brick Wall",
                 new ItemInfoRO(Get<ItemDef>("BB:Stone"), 10),
-                Get<AtlasDef>("BB:tileset64"), new Vec2I(0, 12)));
+                tileset64, new Vec2I(0, 12)));
         }
-
-        // private Dictionary<Type, >
 
         private interface IDefList { }
         public class DefList<TDef> : IDefList where TDef : Def
@@ -254,7 +250,7 @@ namespace BB
             return list;
         }
 
-        private void Register<TDef>(TDef def) where TDef : Def
+        private TDef Register<TDef>(TDef def) where TDef : Def
         {
             DefList<TDef> list;
             if (lists.TryGetValue(typeof(TDef), out var listUntyped))
@@ -263,6 +259,7 @@ namespace BB
                 list = RegisterDefType<TDef>();
 
             list.Register(def);
+            return def;
         }
 
         public TDef Get<TDef>(string name) where TDef : Def
