@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace BB
 {
-
     public class BuildingProtoResource : IBuildingProto
     {
         private readonly BldgMineableDef def;
@@ -19,8 +18,6 @@ namespace BB
         public IBuilding CreateBuilding() => new BuildingResource(this);
 
         public bool passable => false;
-        public bool K_mineable => true;
-        public Tool K_miningTool => def.tool;
 
         public BuildingBounds bounds => BuildingBounds.Unit;
 
@@ -36,17 +33,20 @@ namespace BB
         public IEnumerable<ItemInfo> GetBuildMaterials()
             => throw new NotSupportedException("GetBuildMaterials called on BuildingResource");
 
-        public IEnumerable<ItemInfo> K_GetMinedMaterials()
-        {
-            foreach (var item in def.resources)
-                yield return item;
-        }
-
-        public class BuildingResource : BuildingBase<BuildingProtoResource>
+        public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
         {
             float minedAmt; // or some such thing....
 
             public BuildingResource(BuildingProtoResource proto) : base(proto) => minedAmt = 0;
+
+            public Tool tool => proto.def.tool;
+
+            public IEnumerable<ItemInfo> GetMinedMaterials()
+            {
+                foreach (var item in proto.def.resources)
+                    yield return item;
+            }
+
         }
     }
 

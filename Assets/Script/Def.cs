@@ -27,6 +27,16 @@ namespace BB
             : base(defType, defName) => this.name = name;
     }
 
+    public class TypeDef : Def
+    {
+        public readonly Type type;
+
+        public TypeDef(Type type) : base("BB:Type", type.FullName) => this.type = type;
+        public TypeDef(string typeName) : this(Type.GetType(typeName)) { }
+
+        public static TypeDef Create<T>() => new TypeDef(typeof(T));
+    }
+
     public class AtlasDef : Def
     {
         public readonly string file;
@@ -88,6 +98,22 @@ namespace BB
         public ItemDef(string defName, string name, SpriteDef icon)
             : base("BB:Item", defName, name) => this.sprite = icon;
 
+    }
+
+    public class BldgProtoDef : Def
+    {
+        public readonly TypeDef protoType;
+        public readonly TypeDef protoDefType;
+
+        public BldgProtoDef(TypeDef protoType, TypeDef protoDefType)
+            : base("BB:Proto", protoType.defName)
+        {
+            this.protoType = protoType;
+            this.protoDefType = protoDefType;
+        }
+
+        public static BldgProtoDef Create<TProto, TDef>()
+            => new BldgProtoDef(TypeDef.Create<TProto>(), TypeDef.Create<TDef>());
     }
 
     public class BldgMineableDef : DefNamed
@@ -195,6 +221,7 @@ namespace BB
             Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood")));
 
 
+            Register(BldgProtoDef.Create<BuildingProtoResource, BldgMineableDef>());
             Register(new BldgMineableDef("BB:Rock", "Rock", Tool.Pickaxe,
                 new ItemInfoRO(Get<ItemDef>("BB:Stone"), 36),
                 Get<SpriteDef>("BB:BldgRock")));

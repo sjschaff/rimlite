@@ -5,7 +5,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public struct BuildingBounds
     {
         public readonly Vec2I size;
@@ -48,11 +47,9 @@ namespace BB
     public interface IBuilding
     {
         IBuildingProto prototype { get; }
+        HashSet<WorkHandle> workHandles { get; }
 
         bool passable { get; }
-        bool K_mineable { get; }
-        Tool miningTool { get; }
-        IEnumerable<ItemInfo> GetMinedMaterials();
 
         BuildingBounds bounds { get; }
         RenderFlags renderFlags { get; }
@@ -78,13 +75,14 @@ namespace BB
     {
         protected readonly TProto proto;
         public IBuildingProto prototype => proto;
-        protected BuildingBase(TProto proto) => this.proto = proto;
+        public HashSet<WorkHandle> workHandles { get; }
+        protected BuildingBase(TProto proto)
+        {
+            this.proto = proto;
+            this.workHandles = new HashSet<WorkHandle>();
+        }
 
         public virtual bool passable => proto.passable;
-        public virtual bool K_mineable => proto.K_mineable;
-        public virtual Tool miningTool => proto.K_miningTool;
-        public virtual IEnumerable<ItemInfo> GetMinedMaterials() => proto.K_GetMinedMaterials();
-
         public virtual BuildingBounds bounds => proto.bounds;
         public virtual RenderFlags renderFlags => proto.renderFlags;
         public virtual TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
@@ -92,5 +90,4 @@ namespace BB
         public virtual TileSprite GetSpriteOver(Map map, Vec2I pos)
             => proto.GetSpriteOver(map, pos);
     }
-
 }

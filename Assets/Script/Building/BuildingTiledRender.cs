@@ -5,7 +5,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public abstract class BuildingProtoTiledRender : IBuildingProto
     {
         protected BuildingProtoTiledRender() { }
@@ -13,8 +12,6 @@ namespace BB
         public abstract IBuilding CreateBuilding();
         public abstract IEnumerable<ItemInfo> GetBuildMaterials();
         public abstract bool passable { get; }
-        public abstract bool K_mineable { get; }
-        public abstract Tool K_miningTool { get; }
         public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
 
         public BuildingBounds bounds => BuildingBounds.Unit;
@@ -38,8 +35,5 @@ namespace BB
 
             return proto != null;
         }
-
-        public abstract IEnumerable<ItemInfo> K_GetMinedMaterials();
     }
-
 }

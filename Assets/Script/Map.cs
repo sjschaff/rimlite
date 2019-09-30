@@ -5,7 +5,6 @@ namespace BB
 
     public interface ITile
     {
-        bool K_mineable { get; }
         IJob K_activeJob { get; set; }
         bool passable { get; }
         bool hasBuilding { get; }
@@ -54,10 +53,6 @@ namespace BB
         public bool hasJob => activeJob != null;
         public bool passable => terrain.passable && (hasBuilding ? building.passable : true);
         public bool hasBuilding => bldgMain != null || bldgAdj != null;
-
-        // TODO: also kinda jank, replace with buildings registering for
-        // different functions like mine, deconstruct etc.
-        public bool K_mineable => hasBuilding ? building.K_mineable : false;
 
     }
 

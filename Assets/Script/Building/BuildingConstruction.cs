@@ -30,8 +30,6 @@ namespace BB
             }
 
             public override bool passable => true;
-            public override bool K_mineable => false;
-
             public override BuildingBounds bounds => job.prototype.bounds;
             public override RenderFlags renderFlags => job.prototype.renderFlags;
 
@@ -51,12 +49,6 @@ namespace BB
             => throw new NotSupportedException("GetBuildMaterials called on BuildingProtoConstruction");
         public bool passable
             => throw new NotSupportedException("passable called on BuildingProtoConstruction");
-        public bool K_mineable
-            => throw new NotSupportedException("mineable called on BuildingProtoConstruction");
-        public Tool K_miningTool
-            => throw new NotSupportedException("miningTool called on BuildingProtoConstruction");
-        public IEnumerable<ItemInfo> K_GetMinedMaterials()
-            => throw new NotSupportedException("GetMinedMaterials called on BuildingProtoConstruction");
         public BuildingBounds bounds
             => throw new NotSupportedException("bounds called on BuildingProtoConstruction");
         public RenderFlags renderFlags

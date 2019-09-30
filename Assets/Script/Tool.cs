@@ -14,7 +14,7 @@ namespace BB
             LinkedList<UITool> tools = new LinkedList<UITool>();
 
             tools.AddLast(new ToolControlMinion(game));
-            tools.AddLast(new ToolMine(game));
+            tools.AddLast(new ToolOrders(game));
             tools.AddLast(new ToolPlace(game));
             tools.AddLast(new ToolBuild(game));
 
@@ -65,17 +65,22 @@ namespace BB
         }
     }
 
-    public class ToolMine : UITool
+    public class ToolOrders : UITool
     {
-        private Dictionary<Vec2I, Transform> activeOverlays = new Dictionary<Vec2I, Transform>();
+        private IOrdersGiver currentOrders;
+        private Dictionary<Vec2I, Transform> activeOverlays
+            = new Dictionary<Vec2I, Transform>();
 
-        public ToolMine(GameController game) : base(game) { }
+        public ToolOrders(GameController game) : base(game) {
+            currentOrders = game.registry.works[0].orders;
+        }
 
         public override void OnClick(Vec2I pos)
         {
+            // TODO: handle items
             var tile = game.Tile(pos);
-            if (tile.K_mineable && tile.K_activeJob == null)
-                game.AddJob(new JobMine(game, pos));
+            if (currentOrders.ApplicableToBuilding(tile.building) && !currentOrders.HasOrder(pos))
+                currentOrders.AddOrder(pos);
         }
 
         protected override void OnDragUpdate(RectInt rect)
@@ -97,9 +102,10 @@ namespace BB
             {
                 if (!activeOverlays.ContainsKey(v))
                 {
-                    if (game.Tile(v).K_mineable)
+                    // TODO: handle items
+                    if (currentOrders.ApplicableToBuilding(game.Tile(v).building) && !currentOrders.HasOrder(v))
                     {
-                        var o = JobMine.CreateOverlay(game, v);
+                        var o = currentOrders.CreateOverlay(v);
                         activeOverlays.Add(v, o);
                     }
                 }

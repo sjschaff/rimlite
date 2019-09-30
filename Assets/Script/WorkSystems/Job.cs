@@ -147,9 +147,10 @@ namespace BB
         public JobMine(GameController game, Vec2I pos) : base(game, pos)
         {
             BB.Assert(tile.hasBuilding);
-            BB.Assert(tile.building.K_mineable);
+            var building = tile.building as IMineable;
+            BB.AssertNotNull(building);
 
-            task = new Task(this, null, pos, v => v.Adjacent(pos), tile.building.miningTool, MinionAnim.Slash, 2);
+            task = new Task(this, null, pos, v => v.Adjacent(pos), building.tool, MinionAnim.Slash, 2);
             claimed = false;
 
             overlay = CreateOverlay(game, pos);
@@ -182,7 +183,7 @@ namespace BB
             BB.Assert(task == this.task);
             BB.Assert(claimed);
 
-            IBuilding building = tile.building;
+            var building = (IMineable)tile.building;
             game.RemoveBuilding(pos);
             foreach (ItemInfo item in building.GetMinedMaterials())
                 game.DropItem(pos, item);

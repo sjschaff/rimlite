@@ -5,7 +5,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public class BuildingProtoWall : BuildingProtoTiledRender
     {
         public readonly BldgWallDef def;
@@ -15,9 +14,6 @@ namespace BB
         public override IBuilding CreateBuilding() => new BuildingWall(this);
 
         public override bool passable => false;
-        public override bool K_mineable => false;
-        public override Tool K_miningTool => throw new NotSupportedException("miningTool called on BuildingWall");
-        public override IEnumerable<ItemInfo> K_GetMinedMaterials() { yield break; }
 
         private bool IsSame(Map map, Vec2I pos) => GetSame<BuildingProtoWall>(map, pos, out _);
 
@@ -88,5 +84,4 @@ namespace BB
             public BuildingWall(BuildingProtoWall proto) : base(proto) { }
         }
     }
-
 }

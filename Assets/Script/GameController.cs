@@ -67,9 +67,11 @@ namespace BB
         // Start is called before the first frame update
         void Start()
         {
-            registry = new Registry();
+            registry = new Registry(this);
             assets = new AssetSrc();
             map = new Map(this);
+
+            registry.LoadTypes();
 
             mouseHighlight = assets.CreateLine(
                 transform, Vec2.zero, "Mouse Highlight",

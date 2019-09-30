@@ -15,9 +15,6 @@ namespace BB
         public override IBuilding CreateBuilding() => new BuildingFloor(this);
 
         public override bool passable => true;
-        public override bool K_mineable => false;
-        public override Tool K_miningTool => throw new NotSupportedException("miningTool called on BuildingProtoFloor");
-        public override IEnumerable<ItemInfo> K_GetMinedMaterials() { yield break; }
 
         private bool IsSame(Map map, Vec2I pos)
         {

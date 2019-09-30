@@ -1,10 +1,13 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace BB
 {
 
     public class Registry
     {
+        public readonly GameController game;
         public readonly Defs defs;
 
         // TODO: something more general/interesting
@@ -13,8 +16,11 @@ namespace BB
         public readonly Cache<BldgFloorDef, BuildingProtoFloor> floors;
         public readonly Cache<BldgWallDef, BuildingProtoWall> walls;
 
-        public Registry()
+        public readonly List<IWorkSystem> works = new List<IWorkSystem>();
+
+        public Registry(GameController game)
         {
+            this.game = game;
             defs = new Defs();
 
             resources = new Cache<BldgMineableDef, BuildingProtoResource>(
@@ -23,18 +29,32 @@ namespace BB
                 def => new BuildingProtoFloor(def));
             walls = new Cache<BldgWallDef, BuildingProtoWall>(
                 def => new BuildingProtoWall(def));
+        }
 
+        public void LoadTypes()
+        {
             // test
             var t = typeof(BuildingProtoResource);
             UnityEngine.Debug.Log("assembly: " + t.Assembly);
             UnityEngine.Debug.Log("name: " + t.Name);
-            UnityEngine.Debug.Log("name: " + t.FullName);
-            UnityEngine.Debug.Log("full name:" + t.AssemblyQualifiedName);
+            UnityEngine.Debug.Log("full name: " + t.FullName);
+            UnityEngine.Debug.Log("assembly qualified:" + t.AssemblyQualifiedName);
             string typeName = t.AssemblyQualifiedName;
             UnityEngine.Debug.Log("type: " + Type.GetType(typeName));
             var d = defs.Get<BldgMineableDef>("BB:Rock");
             BuildingProtoResource b = (BuildingProtoResource)Activator.CreateInstance(Type.GetType(typeName), d);
+
+
+            foreach (var workSystem in GetTypesForInterface<IWorkSystem>())
+            {
+                works.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
+            }
+            UnityEngine.Debug.Log("found " + works.Count + " work systems.");
         }
+
+        private IEnumerable<Type> GetTypesForInterface<TInterface>()
+            => AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
+                .Where(x => typeof(TInterface).IsAssignableFrom(x) && !x.IsInterface && ! x.IsAbstract);
     }
 
 }
