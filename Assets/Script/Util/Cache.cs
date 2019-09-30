@@ -4,13 +4,13 @@ using System;
 namespace BB
 {
 
-    public class Cache<TKey, TValue>
+    public class CacheNonNullable<TKey, TValue>
     {
         private readonly Func<TKey, TValue> createFn;
         private readonly Dictionary<TKey, TValue> map
             = new Dictionary<TKey, TValue>();
 
-        public Cache(Func<TKey, TValue> createFn) => this.createFn = createFn;
+        public CacheNonNullable(Func<TKey, TValue> createFn) => this.createFn = createFn;
 
         public TValue Get(TKey key)
         {
@@ -22,6 +22,17 @@ namespace BB
 
             return val;
         }
+    }
+
+    public class Cache<TKey, TValue> where TValue : class
+    {
+        private readonly CacheNonNullable<TKey, TValue> cache;
+
+        public Cache(Func<TKey, TValue> createFn)
+            => this.cache = new CacheNonNullable<TKey, TValue>(createFn);
+
+        public TValue Get(TKey key)
+            => key == null ? null : cache.Get(key);
     }
 
 }

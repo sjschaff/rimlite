@@ -50,7 +50,7 @@ namespace BB
         {
             var node = new GameObject(name);
             node.transform.SetParent(parent, false);
-            node.transform.position = pos;
+            node.transform.localPosition = pos;
 
             var renderer = node.AddComponent<T>();
             renderer.SetLayer(layer);

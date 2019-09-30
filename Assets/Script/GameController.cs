@@ -37,11 +37,9 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public class GameController : MonoBehaviour
     {
         // ---- Editor Values ----
-        public Transform minionPrefab;
         public Transform itemPrefab;
         // -----------------------
 
@@ -96,9 +94,7 @@ namespace BB
 
             for (int i = 0; i < 10; ++i)
             {
-                Minion minion = minionPrefab.Instantiate(new Vec2(1 + i, 1), transform).GetComponent<Minion>();
-                minion.Init(this);
-                minions.AddLast(minion);
+                minions.AddLast(new Minion(this, new Vec2(1 + i, 1)));
             }
             D_minionNoTask = minions.First.Value;
 
@@ -272,15 +268,18 @@ namespace BB
             var b = end;
             dragOutline.positionCount = 4;
             dragOutline.SetPositions(new Vec3[] {
-            new Vec3(a.x, a.y),
-            new Vec3(b.x, a.y),
-            new Vec3(b.x, b.y),
-            new Vec3(a.x, b.y)
-        });
+                new Vec3(a.x, a.y),
+                new Vec3(b.x, a.y),
+                new Vec3(b.x, b.y),
+                new Vec3(a.x, b.y)
+            });
         }
 
         void Update()
         {
+            foreach (var minion in minions)
+                minion.Update();
+
             if (Input.GetKeyDown("tab"))
                 tool.OnTab();
 

@@ -24,12 +24,12 @@ namespace BB
             }
         }
 
-        private readonly Cache<AnimKey, Atlas.Key> keys;
+        private readonly CacheNonNullable<AnimKey, Atlas.Key> keys;
         private readonly Cache<string, Atlas> atlases;
 
         public MetaAtlas()
         {
-            keys = new Cache<AnimKey, Atlas.Key>(
+            keys = new CacheNonNullable<AnimKey, Atlas.Key>(
                 animKey =>
                 {
                     var origin = new Vec2I(
@@ -119,27 +119,35 @@ namespace BB
 
         private void DirtySprite() => lastSprite = null;
 
-        void Awake()
+        public void Init(AssetSrc assets)
         {
             if (atlas == null)
                 atlas = new MetaAtlas();
 
-            animDummy = GetComponent<SpriteRenderer>();
-            animator = GetComponent<Animator>();
-            K_SetOutfit(0);
-        }
+            animDummy = assets.CreateSpriteObject(
+                transform, new Vec2(.5f, 0), "AnimDummy", null, Color.white, RenderLayer.Highlight);
+            animDummy.transform.localScale = Vec3.one * 1.75f;
+            animDummy.enabled = false;
+            animator = animDummy.gameObject.AddComponent<Animator>();
+            animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("anim/MinionAnimController");
 
-        void Start()
-        {
+
             spriteLayers = new Dictionary<string, SpriteRenderer>();
-
             int renderLayer = 0;
             foreach (string layer in layers)
             {
-                spriteLayers.Add(layer, CreateSpriteLayer(layer, renderLayer));
+                spriteLayers.Add(layer, assets.CreateSpriteObject(
+                    animDummy.transform, Vec2.zero,
+                    name, null, Color.white,
+                    RenderLayer.Minion.Layer(renderLayer)));
                 ++renderLayer;
             }
+
+            K_SetOutfit(0);
         }
+
+        void Awake() { }
+        void Start() { }
 
         private string NameForTool(Tool tool)
         {
@@ -247,19 +255,6 @@ namespace BB
             "body/ears",
             "weapon",
         };
-
-        private SpriteRenderer CreateSpriteLayer(string name, int renderLayer)
-        {
-            var layer = new GameObject(name);
-            layer.transform.SetParent(transform, false);
-            layer.transform.localPosition = Vec3.zero;
-
-            var sprite = layer.AddComponent<SpriteRenderer>();
-            sprite.SetLayer(RenderLayer.Minion.Layer(renderLayer));
-
-            return sprite;
-        }
-
 
         int k_curOutfit = 0;
         private void K_SetOutfit(int i)

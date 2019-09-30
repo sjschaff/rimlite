@@ -9,14 +9,14 @@ using Vec2I = UnityEngine.Vector2Int;
 namespace BB
 {
 
-    public class Minion : MonoBehaviour
+    public class Minion
     {
         const float speed = 2;
 
-        private LineRenderer line;
-        public MinionSkin skin;
+        private readonly GameController game;
+        private readonly MinionSkin skin;
+        private readonly LineRenderer line;
 
-        private GameController game;
         private Task currentTask;
         public Item carriedItem { get; private set; }
         public bool carryingItem => carriedItem != null;
@@ -26,21 +26,22 @@ namespace BB
 
         public Vec2 pos
         {
-            get => transform.position.xy();
-            private set => transform.position = new Vec3(value.x, value.y, 0);
+            get => skin.transform.position.xy();
+            private set => skin.transform.position = new Vec3(value.x, value.y, 0);
         }
 
         public bool HasTask() => currentTask != null;
 
-        public void Init(GameController game)
+        public Minion(GameController game, Vec2 pos)
         {
             this.game = game;
-        }
+            skin = new GameObject("skin").AddComponent<MinionSkin>();
+            skin.transform.SetParent(game.transform, false);
+            skin.Init(game.assets);
+            this.pos = pos;
 
-        void Start()
-        {
             line = game.assets.CreateLine(
-                transform, Vec2.zero, "MinionPath",
+                skin.transform, Vec2.zero, "MinionPath",
                 RenderLayer.Default.Layer(1000),
                 new Color(.2f, .2f, .2f, .5f),
                 1 / 32f, false, true, null);
@@ -66,7 +67,7 @@ namespace BB
         {
             BB.Assert(!carryingItem);
             carriedItem = item;
-            carriedItem.transform.parent = transform;
+            carriedItem.transform.parent = skin.transform;
             carriedItem.transform.localPosition = new Vec3(0, .2f, 0);
             ReconfigureItem();
         }
@@ -132,7 +133,7 @@ namespace BB
             skin.SetAnimLoop(MinionAnim.None);
         }
 
-        void Update()
+        public void Update()
         {
             if (path != null)
             {
