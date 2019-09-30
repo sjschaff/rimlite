@@ -107,15 +107,17 @@ namespace BB
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(Vec2I pos, bool required)
         {
+            throw new NotImplementedException();
+            /*
             // TODO: check if minions can reroute more efficiently
             if (!required)
                 return;
 
             foreach (var minion in minions)
             {
-                if (minion.HasTask())
+                if (minion.hasJob)
                     minion.Reroute(pos);
-            }
+            }*/
         }
 
         private void RerouteMinions(Vec2I pos, bool wasPassable, bool nowPassable)
@@ -202,7 +204,8 @@ namespace BB
             }
         }
 
-        public void K_MoveMinion(Vec2I pos) => D_minionNoTask.AssignTask(walkDummyJob.CreateWalkTask(pos));
+        public void K_MoveMinion(Vec2I pos) 
+            => D_minionNoTask.AssignJob(Minion.WalkJob(this, pos));
 
         public void AddJob(IJob job)
         {
@@ -219,7 +222,7 @@ namespace BB
         {
             foreach (Minion minion in minions)
             {
-                if (minion != minionIgnore && Vec2.Distance(minion.pos, pos) < .9f)
+                if (minion != minionIgnore && minion.InTile(pos))
                     return true;
             }
 
@@ -230,11 +233,8 @@ namespace BB
         {
             foreach (Minion minion in minions)
             {
-                if (minion.idle && minion.pos.Floor() == pos)
-                {
-                    if (!minion.AssignTask(walkDummyJob.CreateVacateTask(pos)))
-                        Debug.Log("cannon vacate: no path");
-                }
+                if (!minion.hasJob && minion.pos == pos)
+                    minion.AssignJob(new Job2(Minion.TaskGoTo.Vacate(this, pos)));
             }
         }
 
@@ -266,7 +266,7 @@ namespace BB
         void Update()
         {
             foreach (var minion in minions)
-                minion.Update();
+                minion.Update(Time.deltaTime);
 
             if (Input.GetKeyDown("tab"))
                 tool.OnTab();
@@ -319,12 +319,12 @@ namespace BB
                 dragOutline.enabled = true;
             }
 
-            foreach (Minion minion in minions)
+            /*foreach (Minion minion in minions)
             {
                 if (minion == D_minionNoTask)
                     continue;
 
-                if (!minion.HasTask())
+                if (!minion.hasJob)
                 {
                     foreach (var job in currentJobs)
                     {
@@ -342,7 +342,7 @@ namespace BB
                             break;
                     }
                 }
-            }
+            }*/
         }
     }
 

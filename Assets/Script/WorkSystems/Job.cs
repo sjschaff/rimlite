@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System;
 using UnityEngine;
 using Priority_Queue;
@@ -8,8 +9,171 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public enum Tool { None, Hammer, Pickaxe, Axe };
+
+    public abstract class Task2
+    {
+        public enum WorkStatus { Continue, Complete, Fail }
+
+
+        public readonly GameController game;
+        public Minion minion { get; private set; }
+
+        public Task2(GameController game) => this.game = game;
+
+        public WorkStatus BeginWork(Minion minion)
+        {
+            BB.AssertNull(this.minion);
+            BB.AssertNotNull(minion);
+            this.minion = minion;
+            return OnBeginWork();
+        }
+
+        public void EndWork(bool canceled) => OnEndWork(canceled);
+
+
+        protected abstract WorkStatus OnBeginWork();
+        protected abstract void OnEndWork(bool canceled);
+        public abstract WorkStatus PerformWork(float deltaTime);
+    }
+
+    public abstract class TaskTimed : Task2
+    {
+        private float workAmt;
+        private readonly Vec2I workTarget;
+        private readonly MinionAnim anim;
+        private readonly Tool tool;
+
+        protected abstract float WorkSpeed();
+        protected abstract void OnWorkUpdated(float workAmt);
+
+        public TaskTimed(GameController game, Vec2I workTarget,
+            MinionAnim anim, Tool tool, float workAmt)
+            : base(game)
+        {
+            this.workTarget = workTarget;
+            this.anim = anim;
+            this.tool = tool;
+            this.workAmt = workAmt;
+        }
+
+        protected override WorkStatus OnBeginWork()
+        {
+            // TODO: make loading bar
+            minion.skin.SetTool(tool);
+            minion.skin.SetAnimLoop(anim);
+            if (minion.pos != workTarget)
+                minion.SetFacing(workTarget - minion.pos);
+
+            return WorkStatus.Continue;
+        }
+
+        public override WorkStatus PerformWork(float deltaTime)
+        {
+            workAmt = Mathf.Max(workAmt - deltaTime * WorkSpeed(), 0);
+            OnWorkUpdated(workAmt);
+
+            if (workAmt <= 0)
+                return WorkStatus.Complete;
+            else
+                return WorkStatus.Continue;
+        }
+    }
+
+
+    // Task GoTo
+    // Task claim items
+    // Task Pickup Item
+    // Task Drop Item
+    // Task 
+
+
+    // TODO: handle claims, i.e workbenches, locations, items, etc.
+    public class Job2
+    {
+        private readonly Queue<Task2> tasks;
+        public Minion minion { get; private set; }
+        private Task2 activeTask;
+
+        public Job2(Queue<Task2> tasks)
+        {
+            BB.AssertNotNull(tasks);
+            BB.Assert(tasks.Any());
+            this.tasks = tasks;
+        }
+
+        public Job2(IEnumerable<Task2> tasks)
+            : this(new Queue<Task2>(tasks)) { }
+
+        public Job2(params Task2[] tasks)
+            : this((IEnumerable<Task2>)tasks) { }
+
+        public void Claim(Minion minion)
+        {
+            BB.AssertNull(this.minion);
+            BB.AssertNull(activeTask);
+            this.minion = minion;
+        }
+
+        public void Abandon()
+        {
+            if (activeTask != null)
+                activeTask.EndWork(true);
+        }
+
+        private bool IterateTasks()
+        {
+            while (activeTask == null && tasks.Any())
+            {
+                activeTask = tasks.Dequeue();
+
+                var status = activeTask.BeginWork(minion);
+                if (status == Task2.WorkStatus.Fail)
+                {
+                    // TODO: check if we can get an updated task
+                    minion.AbandonJob();
+                    return false;
+                }
+                else if (status == Task2.WorkStatus.Continue)
+                {
+                    return true;
+                }
+
+                activeTask.EndWork(false);
+                activeTask = null;
+            }
+
+            return false;
+        }
+
+        public void PerformWork(float deltaTime)
+        {
+            if (activeTask == null && !IterateTasks())
+            {
+                minion.AbandonJob();
+                return;
+            }
+
+            BB.AssertNotNull(activeTask);
+
+            var status = activeTask.PerformWork(deltaTime);
+            if (status == Task2.WorkStatus.Continue)
+                return;
+
+            minion.skin.SetTool(Tool.None);
+            minion.skin.SetAnimLoop(MinionAnim.None);
+
+            if (status == Task2.WorkStatus.Complete)
+            {
+                activeTask.EndWork(false);
+                activeTask = null;
+                if (IterateTasks())
+                    return;
+            }
+
+            minion.AbandonJob();
+        }
+    }
 
     public interface IJob
     {

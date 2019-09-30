@@ -16,6 +16,9 @@ namespace BB
         public static void AssertNotNull<T>(T t, string msg = null) where T : class
             => Assert(t != null, msg);
 
+        public static void AssertNull<T>(T t, string msg = null) where T : class
+            => Assert(t == null, msg);
+
         public static T Next<T>(this T src) where T : struct
         {
             if (!typeof(T).IsEnum) throw new ArgumentException(String.Format("Argument {0} is not an Enum", typeof(T).FullName));

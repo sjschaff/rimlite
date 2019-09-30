@@ -6,7 +6,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public class BuildingProtoConstruction : IBuildingProto
     {
         public static BuildingProtoConstruction K_single = new BuildingProtoConstruction();
@@ -58,5 +57,4 @@ namespace BB
         public TileSprite GetSpriteOver(Map map, Vec2I pos)
             => throw new NotSupportedException("GetSpriteOver called on BuildingProtoConstruction");
     }
-
 }
