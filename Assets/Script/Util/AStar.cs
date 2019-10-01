@@ -6,7 +6,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public class AStar
     {
         private class Node : FastPriorityQueueNode
@@ -187,5 +186,4 @@ namespace BB
             return null;
         }
     }
-
 }

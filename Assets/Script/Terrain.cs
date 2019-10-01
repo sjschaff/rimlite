@@ -4,7 +4,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public struct Terrain
     {
         // TODO: Kludge
@@ -68,6 +67,5 @@ namespace BB
                 sprites[i] = GetSprite(map, pos, subTile, i);
             return sprites;
         }
-    };
-
+    }
 }

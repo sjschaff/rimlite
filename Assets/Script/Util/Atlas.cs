@@ -5,7 +5,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public class Atlas
     {
         public struct Key
@@ -56,5 +55,4 @@ namespace BB
                 false);
         }
     }
-
 }

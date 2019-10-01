@@ -3,7 +3,6 @@ using System;
 
 namespace BB
 {
-
     public class CacheNonNullable<TKey, TValue>
     {
         private readonly Func<TKey, TValue> createFn;
@@ -34,5 +33,4 @@ namespace BB
         public TValue Get(TKey key)
             => key == null ? null : cache.Get(key);
     }
-
 }

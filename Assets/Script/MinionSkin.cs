@@ -363,5 +363,4 @@ namespace BB
         private static readonly List<Dictionary<string, string>> K_outfits =
             new List<Dictionary<string, string>>() { K_clothed, K_monk, K_plate };
     }
-
 }

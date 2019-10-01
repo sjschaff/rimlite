@@ -5,14 +5,13 @@ using Vec3 = UnityEngine.Vector3;
 
 namespace BB
 {
-
     public static class VecExt
     {
-        public static Vector3 OrthoScale(this UnityEngine.Camera c)
+        public static Vec3 OrthoScale(this UnityEngine.Camera c)
         {
             float h = c.orthographicSize * 2;
             float w = h * c.aspect;
-            return new Vector3(w, h, 0);
+            return new Vec3(w, h, 0);
         }
     }
 
@@ -26,8 +25,8 @@ namespace BB
         private const float maxZoom = 20;
         public bool lockToMap = false;
 
-        Vector3 dragStart;
-        Vector3 transStart;
+        Vec3 dragStart;
+        Vec3 transStart;
 
         public void Start()
         {
@@ -57,7 +56,7 @@ namespace BB
 
             if (Input.GetMouseButton(1))
             {
-                Vector3 drag = cam.ScreenToViewportPoint(dragStart - Input.mousePosition);
+                Vec3 drag = cam.ScreenToViewportPoint(dragStart - Input.mousePosition);
                 drag.Scale(cam.OrthoScale());
                 transform.localPosition = transStart + drag;
             }
@@ -73,5 +72,4 @@ namespace BB
             }
         }
     }
-
 }

@@ -2,7 +2,6 @@
 
 namespace BB
 {
-
     public interface ITile
     {
         IJob K_activeJob { get; set; }
@@ -156,5 +155,4 @@ namespace BB
             AssertValidTile(end);
         }
     }
-
 }

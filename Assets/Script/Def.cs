@@ -292,5 +292,4 @@ namespace BB
         public TDef Get<TDef>(string name) where TDef : Def
             => GetList<TDef>()[name];
     }
-
 }
