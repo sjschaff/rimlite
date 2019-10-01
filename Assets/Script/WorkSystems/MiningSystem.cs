@@ -14,16 +14,14 @@ namespace BB
         float mineTotal { get; }
     }
 
-    public class MiningSystem : WorkSystemAsOrders<MiningSystem.MineWork>
+    public class MiningSystem : WorkSystemAsOrders<MiningSystem, MiningSystem.MineWork>
     {
-        public class MineWork : WorkHandle
+        public class MineWork : WorkHandleOrders
         {
-            public readonly MiningSystem system;
             public readonly IMineable mineable;
 
             public MineWork(MiningSystem system, Vec2I pos) : base(system, pos) {
                 BB.Assert(system != null);
-                this.system = system;
                 var building = system.game.Tile(pos).building;
                 BB.Assert(building != null);
                 mineable = (IMineable)system.game.Tile(pos).building;
@@ -31,12 +29,21 @@ namespace BB
 
                 mineable.workHandles.Add(this);
             }
+
+            public override void Destroy()
+            {
+                mineable.workHandles.Remove(this);
+                base.Destroy();
+            }
         }
 
         public MiningSystem(GameController game) : base(game)
         {
             sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
         }
+
+        protected override MineWork CreateWork(Vec2I pos)
+            => new MineWork(this, pos);
 
         protected override Job2 JobForWork(MineWork work)
         {
@@ -57,23 +64,16 @@ namespace BB
             BB.AssertNotNull(work);
             BB.Assert(work.system == this);
 
+            work.activeJob = null;
             if (canceled)
-            {
-                work.activeJob = null;
                 return;
-            }
 
-            work.mineable.workHandles.Remove(work);
-            RemoveOrder(work);
+            RemoveWork(work);
 
             game.RemoveBuilding(work.pos);
             foreach (ItemInfo item in work.mineable.GetMinedMaterials())
                 game.DropItem(work.pos, item);
         }
-
-        // TODO: maybe we dont need this
-        protected override MineWork CreateWork(Vec2I pos)
-            => new MineWork(this, pos);
 
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
         protected override SpriteDef sprite { get; }
@@ -91,7 +91,7 @@ namespace BB
             {
                 BB.Assert(job == work.activeJob);
                 BB.Assert(canceled || work.mineable.mineAmt <= 0);
-                work.system.MineFinished(work, canceled);
+                work.orders.MineFinished(work, canceled);
             }
 
             protected override void OnWorkUpdated(float workAmt)

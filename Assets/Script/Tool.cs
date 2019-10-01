@@ -6,7 +6,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public abstract class UITool
     {
         public static LinkedList<UITool> RegisterTools(GameController game)
