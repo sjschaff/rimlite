@@ -10,6 +10,11 @@ namespace BB
 {
     public class Minion
     {
+#if DEBUG
+        private static int D_nextID = 0;
+        public readonly int D_uniqueID;
+#endif
+
         public readonly GameController game;
         public MinionSkin skin { get; }
 
@@ -38,6 +43,11 @@ namespace BB
 
         public Minion(GameController game, Vec2 pos)
         {
+#if DEBUG
+            D_uniqueID = D_nextID;
+            ++D_nextID;
+#endif
+
             this.game = game;
             skin = new GameObject("Minion").AddComponent<MinionSkin>();
             skin.transform.SetParent(game.transform, false);
@@ -85,29 +95,24 @@ namespace BB
                 currentJob.PerformWork(deltaTime);
         }
 
-        public void AssignJob(Job2 job)
+        public bool AssignJob(Job2 job)
         {
             if (currentJob != null)
-                currentJob.Abandon();
+                currentJob.Abandon(this);
 
             currentJob = job;
-            currentJob.Claim(this);
+            return currentJob.Claim(this);
         }
 
         public void AbandonJob()
         {
             BB.AssertNotNull(currentJob);
-            currentJob.Abandon();
+            currentJob.Abandon(this);
+            currentJob = null;
 
             // TODO: handle case of not being Grid Aligned
             if (!GridAligned())
                 realPos = pos;
-        }
-
-        // TODO: put this somewhere sensible
-        public static Job2 WalkJob(GameController game, Vec2I pos)
-        {
-            return new Job2(new TaskGoTo(game, pos));
         }
 
         public class TaskGoTo : Task2
@@ -119,23 +124,25 @@ namespace BB
             private LinkedList<Vec2I> path;
             private LineRenderer pathVis;
 
-            public TaskGoTo(GameController game, Func<Vec2I, bool> dstFn, Vec2I endHint)
+            private TaskGoTo(GameController game, Func<Vec2I, bool> dstFn, Vec2I endHint)
                 : base(game)
             {
                 this.dstFn = dstFn;
                 this.endHint = endHint;
             }
 
-            public TaskGoTo(GameController game, Vec2I end)
-                : this(game, pt => pt == end, end) { }
+            public static TaskGoTo Point(GameController game, Vec2I end)
+                => new TaskGoTo(game, pt => pt == end, end);
 
+            // TODO: this is gonna get interesting with claims, well have to find a path first
+            // then claim the endpoint, pathfinding will also need to not allow claimed tiles
+            // also the hueristic for this is totalled f'ed right now
             public static TaskGoTo Vacate(GameController game, Vec2I pos)
-            {
-                // TODO: this is gonna get interesting with claims, well have to find a path first
-                // then claim the endpoint, pathfinding will also need to not allow claimed tiles
-                // also the hueristic for this is totalled f'ed right now
-                return new TaskGoTo(game, v => v != pos, pos);
-            }
+                => new TaskGoTo(game, v => v != pos, pos);
+
+            // TODO: see Vacate, also take building size or something instead
+            public static TaskGoTo Adjacent(GameController game, Vec2I pos)
+                => new TaskGoTo(game, v => v.Adjacent(pos), pos);
 
             private bool GetPath()
             {
@@ -201,9 +208,10 @@ namespace BB
 
                 if (!GetPath())
                 {
-                    minion.AbandonJob(); // actually this could track its failure state and
-                                         // finish moving then return Fail
-                                         // TODO: assign new job to minion to walk to nearest tile
+                    job.Cancel();
+                     // actually this could track its failure state and
+                     // finish moving then return Fail
+                     // TODO: assign new job to minion to walk to nearest tile
 
                     //// TODO: figure out how to handle edge case of currentently in or going into newly solid tile
                     //path = new LinkedList<Vec2I>();

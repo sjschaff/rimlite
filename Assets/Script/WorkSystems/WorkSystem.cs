@@ -10,7 +10,7 @@ namespace BB
         public readonly IOrdersGiver orders;
         public readonly Vec2I pos;
         public readonly Transform overlay;
-        public IJob activeJob;
+        public Job2 activeJob;
 
         public WorkHandle(IOrdersGiver orders, Vec2I pos)
         {
@@ -20,11 +20,8 @@ namespace BB
             this.overlay = orders.CreateOverlay(pos);
         }
 
-        public void Destroy()
-        {
-            overlay.Destroy();
-            orders.CancelOrder(this);
-        }
+        public void Cancel() => orders.CancelOrder(this);
+        public void Destroy() => overlay.Destroy();
     }
 
     // example: s
@@ -32,6 +29,8 @@ namespace BB
     {
         // TODO: some way to track buildings added/removed
         IOrdersGiver orders { get; }
+
+        IEnumerable<Job2> QueryJobs();
     }
 
     public enum OrdersFlags
@@ -73,22 +72,30 @@ namespace BB
         public void AddOrder(Vec2I pos)
         {
             BB.Assert(!HasOrder(pos));
-            works.Add(pos, CreateWork(pos));
+            var work = CreateWork(pos);
+            works.Add(pos, work);
+        }
+
+        protected void RemoveOrder(TWork work)
+        {
+            BB.Assert(work.orders == this);
+            BB.Assert(works.TryGetValue(work.pos, out var workContained) && workContained == work);
+
+            works.Remove(work.pos);
+            work.Destroy();
         }
 
         public void CancelOrder(WorkHandle handle)
         {
             TWork work = (TWork)handle;
+            BB.Assert(work.orders == this);
             BB.Assert(HasOrder(work.pos));
             BB.Assert(works[work.pos] == work);
 
-            works.Remove(work.pos);
             if (work.activeJob != null)
-            {
-                throw new System.NotImplementedException();
-//                work.activeJob.Cancel();
-            }
+                work.activeJob.Cancel();
 
+            RemoveOrder(work);
         }
 
         public Transform CreateOverlay(Vec2I pos)

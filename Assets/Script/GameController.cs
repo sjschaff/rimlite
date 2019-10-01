@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System;
 using UnityEngine;
 
@@ -54,8 +55,6 @@ namespace BB
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
         private Minion D_minionNoTask;
         private readonly LinkedList<Item> items = new LinkedList<Item>();
-        private readonly LinkedList<IJob> currentJobs = new LinkedList<IJob>();
-        private readonly JobWalkDummy walkDummyJob = new JobWalkDummy();
         private UITool tool => currentTool.Value;
 
         // TODO: figure out what should be in awake and what should be in start
@@ -107,7 +106,8 @@ namespace BB
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(Vec2I pos, bool required)
         {
-            throw new NotImplementedException();
+            if (required)
+                throw new NotImplementedException();
             /*
             // TODO: check if minions can reroute more efficiently
             if (!required)
@@ -175,6 +175,7 @@ namespace BB
                 RerouteMinions(pos, wasPassable);
         }
 
+        // TODO: make this DropItems so we can do fast flood fill in O(n)
         public void DropItem(Vec2I pos, Item item)
         {
             BB.AssertNotNull(item);
@@ -205,17 +206,19 @@ namespace BB
         }
 
         public void K_MoveMinion(Vec2I pos) 
-            => D_minionNoTask.AssignJob(Minion.WalkJob(this, pos));
+            => D_minionNoTask.AssignJob(new Job2(Minion.TaskGoTo.Point(this, pos)));
 
         public void AddJob(IJob job)
         {
             Debug.Log("Added Job: " + job + "(" + job.GetHashCode() + ")");
-            currentJobs.AddLast(job);
+            throw new NotSupportedException();
+           // currentJobs.AddLast(job);
         }
 
         public void RemoveJob(IJob job)
         {
-            currentJobs.Remove(job);
+            //currentJobs.Remove(job);
+            throw new NotSupportedException();
         }
 
         public bool IsTileOccupied(Vec2I pos, Minion minionIgnore)
@@ -319,30 +322,20 @@ namespace BB
                 dragOutline.enabled = true;
             }
 
-            /*foreach (Minion minion in minions)
+            foreach (Minion minion in minions)
             {
                 if (minion == D_minionNoTask)
                     continue;
 
                 if (!minion.hasJob)
                 {
-                    foreach (var job in currentJobs)
+                    foreach (var job in registry.works.SelectMany(w => w.QueryJobs()))
                     {
-                        bool gotTask = false;
-                        foreach (var task in job.AvailableTasks())
-                        {
-                            if (minion.AssignTask(task))
-                            {
-                                gotTask = true;
-                                break;
-                            }
-                        }
-
-                        if (gotTask)
+                        if (minion.AssignJob(job))
                             break;
                     }
                 }
-            }*/
+            }
         }
     }
 

@@ -35,9 +35,11 @@ namespace BB
 
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
         {
-            float minedAmt; // or some such thing....
+            public float mineAmt { get; set; }
+            public float mineTotal { get; }
 
-            public BuildingResource(BuildingProtoResource proto) : base(proto) => minedAmt = 0;
+            public BuildingResource(BuildingProtoResource proto) : base(proto)
+                => mineAmt = mineTotal = 2;
 
             public Tool tool => proto.def.tool;
 

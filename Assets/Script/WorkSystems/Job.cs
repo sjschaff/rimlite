@@ -17,15 +17,17 @@ namespace BB
 
 
         public readonly GameController game;
-        public Minion minion { get; private set; }
+        public Job2 job { get; private set; }
+        public Minion minion => job.minion;
 
         public Task2(GameController game) => this.game = game;
 
-        public WorkStatus BeginWork(Minion minion)
+        public WorkStatus BeginWork(Job2 job)
         {
-            BB.AssertNull(this.minion);
-            BB.AssertNotNull(minion);
-            this.minion = minion;
+            BB.AssertNull(this.job);
+            BB.AssertNotNull(job);
+            BB.AssertNotNull(job.minion);
+            this.job = job;
             return OnBeginWork();
         }
 
@@ -35,6 +37,26 @@ namespace BB
         protected abstract WorkStatus OnBeginWork();
         protected abstract void OnEndWork(bool canceled);
         public abstract WorkStatus PerformWork(float deltaTime);
+    }
+
+    public class TaskLambda : Task2
+    {
+        private readonly Func<Job2, bool> fn;
+
+        public TaskLambda(GameController game, Func<Job2, bool> fn)
+            : base(game)
+        {
+            BB.AssertNotNull(fn);
+            this.fn = fn;
+        }
+
+        protected override WorkStatus OnBeginWork()
+            => fn(job) ? WorkStatus.Complete : WorkStatus.Fail;
+
+        public override WorkStatus PerformWork(float deltaTime)
+            => throw new NotSupportedException();
+
+        protected override void OnEndWork(bool canceled) { }
     }
 
     public abstract class TaskTimed : Task2
@@ -85,18 +107,28 @@ namespace BB
     // Task claim items
     // Task Pickup Item
     // Task Drop Item
-    // Task 
+    // Task
 
 
     // TODO: handle claims, i.e workbenches, locations, items, etc.
     public class Job2
     {
+#if DEBUG
+        private static int D_nextID = 0;
+        public readonly int D_uniqueID;
+#endif
+
         private readonly Queue<Task2> tasks;
         public Minion minion { get; private set; }
         private Task2 activeTask;
 
         public Job2(Queue<Task2> tasks)
         {
+#if DEBUG
+            D_uniqueID = D_nextID;
+            ++D_nextID;
+#endif
+
             BB.AssertNotNull(tasks);
             BB.Assert(tasks.Any());
             this.tasks = tasks;
@@ -108,17 +140,27 @@ namespace BB
         public Job2(params Task2[] tasks)
             : this((IEnumerable<Task2>)tasks) { }
 
-        public void Claim(Minion minion)
+        public bool Claim(Minion minion)
         {
             BB.AssertNull(this.minion);
             BB.AssertNull(activeTask);
             this.minion = minion;
+
+            return IterateTasks();
         }
 
-        public void Abandon()
+        public void Abandon(Minion minion)
         {
+            BB.AssertNotNull(this.minion);
+            BB.Assert(this.minion == minion);
             if (activeTask != null)
                 activeTask.EndWork(true);
+        }
+
+        public void Cancel()
+        {
+            BB.Assert(this.minion != null);
+            minion.AbandonJob();
         }
 
         private bool IterateTasks()
@@ -127,11 +169,11 @@ namespace BB
             {
                 activeTask = tasks.Dequeue();
 
-                var status = activeTask.BeginWork(minion);
+                var status = activeTask.BeginWork(this);
                 if (status == Task2.WorkStatus.Fail)
                 {
                     // TODO: check if we can get an updated task
-                    minion.AbandonJob();
+                    Cancel();
                     return false;
                 }
                 else if (status == Task2.WorkStatus.Continue)
@@ -148,12 +190,6 @@ namespace BB
 
         public void PerformWork(float deltaTime)
         {
-            if (activeTask == null && !IterateTasks())
-            {
-                minion.AbandonJob();
-                return;
-            }
-
             BB.AssertNotNull(activeTask);
 
             var status = activeTask.PerformWork(deltaTime);
@@ -171,7 +207,7 @@ namespace BB
                     return;
             }
 
-            minion.AbandonJob();
+            Cancel();
         }
     }
 
@@ -183,20 +219,6 @@ namespace BB
 
         // Returns a follow up task or null if none
         Task CompleteTask(Minion minion, Task task);
-    }
-
-    public class JobWalkDummy : IJob
-    {
-        public IEnumerable<Task> AvailableTasks() => throw new NotImplementedException();
-        public void ClaimTask(Minion minion, Task task) { }
-        public Task CompleteTask(Minion minion, Task task) => null;
-        public void AbandonTask(Minion minion, Task task) { }
-
-        public Task CreateWalkTask(Vec2I pos)
-            => new Task(this, null, pos, v => v == pos, Tool.None, MinionAnim.None, 0);
-
-        public Task CreateVacateTask(Vec2I pos)
-            => new Task(this, null, pos, v => v != pos, Tool.None, MinionAnim.None, 0);
     }
 
     public abstract class JobStandard : IJob
@@ -297,64 +319,6 @@ namespace BB
         public abstract void OnClaimTask(Minion minion, Task task);
         public abstract void OnAbandonTask(Minion minion, Task task);
         public abstract Task OnCompleteTask(Minion minion, Task task);
-    }
-
-    public class JobMine : JobStandard
-    {
-        private readonly Task task;
-        private readonly Transform overlay;
-        private bool claimed;
-
-        public static Transform CreateOverlay(GameController game, Vec2I pos)
-            => game.assets.CreateJobOverlay(game.transform, pos, game.defs.Get<SpriteDef>("BB:MineOverlay")).transform;
-
-        public JobMine(GameController game, Vec2I pos) : base(game, pos)
-        {
-            BB.Assert(tile.hasBuilding);
-            var building = tile.building as IMineable;
-            BB.AssertNotNull(building);
-
-            task = new Task(this, null, pos, v => v.Adjacent(pos), building.tool, MinionAnim.Slash, 2);
-            claimed = false;
-
-            overlay = CreateOverlay(game, pos);
-        }
-
-        public override IEnumerable<Task> GetAvailableTasks()
-        {
-            if (!claimed)
-                yield return task;
-        }
-
-        public override void OnClaimTask(Minion minion, Task task)
-        {
-            BB.Assert(task == this.task);
-            BB.Assert(!claimed);
-
-            claimed = true;
-        }
-
-        public override void OnAbandonTask(Minion minion, Task task)
-        {
-            BB.Assert(task == this.task);
-            BB.Assert(claimed);
-
-            claimed = false;
-        }
-
-        public override Task OnCompleteTask(Minion minion, Task task)
-        {
-            BB.Assert(task == this.task);
-            BB.Assert(claimed);
-
-            var building = (IMineable)tile.building;
-            game.RemoveBuilding(pos);
-            foreach (ItemInfo item in building.GetMinedMaterials())
-                game.DropItem(pos, item);
-
-            overlay.Destroy();
-            return FinishJob();
-        }
     }
 
     // TODO: support hualing to multiple jobs
@@ -647,5 +611,4 @@ namespace BB
 
         public override string ToString() => "Task{" + job + ", " + info + "}";
     }
-
 }
