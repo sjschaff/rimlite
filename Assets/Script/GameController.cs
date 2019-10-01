@@ -206,7 +206,7 @@ namespace BB
         }
 
         public void K_MoveMinion(Vec2I pos) 
-            => D_minionNoTask.AssignWork(new Work(Minion.TaskGoTo.Point(this, pos)));
+            => D_minionNoTask.AssignWork(WalkSystemDummy.Create(Minion.TaskGoTo.Point(this, pos)));
 
         public void AddJob(IJob job)
         {
@@ -237,7 +237,7 @@ namespace BB
             foreach (Minion minion in minions)
             {
                 if (!minion.hasWork && minion.pos == pos)
-                    minion.AssignWork(new Work(Minion.TaskGoTo.Vacate(this, pos)));
+                    minion.AssignWork(WalkSystemDummy.Create(Minion.TaskGoTo.Vacate(this, pos)));
             }
         }
 

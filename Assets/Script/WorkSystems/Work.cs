@@ -118,27 +118,29 @@ namespace BB
         public readonly int D_uniqueID;
 #endif
 
+        private readonly JobHandle job;
         private readonly Queue<Task2> tasks;
         public Minion minion { get; private set; }
         private Task2 activeTask;
 
-        public Work(Queue<Task2> tasks)
+        public Work(JobHandle job, Queue<Task2> tasks)
         {
 #if DEBUG
             D_uniqueID = D_nextID;
             ++D_nextID;
 #endif
-
+            BB.AssertNotNull(job);
             BB.AssertNotNull(tasks);
             BB.Assert(tasks.Any());
+            this.job = job;
             this.tasks = tasks;
         }
 
-        public Work(IEnumerable<Task2> tasks)
-            : this(new Queue<Task2>(tasks)) { }
+        public Work(JobHandle job, IEnumerable<Task2> tasks)
+            : this(job, new Queue<Task2>(tasks)) { }
 
-        public Work(params Task2[] tasks)
-            : this((IEnumerable<Task2>)tasks) { }
+        public Work(JobHandle job, params Task2[] tasks)
+            : this(job, (IEnumerable<Task2>)tasks) { }
 
         public bool Claim(Minion minion)
         {
@@ -146,7 +148,7 @@ namespace BB
             BB.AssertNull(activeTask);
             this.minion = minion;
 
-            return IterateTasks();
+            return MoveToNextTask();
         }
 
         public void Abandon(Minion minion)
@@ -155,6 +157,7 @@ namespace BB
             BB.Assert(this.minion == minion);
             if (activeTask != null)
                 activeTask.EndTask(true);
+            job.AbandonWork();
         }
 
         public void Cancel()
@@ -163,29 +166,43 @@ namespace BB
             minion.AbandonWork();
         }
 
-        private bool IterateTasks()
+        private void Complete()
+        {
+            minion.RemoveWork(this);
+        }
+
+        private bool MoveToNextTask()
+        {
+            var status = IterateTasks();
+
+            if (status == Task2.Status.Fail)
+            {
+                Cancel();
+                return false;
+            }
+            else if (status == Task2.Status.Complete)
+                Complete();
+
+            return true;
+        }
+
+        private Task2.Status IterateTasks()
         {
             while (activeTask == null && tasks.Any())
             {
                 activeTask = tasks.Dequeue();
 
                 var status = activeTask.BeginTask(this);
-                if (status == Task2.Status.Fail)
+                if (status == Task2.Status.Complete)
                 {
-                    // TODO: check if we can get an updated task
-                    Cancel();
-                    return false;
+                    activeTask.EndTask(false);
+                    activeTask = null;
                 }
-                else if (status == Task2.Status.Continue)
-                {
-                    return true;
-                }
-
-                activeTask.EndTask(false);
-                activeTask = null;
+                else
+                    return status;
             }
 
-            return false;
+            return Task2.Status.Complete;
         }
 
         public void PerformWork(float deltaTime)
@@ -203,11 +220,8 @@ namespace BB
             {
                 activeTask.EndTask(false);
                 activeTask = null;
-                if (IterateTasks())
-                    return;
+                MoveToNextTask();
             }
-
-            Cancel();
         }
     }
 
@@ -221,13 +235,13 @@ namespace BB
         Task CompleteTask(Minion minion, Task task);
     }
 
-    public abstract class JobStandard : IJob
+    public abstract class JobStandardOLD : IJob
     {
         protected GameController game { get; private set; }
         protected Vec2I pos { get; private set; }
         protected ITile tile { get; private set; }
 
-        protected JobStandard(GameController game, Vec2I pos)
+        protected JobStandardOLD(GameController game, Vec2I pos)
         {
             this.game = game;
             this.pos = pos;
@@ -322,7 +336,7 @@ namespace BB
     }
 
     // TODO: support hualing to multiple jobs
-    public class JobBuild : JobStandard
+    public class JobBuild : JobStandardOLD
     {
         private class HaulTaskInfo : ITaskInfo
         {

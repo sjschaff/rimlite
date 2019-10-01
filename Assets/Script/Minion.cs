@@ -104,15 +104,22 @@ namespace BB
             return currentWork.Claim(this);
         }
 
-        public void AbandonWork()
+        public void RemoveWork(Work work)
         {
             BB.AssertNotNull(currentWork);
-            currentWork.Abandon(this);
+            BB.Assert(work == currentWork);
             currentWork = null;
 
             // TODO: handle case of not being Grid Aligned
             if (!GridAligned())
                 realPos = pos;
+        }
+
+        public void AbandonWork()
+        {
+            BB.AssertNotNull(currentWork);
+            currentWork.Abandon(this);
+            RemoveWork(currentWork);
         }
 
         public class TaskGoTo : Task2

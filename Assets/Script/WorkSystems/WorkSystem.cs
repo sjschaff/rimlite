@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System;
 using UnityEngine;
 
@@ -19,8 +20,14 @@ namespace BB
             this.pos = pos;
         }
 
-        public virtual void Cancel() => system.CancelJob(this);
-        public virtual void Destroy() { }
+        public virtual void CancelJob() => system.CancelJob(this);
+        public virtual void AbandonWork() => system.WorkAbandoned(this);
+
+        public virtual void Destroy()
+        {
+            if (activeWork != null)
+                activeWork.Cancel();
+        }
     }
 
     // example: s
@@ -31,7 +38,8 @@ namespace BB
 
         IEnumerable<Work> QueryWork();
 
-        void CancelJob(JobHandle work);
+        void CancelJob(JobHandle job);
+        void WorkAbandoned(JobHandle job);
     }
 
     [Flags]
@@ -54,9 +62,23 @@ namespace BB
         bool ApplicableToBuilding(IBuilding building);
     }
 
-    public abstract class WorkSystemStandard<TJob> : IWorkSystem
-        where TJob : JobHandle
+    public abstract class WorkSystemStandard<TThis, TJob> : IWorkSystem
+        where TJob : WorkSystemStandard<TThis, TJob>.JobStandard
+        where TThis : WorkSystemStandard<TThis, TJob>
     {
+        public abstract class JobStandard : JobHandle
+        {
+            public readonly TThis systemTyped;
+
+            public JobStandard(TThis system, Vec2I pos)
+                : base(system, pos)
+            {
+                this.systemTyped = system;
+            }
+
+            public abstract IEnumerable<Task2> GetTasks();
+        }
+
         public readonly GameController game;
         private readonly Dictionary<Vec2I, TJob> jobs
             = new Dictionary<Vec2I, TJob>();
@@ -64,14 +86,30 @@ namespace BB
         protected WorkSystemStandard(GameController game) => this.game = game;
 
         public abstract IOrdersGiver orders { get; }
-        protected abstract Work WorkForJob(TJob job);
 
         public IEnumerable<Work> QueryWork()
         {
             foreach (var job in jobs.Values)
             {
                 if (job.activeWork == null)
-                    yield return WorkForJob(job);
+                    yield return new Work(job, job.GetTasks()
+                        .Prepend(new TaskLambda(game,
+                            (work) =>
+                            {
+                                if (job.activeWork != null)
+                                    return false;
+
+                                job.activeWork = work;
+                                return true;
+                            }))
+                        .Append(new TaskLambda(game,
+                            (work) =>
+                            {
+                                job.activeWork = null;
+                                RemoveJob(job);
+                                return true;
+                            }))
+                        );
             }
         }
 
@@ -88,11 +126,8 @@ namespace BB
             BB.Assert(job.system == this);
             BB.Assert(jobs.TryGetValue(job.pos, out var workContained) && workContained == job);
 
-            if (job.activeWork != null)
-                job.activeWork.Cancel();
-
-            jobs.Remove(job.pos);
             job.Destroy();
+            jobs.Remove(job.pos);
         }
 
         public void CancelJob(JobHandle handle)
@@ -101,13 +136,20 @@ namespace BB
             BB.Assert(job.system == this);
             RemoveJob(job);
         }
+
+        public void WorkAbandoned(JobHandle handle)
+        {
+            TJob job = (TJob)handle;
+            BB.Assert(job.system == this);
+            handle.activeWork = null;
+        }
     }
 
-    public abstract class WorkSystemAsOrders<TThis, TJob> : WorkSystemStandard<TJob>, IOrdersGiver
-        where TJob : JobHandle
+    public abstract class WorkSystemAsOrders<TThis, TJob> : WorkSystemStandard<TThis, TJob>, IOrdersGiver
+        where TJob : WorkSystemStandard<TThis, TJob>.JobStandard
         where TThis : WorkSystemAsOrders<TThis, TJob>
     {
-        public class JobHandleOrders : JobHandle
+        public abstract class JobHandleOrders : JobStandard
         {
             public readonly TThis orders;
             public readonly Transform overlay;

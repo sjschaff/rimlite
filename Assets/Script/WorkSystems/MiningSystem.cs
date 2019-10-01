@@ -16,11 +16,22 @@ namespace BB
 
     public class MiningSystem : WorkSystemAsOrders<MiningSystem, MiningSystem.JobMine>
     {
+        public MiningSystem(GameController game) : base(game)
+            => sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
+
+        public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
+        protected override SpriteDef sprite { get; }
+        public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
+
+        protected override JobMine CreateJob(Vec2I pos)
+            => new JobMine(this, pos);
+
         public class JobMine : JobHandleOrders
         {
             public readonly IMineable mineable;
 
-            public JobMine(MiningSystem system, Vec2I pos) : base(system, pos) {
+            public JobMine(MiningSystem system, Vec2I pos) : base(system, pos)
+            {
                 BB.Assert(system != null);
                 var building = system.game.Tile(pos).building;
                 BB.Assert(building != null);
@@ -35,49 +46,13 @@ namespace BB
                 mineable.jobHandles.Remove(this);
                 base.Destroy();
             }
+
+            public override IEnumerable<Task2> GetTasks()
+            {
+                yield return Minion.TaskGoTo.Adjacent(systemTyped.game, pos);
+                yield return new TaskMine(systemTyped.game, this);
+            }
         }
-
-        public MiningSystem(GameController game) : base(game)
-        {
-            sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
-        }
-
-        protected override JobMine CreateJob(Vec2I pos)
-            => new JobMine(this, pos);
-
-        protected override Work WorkForJob(JobMine job)
-        {
-            return new Work(
-                new TaskLambda(game, (work) =>
-                {
-                    if (job.activeWork != null)
-                        return false;
-                    job.activeWork = work;
-                    return true;
-                }),
-                Minion.TaskGoTo.Adjacent(game, job.pos),
-                new TaskMine(game, job));
-        }
-
-        private void MineFinished(JobMine job, bool canceled)
-        {
-            BB.AssertNotNull(job);
-            BB.Assert(job.system == this);
-
-            job.activeWork = null;
-            if (canceled)
-                return;
-
-            RemoveJob(job);
-
-            game.RemoveBuilding(job.pos);
-            foreach (ItemInfo item in job.mineable.GetMinedMaterials())
-                game.DropItem(job.pos, item);
-        }
-
-        public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
-        protected override SpriteDef sprite { get; }
-        public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
 
         private class TaskMine : TaskTimed
         {
@@ -90,8 +65,14 @@ namespace BB
             protected override void OnEndTask(bool canceled)
             {
                 BB.Assert(work == job.activeWork);
-                BB.Assert(canceled || job.mineable.mineAmt <= 0);
-                job.orders.MineFinished(job, canceled);
+                if (!canceled)
+                {
+                    BB.Assert(job.mineable.mineAmt <= 0);
+
+                    game.RemoveBuilding(job.pos);
+                    foreach (ItemInfo item in job.mineable.GetMinedMaterials())
+                        game.DropItem(job.pos, item);
+                }
             }
 
             protected override void OnWorkUpdated(float workAmt)

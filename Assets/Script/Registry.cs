@@ -4,7 +4,6 @@ using System;
 
 namespace BB
 {
-
     public class Registry
     {
         public readonly GameController game;
@@ -34,7 +33,7 @@ namespace BB
         public void LoadTypes()
         {
             // test
-            var t = typeof(BuildingProtoResource);
+            /*var t = typeof(BuildingProtoResource);
             UnityEngine.Debug.Log("assembly: " + t.Assembly);
             UnityEngine.Debug.Log("name: " + t.Name);
             UnityEngine.Debug.Log("full name: " + t.FullName);
@@ -43,11 +42,20 @@ namespace BB
             UnityEngine.Debug.Log("type: " + Type.GetType(typeName));
             var d = defs.Get<BldgMineableDef>("BB:Rock");
             BuildingProtoResource b = (BuildingProtoResource)Activator.CreateInstance(Type.GetType(typeName), d);
-
+            */
 
             foreach (var workSystem in GetTypesForInterface<IWorkSystem>())
             {
-                systems.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
+                try
+                {
+                    if (!workSystem.GetCustomAttributes(typeof(AttributeDontInstantiate), false).Any())
+                        systems.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
+                } catch (MissingMethodException)
+                {
+                    UnityEngine.Debug.Log("Failed to instatiate work system '" + workSystem.FullName +
+                        "': missing constructor taking single argument GameController");
+
+                }
             }
             UnityEngine.Debug.Log("found " + systems.Count + " work systems.");
         }
@@ -57,4 +65,6 @@ namespace BB
                 .Where(x => typeof(TInterface).IsAssignableFrom(x) && !x.IsInterface && ! x.IsAbstract);
     }
 
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    public class AttributeDontInstantiate : Attribute { }
 }
