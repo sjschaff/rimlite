@@ -14,25 +14,25 @@ namespace BB
         float mineTotal { get; }
     }
 
-    public class MiningSystem : WorkSystemAsOrders<MiningSystem, MiningSystem.MineWork>
+    public class MiningSystem : WorkSystemAsOrders<MiningSystem, MiningSystem.JobMine>
     {
-        public class MineWork : WorkHandleOrders
+        public class JobMine : JobHandleOrders
         {
             public readonly IMineable mineable;
 
-            public MineWork(MiningSystem system, Vec2I pos) : base(system, pos) {
+            public JobMine(MiningSystem system, Vec2I pos) : base(system, pos) {
                 BB.Assert(system != null);
                 var building = system.game.Tile(pos).building;
                 BB.Assert(building != null);
                 mineable = (IMineable)system.game.Tile(pos).building;
                 BB.Assert(mineable != null);
 
-                mineable.workHandles.Add(this);
+                mineable.jobHandles.Add(this);
             }
 
             public override void Destroy()
             {
-                mineable.workHandles.Remove(this);
+                mineable.jobHandles.Remove(this);
                 base.Destroy();
             }
         }
@@ -42,37 +42,37 @@ namespace BB
             sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
         }
 
-        protected override MineWork CreateWork(Vec2I pos)
-            => new MineWork(this, pos);
+        protected override JobMine CreateJob(Vec2I pos)
+            => new JobMine(this, pos);
 
-        protected override Job2 JobForWork(MineWork work)
+        protected override Work WorkForJob(JobMine job)
         {
-            return new Job2(
-                new TaskLambda(game, (job) =>
+            return new Work(
+                new TaskLambda(game, (work) =>
                 {
-                    if (work.activeJob != null)
+                    if (job.activeWork != null)
                         return false;
-                    work.activeJob = job;
+                    job.activeWork = work;
                     return true;
                 }),
-                Minion.TaskGoTo.Adjacent(game, work.pos),
-                new TaskMine(game, work));
+                Minion.TaskGoTo.Adjacent(game, job.pos),
+                new TaskMine(game, job));
         }
 
-        private void MineFinished(MineWork work, bool canceled)
+        private void MineFinished(JobMine job, bool canceled)
         {
-            BB.AssertNotNull(work);
-            BB.Assert(work.system == this);
+            BB.AssertNotNull(job);
+            BB.Assert(job.system == this);
 
-            work.activeJob = null;
+            job.activeWork = null;
             if (canceled)
                 return;
 
-            RemoveWork(work);
+            RemoveJob(job);
 
-            game.RemoveBuilding(work.pos);
-            foreach (ItemInfo item in work.mineable.GetMinedMaterials())
-                game.DropItem(work.pos, item);
+            game.RemoveBuilding(job.pos);
+            foreach (ItemInfo item in job.mineable.GetMinedMaterials())
+                game.DropItem(job.pos, item);
         }
 
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
@@ -81,23 +81,23 @@ namespace BB
 
         private class TaskMine : TaskTimed
         {
-            private readonly MineWork work;
+            private readonly JobMine job;
 
-            public TaskMine(GameController game, MineWork work)
+            public TaskMine(GameController game, JobMine work)
                 : base(game, work.pos, MinionAnim.Slash, work.mineable.tool, work.mineable.mineAmt)
-                => this.work = work;
+                => this.job = work;
 
-            protected override void OnEndWork(bool canceled)
+            protected override void OnEndTask(bool canceled)
             {
-                BB.Assert(job == work.activeJob);
-                BB.Assert(canceled || work.mineable.mineAmt <= 0);
-                work.orders.MineFinished(work, canceled);
+                BB.Assert(work == job.activeWork);
+                BB.Assert(canceled || job.mineable.mineAmt <= 0);
+                job.orders.MineFinished(job, canceled);
             }
 
             protected override void OnWorkUpdated(float workAmt)
             {
-                BB.Assert(job == work.activeJob);
-                work.mineable.mineAmt -= workAmt;
+                BB.Assert(work == job.activeWork);
+                job.mineable.mineAmt -= workAmt;
             }
 
             protected override float WorkSpeed() => 1;

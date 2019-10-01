@@ -13,50 +13,50 @@ namespace BB
 
     public abstract class Task2
     {
-        public enum WorkStatus { Continue, Complete, Fail }
+        public enum Status { Continue, Complete, Fail }
 
 
         public readonly GameController game;
-        public Job2 job { get; private set; }
-        public Minion minion => job.minion;
+        public Work work { get; private set; }
+        public Minion minion => work.minion;
 
         public Task2(GameController game) => this.game = game;
 
-        public WorkStatus BeginWork(Job2 job)
+        public Status BeginTask(Work work)
         {
-            BB.AssertNull(this.job);
-            BB.AssertNotNull(job);
-            BB.AssertNotNull(job.minion);
-            this.job = job;
-            return OnBeginWork();
+            BB.AssertNull(this.work);
+            BB.AssertNotNull(work);
+            BB.AssertNotNull(work.minion);
+            this.work = work;
+            return OnBeginTask();
         }
 
-        public void EndWork(bool canceled) => OnEndWork(canceled);
+        public void EndTask(bool canceled) => OnEndTask(canceled);
 
 
-        protected abstract WorkStatus OnBeginWork();
-        protected abstract void OnEndWork(bool canceled);
-        public abstract WorkStatus PerformWork(float deltaTime);
+        protected abstract Status OnBeginTask();
+        protected abstract void OnEndTask(bool canceled);
+        public abstract Status PerformTask(float deltaTime);
     }
 
     public class TaskLambda : Task2
     {
-        private readonly Func<Job2, bool> fn;
+        private readonly Func<Work, bool> fn;
 
-        public TaskLambda(GameController game, Func<Job2, bool> fn)
+        public TaskLambda(GameController game, Func<Work, bool> fn)
             : base(game)
         {
             BB.AssertNotNull(fn);
             this.fn = fn;
         }
 
-        protected override WorkStatus OnBeginWork()
-            => fn(job) ? WorkStatus.Complete : WorkStatus.Fail;
+        protected override Status OnBeginTask()
+            => fn(work) ? Status.Complete : Status.Fail;
 
-        public override WorkStatus PerformWork(float deltaTime)
+        public override Status PerformTask(float deltaTime)
             => throw new NotSupportedException();
 
-        protected override void OnEndWork(bool canceled) { }
+        protected override void OnEndTask(bool canceled) { }
     }
 
     public abstract class TaskTimed : Task2
@@ -79,7 +79,7 @@ namespace BB
             this.workAmt = workAmt;
         }
 
-        protected override WorkStatus OnBeginWork()
+        protected override Status OnBeginTask()
         {
             // TODO: make loading bar
             minion.skin.SetTool(tool);
@@ -87,18 +87,18 @@ namespace BB
             if (minion.pos != workTarget)
                 minion.SetFacing(workTarget - minion.pos);
 
-            return WorkStatus.Continue;
+            return Status.Continue;
         }
 
-        public override WorkStatus PerformWork(float deltaTime)
+        public override Status PerformTask(float deltaTime)
         {
             workAmt = Mathf.Max(workAmt - deltaTime * WorkSpeed(), 0);
             OnWorkUpdated(workAmt);
 
             if (workAmt <= 0)
-                return WorkStatus.Complete;
+                return Status.Complete;
             else
-                return WorkStatus.Continue;
+                return Status.Continue;
         }
     }
 
@@ -111,7 +111,7 @@ namespace BB
 
 
     // TODO: handle claims, i.e workbenches, locations, items, etc.
-    public class Job2
+    public class Work
     {
 #if DEBUG
         private static int D_nextID = 0;
@@ -122,7 +122,7 @@ namespace BB
         public Minion minion { get; private set; }
         private Task2 activeTask;
 
-        public Job2(Queue<Task2> tasks)
+        public Work(Queue<Task2> tasks)
         {
 #if DEBUG
             D_uniqueID = D_nextID;
@@ -134,10 +134,10 @@ namespace BB
             this.tasks = tasks;
         }
 
-        public Job2(IEnumerable<Task2> tasks)
+        public Work(IEnumerable<Task2> tasks)
             : this(new Queue<Task2>(tasks)) { }
 
-        public Job2(params Task2[] tasks)
+        public Work(params Task2[] tasks)
             : this((IEnumerable<Task2>)tasks) { }
 
         public bool Claim(Minion minion)
@@ -154,13 +154,13 @@ namespace BB
             BB.AssertNotNull(this.minion);
             BB.Assert(this.minion == minion);
             if (activeTask != null)
-                activeTask.EndWork(true);
+                activeTask.EndTask(true);
         }
 
         public void Cancel()
         {
             BB.Assert(this.minion != null);
-            minion.AbandonJob();
+            minion.AbandonWork();
         }
 
         private bool IterateTasks()
@@ -169,19 +169,19 @@ namespace BB
             {
                 activeTask = tasks.Dequeue();
 
-                var status = activeTask.BeginWork(this);
-                if (status == Task2.WorkStatus.Fail)
+                var status = activeTask.BeginTask(this);
+                if (status == Task2.Status.Fail)
                 {
                     // TODO: check if we can get an updated task
                     Cancel();
                     return false;
                 }
-                else if (status == Task2.WorkStatus.Continue)
+                else if (status == Task2.Status.Continue)
                 {
                     return true;
                 }
 
-                activeTask.EndWork(false);
+                activeTask.EndTask(false);
                 activeTask = null;
             }
 
@@ -192,16 +192,16 @@ namespace BB
         {
             BB.AssertNotNull(activeTask);
 
-            var status = activeTask.PerformWork(deltaTime);
-            if (status == Task2.WorkStatus.Continue)
+            var status = activeTask.PerformTask(deltaTime);
+            if (status == Task2.Status.Continue)
                 return;
 
             minion.skin.SetTool(Tool.None);
             minion.skin.SetAnimLoop(MinionAnim.None);
 
-            if (status == Task2.WorkStatus.Complete)
+            if (status == Task2.Status.Complete)
             {
-                activeTask.EndWork(false);
+                activeTask.EndTask(false);
                 activeTask = null;
                 if (IterateTasks())
                     return;

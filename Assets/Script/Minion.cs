@@ -18,12 +18,12 @@ namespace BB
         public readonly GameController game;
         public MinionSkin skin { get; }
 
-        private Job2 currentJob;
+        private Work currentWork;
 
         public Item carriedItem { get; private set; }
         public bool carryingItem => carriedItem != null;
         public float speed => 2;
-        public bool hasJob => currentJob != null;
+        public bool hasWork => currentWork != null;
 
         private Vec2 realPos
         {
@@ -91,24 +91,24 @@ namespace BB
 
         public void Update(float deltaTime)
         {
-            if (currentJob != null)
-                currentJob.PerformWork(deltaTime);
+            if (currentWork != null)
+                currentWork.PerformWork(deltaTime);
         }
 
-        public bool AssignJob(Job2 job)
+        public bool AssignWork(Work work)
         {
-            if (currentJob != null)
-                currentJob.Abandon(this);
+            if (currentWork != null)
+                currentWork.Abandon(this);
 
-            currentJob = job;
-            return currentJob.Claim(this);
+            currentWork = work;
+            return currentWork.Claim(this);
         }
 
-        public void AbandonJob()
+        public void AbandonWork()
         {
-            BB.AssertNotNull(currentJob);
-            currentJob.Abandon(this);
-            currentJob = null;
+            BB.AssertNotNull(currentWork);
+            currentWork.Abandon(this);
+            currentWork = null;
 
             // TODO: handle case of not being Grid Aligned
             if (!GridAligned())
@@ -173,13 +173,13 @@ namespace BB
                 }
             }
 
-            protected override WorkStatus OnBeginWork()
+            protected override Status OnBeginTask()
             {
                 if (minion.GridAligned() && dstFn(minion.pos))
-                    return WorkStatus.Complete;
+                    return Status.Complete;
 
                 if (!GetPath())
-                    return WorkStatus.Fail;
+                    return Status.Fail;
 
                 pathVis = game.assets.CreateLine(
                     game.transform, Vec2.zero, "MinionPath",
@@ -189,10 +189,10 @@ namespace BB
                 UpdatePathVis();
 
                 minion.skin.SetAnimLoop(MinionAnim.Walk);
-                return WorkStatus.Continue;
+                return Status.Continue;
             }
 
-            protected override void OnEndWork(bool canceled)
+            protected override void OnEndTask(bool canceled)
             {
                 if (pathVis != null)
                     pathVis.transform.gameObject.Destroy();
@@ -208,7 +208,7 @@ namespace BB
 
                 if (!GetPath())
                 {
-                    job.Cancel();
+                    work.Cancel();
                      // actually this could track its failure state and
                      // finish moving then return Fail
                      // TODO: assign new job to minion to walk to nearest tile
@@ -224,7 +224,7 @@ namespace BB
                 UpdatePathVis();
             }
 
-            public override WorkStatus PerformWork(float deltaTime)
+            public override Status PerformTask(float deltaTime)
             {
                 float distance = deltaTime * minion.speed;
                 while (true)
@@ -236,7 +236,7 @@ namespace BB
 
                         minion.SetFacing(path.First.Value - minion.realPos);
                         UpdatePathVis();
-                        return WorkStatus.Continue;
+                        return Status.Continue;
                     }
                     else
                     {
@@ -247,7 +247,7 @@ namespace BB
                         {
                             // TODO: delete path vis
                             minion.skin.SetAnimLoop(MinionAnim.None);
-                            return WorkStatus.Complete;
+                            return Status.Complete;
                         }
                     }
                 }

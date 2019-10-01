@@ -49,7 +49,7 @@ namespace BB
     public interface IBuilding
     {
         IBuildingProto prototype { get; }
-        HashSet<WorkHandle> workHandles { get; }
+        HashSet<JobHandle> jobHandles { get; }
 
         bool passable { get; }
 
@@ -77,11 +77,11 @@ namespace BB
     {
         protected readonly TProto proto;
         public IBuildingProto prototype => proto;
-        public HashSet<WorkHandle> workHandles { get; }
+        public HashSet<JobHandle> jobHandles { get; }
         protected BuildingBase(TProto proto)
         {
             this.proto = proto;
-            this.workHandles = new HashSet<WorkHandle>();
+            this.jobHandles = new HashSet<JobHandle>();
         }
 
         public virtual bool passable => proto.passable;

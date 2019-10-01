@@ -71,7 +71,7 @@ namespace BB
             = new Dictionary<Vec2I, Transform>();
 
         public ToolOrders(GameController game) : base(game) {
-            currentOrders = game.registry.works[0].orders;
+            currentOrders = game.registry.systems[0].orders;
         }
 
         public override void OnClick(Vec2I pos)

@@ -6,20 +6,20 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public class WorkHandle
+    public class JobHandle
     {
         public readonly IWorkSystem system;
         public readonly Vec2I pos;
-        public Job2 activeJob;
+        public Work activeWork;
 
-        public WorkHandle(IWorkSystem system, Vec2I pos)
+        public JobHandle(IWorkSystem system, Vec2I pos)
         {
             BB.Assert(system != null);
             this.system = system;
             this.pos = pos;
         }
 
-        public virtual void Cancel() => system.CancelWork(this);
+        public virtual void Cancel() => system.CancelJob(this);
         public virtual void Destroy() { }
     }
 
@@ -29,9 +29,9 @@ namespace BB
         // TODO: some way to track buildings added/removed
         IOrdersGiver orders { get; }
 
-        IEnumerable<Job2> QueryJobs();
+        IEnumerable<Work> QueryWork();
 
-        void CancelWork(WorkHandle work);
+        void CancelJob(JobHandle work);
     }
 
     [Flags]
@@ -54,65 +54,65 @@ namespace BB
         bool ApplicableToBuilding(IBuilding building);
     }
 
-    public abstract class WorkSystemStandard<TWork> : IWorkSystem
-        where TWork : WorkHandle
+    public abstract class WorkSystemStandard<TJob> : IWorkSystem
+        where TJob : JobHandle
     {
         public readonly GameController game;
-        private readonly Dictionary<Vec2I, TWork> works
-            = new Dictionary<Vec2I, TWork>();
+        private readonly Dictionary<Vec2I, TJob> jobs
+            = new Dictionary<Vec2I, TJob>();
 
         protected WorkSystemStandard(GameController game) => this.game = game;
 
         public abstract IOrdersGiver orders { get; }
-        protected abstract Job2 JobForWork(TWork work);
+        protected abstract Work WorkForJob(TJob job);
 
-        public IEnumerable<Job2> QueryJobs()
+        public IEnumerable<Work> QueryWork()
         {
-            foreach (var work in works.Values)
+            foreach (var job in jobs.Values)
             {
-                if (work.activeJob == null)
-                    yield return JobForWork(work);
+                if (job.activeWork == null)
+                    yield return WorkForJob(job);
             }
         }
 
-        protected bool HasWork(Vec2I pos) => works.ContainsKey(pos);
+        protected bool HasJob(Vec2I pos) => jobs.ContainsKey(pos);
 
-        protected void AddWork(TWork work)
+        protected void AddJob(TJob job)
         {
-            BB.Assert(!HasWork(work.pos));
-            works.Add(work.pos, work);
+            BB.Assert(!HasJob(job.pos));
+            jobs.Add(job.pos, job);
         }
 
-        protected void RemoveWork(TWork work)
+        protected void RemoveJob(TJob job)
         {
-            BB.Assert(work.system == this);
-            BB.Assert(works.TryGetValue(work.pos, out var workContained) && workContained == work);
+            BB.Assert(job.system == this);
+            BB.Assert(jobs.TryGetValue(job.pos, out var workContained) && workContained == job);
 
-            if (work.activeJob != null)
-                work.activeJob.Cancel();
+            if (job.activeWork != null)
+                job.activeWork.Cancel();
 
-            works.Remove(work.pos);
-            work.Destroy();
+            jobs.Remove(job.pos);
+            job.Destroy();
         }
 
-        public void CancelWork(WorkHandle handle)
+        public void CancelJob(JobHandle handle)
         {
-            TWork work = (TWork)handle;
-            BB.Assert(work.system == this);
-            RemoveWork(work);
+            TJob job = (TJob)handle;
+            BB.Assert(job.system == this);
+            RemoveJob(job);
         }
     }
 
-    public abstract class WorkSystemAsOrders<TThis, TWork> : WorkSystemStandard<TWork>, IOrdersGiver
-        where TWork : WorkHandle
-        where TThis : WorkSystemAsOrders<TThis, TWork>
+    public abstract class WorkSystemAsOrders<TThis, TJob> : WorkSystemStandard<TJob>, IOrdersGiver
+        where TJob : JobHandle
+        where TThis : WorkSystemAsOrders<TThis, TJob>
     {
-        public class WorkHandleOrders : WorkHandle
+        public class JobHandleOrders : JobHandle
         {
             public readonly TThis orders;
             public readonly Transform overlay;
 
-            public WorkHandleOrders(TThis orders, Vec2I pos)
+            public JobHandleOrders(TThis orders, Vec2I pos)
                 : base(orders, pos)
             {
                 this.orders = orders;
@@ -126,12 +126,12 @@ namespace BB
             }
         }
 
-
         protected WorkSystemAsOrders(GameController game) : base(game) { }
 
         protected abstract SpriteDef sprite { get; }
-        protected abstract TWork CreateWork(Vec2I pos);
+        protected abstract TJob CreateJob(Vec2I pos);
         public abstract OrdersFlags flags { get; }
+
 
         public override IOrdersGiver orders => this;
 
@@ -150,8 +150,8 @@ namespace BB
             => ApplicableErrorCheck(OrdersFlags.AppliesItem);
 
 
-        public bool HasOrder(Vec2I pos) => HasWork(pos);
-        public void AddOrder(Vec2I pos) => AddWork(CreateWork(pos));
+        public bool HasOrder(Vec2I pos) => HasJob(pos);
+        public void AddOrder(Vec2I pos) => AddJob(CreateJob(pos));
 
         public Transform CreateOverlay(Vec2I pos)
             => game.assets.CreateJobOverlay(game.transform, pos, sprite).transform;

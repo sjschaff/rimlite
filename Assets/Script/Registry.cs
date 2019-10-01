@@ -16,7 +16,7 @@ namespace BB
         public readonly Cache<BldgFloorDef, BuildingProtoFloor> floors;
         public readonly Cache<BldgWallDef, BuildingProtoWall> walls;
 
-        public readonly List<IWorkSystem> works = new List<IWorkSystem>();
+        public readonly List<IWorkSystem> systems = new List<IWorkSystem>();
 
         public Registry(GameController game)
         {
@@ -47,9 +47,9 @@ namespace BB
 
             foreach (var workSystem in GetTypesForInterface<IWorkSystem>())
             {
-                works.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
+                systems.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
             }
-            UnityEngine.Debug.Log("found " + works.Count + " work systems.");
+            UnityEngine.Debug.Log("found " + systems.Count + " work systems.");
         }
 
         private IEnumerable<Type> GetTypesForInterface<TInterface>()
