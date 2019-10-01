@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -73,7 +72,7 @@ namespace BB
             return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
         }
 
-        public override IEnumerable<ItemInfo> GetBuildMaterials()
+        public override IEnumerable<ItemInfoRO> GetBuildMaterials()
         {
             foreach (var item in def.materials)
                 yield return item;

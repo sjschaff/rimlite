@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
@@ -101,7 +101,7 @@ namespace BB
                 currentWork.Abandon(this);
 
             currentWork = work;
-            return currentWork.Claim(this);
+            return currentWork.ClaimWork(this);
         }
 
         public void RemoveWork(Work work)

@@ -10,7 +10,7 @@ namespace BB
         protected BuildingProtoTiledRender() { }
 
         public abstract IBuilding CreateBuilding();
-        public abstract IEnumerable<ItemInfo> GetBuildMaterials();
+        public abstract IEnumerable<ItemInfoRO> GetBuildMaterials();
         public abstract bool passable { get; }
         public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
 
@@ -29,7 +29,7 @@ namespace BB
 
             var bldgOther = map.Tile(pos).building;
             if (bldgOther is BuildingProtoConstruction.BuildingConstruction bldgConstruction)
-                proto = bldgConstruction.job.prototype as TThis;
+                proto = bldgConstruction.buildProto as TThis;
             else
                 proto = bldgOther?.prototype as TThis;
 

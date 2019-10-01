@@ -8,7 +8,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     public struct TileSprite
     {
         public readonly Sprite sprite;
@@ -236,7 +235,7 @@ namespace BB
             tilemapBuildingOver = new Tilemap<VirtualTileBuildingOver>(map, layout, material, RenderLayer.OverMap.Layer(0), bounds, tileBuffer);
 
             sw.Stop();
-            Debug.Log("tiles took " + sw.ElapsedMilliseconds + "ms");
+            BB.Log("tiles took " + sw.ElapsedMilliseconds + "ms");
         }
 
         private Transform CreateGridLayout()

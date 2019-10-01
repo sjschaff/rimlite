@@ -7,7 +7,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-
     // TODO: can we merge these? (i.e. does ItemInfo need to be mutable?)
     public struct ItemInfoRO
     {
@@ -42,6 +41,7 @@ namespace BB
 
     public class Item
     {
+        public readonly GameController game;
         private readonly GameObject gameObject;
         private readonly SpriteRenderer spriteRenderer;
         private readonly Text text;
@@ -56,6 +56,7 @@ namespace BB
         public Item(GameController game, Vec2I pos, ItemInfo info)
         {
             BB.Assert(info.amt > 0);
+            this.game = game;
             this.pos = pos;
             this.info = info;
             this.amtClaimed = 0;
@@ -138,6 +139,12 @@ namespace BB
             UpdateText();
         }
 
+        public Item Split(int amt)
+        {
+            Remove(amt);
+            return new Item(game, pos, new ItemInfo(def, amt));
+        }
+
         public enum Config { Ground, PlayerAbove, PlayerBelow }
 
         public void Configure(Config config)
@@ -163,5 +170,4 @@ namespace BB
 
         public void Place(Vec2I pos) => this.pos = pos;
     }
-
 }

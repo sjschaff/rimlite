@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System;
 using UnityEngine;
 
@@ -8,43 +9,86 @@ namespace BB
 {
     public class BuildingProtoConstruction : IBuildingProto
     {
-        public static BuildingProtoConstruction K_single = new BuildingProtoConstruction();
-
         public BuildingProtoConstruction() { }
 
-        public BuildingConstruction Create(JobBuild job)
-            => new BuildingConstruction(this, job);
+        public BuildingConstruction Create(IBuildingProto proto)
+            => new BuildingConstruction(this, proto);
 
         public class BuildingConstruction : BuildingBase<BuildingProtoConstruction>
         {
-            public JobBuild job;
+            public readonly IBuildingProto buildProto;
+
+            public class MaterialInfo
+            {
+                public readonly ItemInfoRO info;
+                public int amtStored;
+                public int amtClaimed;
+
+                public int amtRemaining => info.amt - amtStored;
+                public int haulRemaining => amtRemaining - amtClaimed;
+
+                public MaterialInfo(ItemInfoRO info)
+                {
+                    this.info = info;
+                    this.amtStored = this.amtClaimed = 0;
+                }
+
+               public int HaulAmount(Item item) => Math.Min(haulRemaining, item.amtAvailable);
+            }
+
+            // All stuff used by JobBuild
+            // TODO: this whole file should prob be moved to BuildSystem
+            public readonly List<MaterialInfo> materials;
             public bool constructionBegan;
             public float constructionPercent; // or some such thing...
+            public bool hasBuilder;
 
-            public BuildingConstruction(BuildingProtoConstruction proto, JobBuild job) : base(proto)
+            public bool HasAvailableHauls()
             {
-                this.job = job;
+                foreach (var info in materials)
+                    if (info.haulRemaining > 0)
+                        return true;
+
+                return false;
+            }
+
+            public bool HasAllMaterials()
+            {
+                foreach (var info in materials)
+                    if (info.amtRemaining != 0)
+                        return false;
+
+                return true;
+            }
+
+            public BuildingConstruction(BuildingProtoConstruction proto, IBuildingProto buildProto)
+                : base(proto)
+            {
+                this.buildProto = buildProto;
                 constructionBegan = false;
                 constructionPercent = 0;
+                materials = new List<MaterialInfo>(
+                    buildProto.GetBuildMaterials()
+                    .Select(i => new MaterialInfo(i)));
             }
 
             public override bool passable => true;
-            public override BuildingBounds bounds => job.prototype.bounds;
-            public override RenderFlags renderFlags => job.prototype.renderFlags;
+            public override BuildingBounds bounds => buildProto.bounds;
+            public override RenderFlags renderFlags => buildProto.renderFlags;
 
             private TileSprite Virtualize(TileSprite sprite)
                 => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .5f));
 
             public override TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-                => Virtualize(job.prototype.GetSprite(map, pos, subTile));
+                => Virtualize(buildProto.GetSprite(map, pos, subTile));
 
             public override TileSprite GetSpriteOver(Map map, Vec2I pos)
-                => Virtualize(job.prototype.GetSpriteOver(map, pos));
+                => Virtualize(buildProto.GetSpriteOver(map, pos));
         }
 
         public IBuilding CreateBuilding()
             => throw new NotSupportedException("CreateBuilding called on BuildingProtoConstruction");
-        public IEnumerable<ItemInfo> GetBuildMaterials()
+        public IEnumerable<ItemInfoRO> GetBuildMaterials()
             => throw new NotSupportedException("GetBuildMaterials called on BuildingProtoConstruction");
         public bool passable
             => throw new NotSupportedException("passable called on BuildingProtoConstruction");

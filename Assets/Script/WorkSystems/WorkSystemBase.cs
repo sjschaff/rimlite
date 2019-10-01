@@ -14,14 +14,17 @@ namespace BB
         public abstract class JobStandard : JobHandle
         {
             public readonly TThis systemTyped;
+            public readonly Vec2I pos;
+            public GameController game => systemTyped.game;
 
             public JobStandard(TThis system, Vec2I pos)
-                : base(system, pos)
+                : base(system)
             {
+                this.pos = pos;
                 this.systemTyped = system;
             }
 
-            public abstract IEnumerable<Task2> GetTasks();
+            public virtual void Destroy() { }
         }
 
         public readonly GameController game;
@@ -31,32 +34,11 @@ namespace BB
         protected WorkSystemStandard(GameController game) => this.game = game;
 
         public abstract IOrdersGiver orders { get; }
+        public abstract void WorkAbandoned(JobHandle job, Work work);
+        protected abstract IEnumerable<Work> QueryWorkForJob(TJob job);
 
         public IEnumerable<Work> QueryWork()
-        {
-            foreach (var job in jobs.Values)
-            {
-                if (job.activeWork == null)
-                    yield return new Work(job, job.GetTasks()
-                        .Prepend(new TaskLambda(game,
-                            (work) =>
-                            {
-                                if (job.activeWork != null)
-                                    return false;
-
-                                job.activeWork = work;
-                                return true;
-                            }))
-                        .Append(new TaskLambda(game,
-                            (work) =>
-                            {
-                                job.activeWork = null;
-                                RemoveJob(job);
-                                return true;
-                            }))
-                        );
-            }
-        }
+            => jobs.Values.SelectMany(job => QueryWorkForJob(job));
 
         protected bool HasJob(Vec2I pos) => jobs.ContainsKey(pos);
 
@@ -81,30 +63,73 @@ namespace BB
             BB.Assert(job.system == this);
             RemoveJob(job);
         }
+    }
 
-        public void WorkAbandoned(JobHandle handle)
+    public abstract class WorkSystemBasic<TThis, TJob> : WorkSystemStandard<TThis, TJob>
+        where TJob : WorkSystemBasic<TThis, TJob>.JobBasic
+        where TThis : WorkSystemAsOrders<TThis, TJob>
+    {
+        public abstract class JobBasic : JobStandard
+        {
+            public Work activeWork;
+
+            public JobBasic(TThis system, Vec2I pos) : base(system, pos) { }
+
+            public abstract IEnumerable<Task2> GetTasks();
+
+            public override void Destroy()
+            {
+                if (activeWork != null)
+                    activeWork.Cancel();
+
+                base.Destroy();
+            }
+        }
+
+        protected WorkSystemBasic(GameController game) : base(game) { }
+
+        protected override IEnumerable<Work> QueryWorkForJob(TJob job)
+        {
+            if (job.activeWork == null)
+                yield return new Work(job, job.GetTasks()
+                    .Prepend(new TaskLambda(game,
+                        (work) =>
+                        {
+                            if (job.activeWork != null)
+                                return false;
+
+                            job.activeWork = work;
+                            return true;
+                        }))
+                    .Append(new TaskLambda(game,
+                        (work) =>
+                        {
+                            job.activeWork = null;
+                            RemoveJob(job);
+                            return true;
+                        }))
+                    );
+        }
+
+        public override void WorkAbandoned(JobHandle handle, Work work)
         {
             TJob job = (TJob)handle;
             BB.Assert(job.system == this);
-            handle.activeWork = null;
+            BB.Assert(job.activeWork == work);
+            job.activeWork = null;
         }
     }
 
-    public abstract class WorkSystemAsOrders<TThis, TJob> : WorkSystemStandard<TThis, TJob>, IOrdersGiver
-        where TJob : WorkSystemStandard<TThis, TJob>.JobStandard
+    public abstract class WorkSystemAsOrders<TThis, TJob> : WorkSystemBasic<TThis, TJob>, IOrdersGiver
+        where TJob : WorkSystemBasic<TThis, TJob>.JobBasic
         where TThis : WorkSystemAsOrders<TThis, TJob>
     {
-        public abstract class JobHandleOrders : JobStandard
+        public abstract class JobHandleOrders : JobBasic
         {
-            public readonly TThis orders;
             public readonly Transform overlay;
 
             public JobHandleOrders(TThis orders, Vec2I pos)
-                : base(orders, pos)
-            {
-                this.orders = orders;
-                this.overlay = orders.CreateOverlay(pos);
-            }
+                : base(orders, pos) => overlay = orders.CreateOverlay(pos);
 
             public override void Destroy()
             {

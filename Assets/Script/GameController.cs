@@ -200,8 +200,7 @@ namespace BB
             }
             else
             {
-                item.Remove(amt);
-                return new Item(this, item.pos, new ItemInfo(item.def, amt));
+                return item.Split(amt);
             }
         }
 
@@ -210,7 +209,7 @@ namespace BB
 
         public void AddJob(IJob job)
         {
-            Debug.Log("Added Job: " + job + "(" + job.GetHashCode() + ")");
+            BB.Log("Added Job: " + job + "(" + job.GetHashCode() + ")");
             throw new NotSupportedException();
            // currentJobs.AddLast(job);
         }
@@ -284,7 +283,7 @@ namespace BB
                 if (currentTool == null)
                     currentTool = tools.First;
 
-                Debug.Log("Current Tool: " + tool);
+                BB.Log("Current Tool: " + tool);
             }
 
             if (Input.GetMouseButtonDown(0))

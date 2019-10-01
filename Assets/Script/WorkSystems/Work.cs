@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System;
 using UnityEngine;
 using Priority_Queue;
@@ -39,78 +38,6 @@ namespace BB
         public abstract Status PerformTask(float deltaTime);
     }
 
-    public class TaskLambda : Task2
-    {
-        private readonly Func<Work, bool> fn;
-
-        public TaskLambda(GameController game, Func<Work, bool> fn)
-            : base(game)
-        {
-            BB.AssertNotNull(fn);
-            this.fn = fn;
-        }
-
-        protected override Status OnBeginTask()
-            => fn(work) ? Status.Complete : Status.Fail;
-
-        public override Status PerformTask(float deltaTime)
-            => throw new NotSupportedException();
-
-        protected override void OnEndTask(bool canceled) { }
-    }
-
-    public abstract class TaskTimed : Task2
-    {
-        private float workAmt;
-        private readonly Vec2I workTarget;
-        private readonly MinionAnim anim;
-        private readonly Tool tool;
-
-        protected abstract float WorkSpeed();
-        protected abstract void OnWorkUpdated(float workAmt);
-
-        public TaskTimed(GameController game, Vec2I workTarget,
-            MinionAnim anim, Tool tool, float workAmt)
-            : base(game)
-        {
-            this.workTarget = workTarget;
-            this.anim = anim;
-            this.tool = tool;
-            this.workAmt = workAmt;
-        }
-
-        protected override Status OnBeginTask()
-        {
-            // TODO: make loading bar
-            minion.skin.SetTool(tool);
-            minion.skin.SetAnimLoop(anim);
-            if (minion.pos != workTarget)
-                minion.SetFacing(workTarget - minion.pos);
-
-            return Status.Continue;
-        }
-
-        public override Status PerformTask(float deltaTime)
-        {
-            workAmt = Mathf.Max(workAmt - deltaTime * WorkSpeed(), 0);
-            OnWorkUpdated(workAmt);
-
-            if (workAmt <= 0)
-                return Status.Complete;
-            else
-                return Status.Continue;
-        }
-    }
-
-
-    // Task GoTo
-    // Task claim items
-    // Task Pickup Item
-    // Task Drop Item
-    // Task
-
-
-    // TODO: handle claims, i.e workbenches, locations, items, etc.
     public class Work
     {
 #if DEBUG
@@ -118,12 +45,60 @@ namespace BB
         public readonly int D_uniqueID;
 #endif
 
+        public interface IClaim
+        {
+            void Unclaim();
+        }
+
+        // TODO: make more general
+        public class ItemClaim : IClaim
+        {
+            private readonly Item item;
+            private readonly int amt;
+
+            public ItemClaim(Item item, int amt)
+            {
+                BB.AssertNotNull(item);
+                BB.Assert(amt <= item.amtAvailable);
+
+                this.item = item;
+                this.amt = amt;
+                item.Claim(amt);
+            }
+
+            public void Unclaim()
+            {
+                item.Unclaim(amt);
+            }
+        }
+
+        public class ClaimLambda : IClaim
+        {
+            private readonly Action unclaimFn;
+            public ClaimLambda(Action unclaimFn) => this.unclaimFn = unclaimFn;
+            public void Unclaim() => unclaimFn();
+        }
+
+        public void MakeClaim(IClaim claim) => claims.Add(claim);
+
+        public void Unclaim(TaskClaim task) => Unclaim(task.claim);
+
+        public void Unclaim(IClaim claim)
+        {
+            BB.AssertNotNull(claim);
+            BB.Assert(claims.Contains(claim));
+            claim.Unclaim();
+            claims.Remove(claim);
+        }
+
         private readonly JobHandle job;
-        private readonly Queue<Task2> tasks;
+        private readonly HashSet<IClaim> claims;
+        private readonly IEnumerator<Task2> taskIt;
+
         public Minion minion { get; private set; }
         private Task2 activeTask;
 
-        public Work(JobHandle job, Queue<Task2> tasks)
+        public Work(JobHandle job, IEnumerable<Task2> tasks)
         {
 #if DEBUG
             D_uniqueID = D_nextID;
@@ -131,18 +106,16 @@ namespace BB
 #endif
             BB.AssertNotNull(job);
             BB.AssertNotNull(tasks);
-            BB.Assert(tasks.Any());
-            this.job = job;
-            this.tasks = tasks;
-        }
 
-        public Work(JobHandle job, IEnumerable<Task2> tasks)
-            : this(job, new Queue<Task2>(tasks)) { }
+            this.job = job;
+            this.claims = new HashSet<IClaim>();
+            taskIt = tasks.GetEnumerator();
+        }
 
         public Work(JobHandle job, params Task2[] tasks)
             : this(job, (IEnumerable<Task2>)tasks) { }
 
-        public bool Claim(Minion minion)
+        public bool ClaimWork(Minion minion)
         {
             BB.AssertNull(this.minion);
             BB.AssertNull(activeTask);
@@ -157,17 +130,28 @@ namespace BB
             BB.Assert(this.minion == minion);
             if (activeTask != null)
                 activeTask.EndTask(true);
-            job.AbandonWork();
+            job.AbandonWork(this);
+        }
+
+        private void ClearClaims()
+        {
+            foreach (IClaim claim in claims)
+                claim.Unclaim();
         }
 
         public void Cancel()
         {
             BB.Assert(this.minion != null);
+            ClearClaims();
             minion.AbandonWork();
         }
 
         private void Complete()
         {
+            BB.Assert(claims.Count == 0);
+            if (claims.Count != 0)
+                BB.Log("Task completed with claims left over, this is a bug");
+            ClearClaims();
             minion.RemoveWork(this);
         }
 
@@ -175,33 +159,31 @@ namespace BB
         {
             var status = IterateTasks();
 
+            if (status == Task2.Status.Continue)
+                return true;
+
             if (status == Task2.Status.Fail)
-            {
                 Cancel();
-                return false;
-            }
             else if (status == Task2.Status.Complete)
                 Complete();
 
-            return true;
+            return false;
         }
 
         private Task2.Status IterateTasks()
         {
-            while (activeTask == null && tasks.Any())
+            while (taskIt.MoveNext())
             {
-                activeTask = tasks.Dequeue();
-
+                activeTask = taskIt.Current;
                 var status = activeTask.BeginTask(this);
+
                 if (status == Task2.Status.Complete)
-                {
                     activeTask.EndTask(false);
-                    activeTask = null;
-                }
                 else
                     return status;
             }
 
+            activeTask = null; // just in case
             return Task2.Status.Complete;
         }
 
@@ -219,7 +201,6 @@ namespace BB
             if (status == Task2.Status.Complete)
             {
                 activeTask.EndTask(false);
-                activeTask = null;
                 MoveToNextTask();
             }
         }
@@ -278,7 +259,6 @@ namespace BB
 
         public void ClaimTask(Minion minion, Task task)
         {
-            //Debug.Log("Task claimed job{" + GetHashCode() + "} + task{" + task.GetHashCode() + "} + minion{"+minion.GetHashCode() +"}");
             BB.Assert(!D_finished);
             BB.Assert(task == D_lastTaskOffered);
             BB.Assert(!D_outstandingTasks.ContainsKey(task));
@@ -301,7 +281,6 @@ namespace BB
 
         public Task CompleteTask(Minion minion, Task task)
         {
-            //Debug.Log("Task completed job{" + GetHashCode() + "} + task{" + task.GetHashCode() + "} + minion{"+minion.GetHashCode()+"}");
             BB.Assert(!D_finished);
             BB.Assert(D_lastTaskOffered == null);
             BB.Assert(D_outstandingTasks.ContainsKey(task));
@@ -399,7 +378,8 @@ namespace BB
         {
             BB.Assert(prototype != null);
             this.prototype = prototype;
-            building = BuildingProtoConstruction.K_single.Create(this);
+            // building = BuildingProtoConstruction.K_single.Create(this);
+            building = null;
             game.AddBuilding(pos, building);
 
             state = State.Hauling;

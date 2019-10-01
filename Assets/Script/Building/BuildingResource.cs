@@ -13,7 +13,7 @@ namespace BB
         public BuildingProtoResource(BldgMineableDef def)
         {
             this.def = def;
-            Debug.Log("instantiated with: " + def.name);
+            BB.Log("instantiated with: " + def.name);
         }
         public IBuilding CreateBuilding() => new BuildingResource(this);
 
@@ -30,7 +30,7 @@ namespace BB
         public TileSprite GetSpriteOver(Map map, Vec2I pos)
             => map.game.assets.sprites.Get(def.spriteOver);
 
-        public IEnumerable<ItemInfo> GetBuildMaterials()
+        public IEnumerable<ItemInfoRO> GetBuildMaterials()
             => throw new NotSupportedException("GetBuildMaterials called on BuildingResource");
 
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
@@ -51,5 +51,4 @@ namespace BB
 
         }
     }
-
 }

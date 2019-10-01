@@ -71,7 +71,8 @@ namespace BB
             = new Dictionary<Vec2I, Transform>();
 
         public ToolOrders(GameController game) : base(game) {
-            currentOrders = game.registry.systems[0].orders;
+            // TODO: janky af
+            currentOrders = game.registry.systems[1].orders;
         }
 
         public override void OnClick(Vec2I pos)
@@ -132,7 +133,7 @@ namespace BB
         public override void OnTab()
         {
             currentBuild = (currentBuild + 1) % 2;
-            Debug.Log("Build " + currentBuild);
+            BB.Log("Build " + currentBuild);
         }
 
         public override void OnClick(Vec2I pos)
@@ -145,7 +146,8 @@ namespace BB
                     case 0: proto = game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick")); break;
                     case 1: proto = game.registry.floors.Get(game.defs.Get<BldgFloorDef>("BB:StoneBrick")); break;
                 }
-                game.AddJob(new JobBuild(game, pos, proto));
+
+                BuildSystem.K_instance.CreateBuild(proto, pos);
             }
         }
 
@@ -165,5 +167,4 @@ namespace BB
             game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
         }
     }
-
 }

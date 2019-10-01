@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System;
 using UnityEngine;
 
@@ -10,36 +9,31 @@ namespace BB
     public class JobHandle
     {
         public readonly IWorkSystem system;
-        public readonly Vec2I pos;
-        public Work activeWork;
 
-        public JobHandle(IWorkSystem system, Vec2I pos)
+        public JobHandle(IWorkSystem system)
         {
             BB.Assert(system != null);
             this.system = system;
-            this.pos = pos;
         }
 
         public virtual void CancelJob() => system.CancelJob(this);
-        public virtual void AbandonWork() => system.WorkAbandoned(this);
+        public virtual void AbandonWork(Work work) => system.WorkAbandoned(this, work);
 
-        public virtual void Destroy()
+        // Utility for task generation
+        protected TTask Capture<TTask>(TTask task, out TTask outTask)
         {
-            if (activeWork != null)
-                activeWork.Cancel();
+            outTask = task;
+            return task;
         }
     }
 
-    // example: s
     public interface IWorkSystem
     {
         // TODO: some way to track buildings added/removed
         IOrdersGiver orders { get; }
-
         IEnumerable<Work> QueryWork();
-
         void CancelJob(JobHandle job);
-        void WorkAbandoned(JobHandle job);
+        void WorkAbandoned(JobHandle job, Work work);
     }
 
     [Flags]

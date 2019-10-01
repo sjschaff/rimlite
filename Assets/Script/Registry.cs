@@ -34,12 +34,12 @@ namespace BB
         {
             // test
             /*var t = typeof(BuildingProtoResource);
-            UnityEngine.Debug.Log("assembly: " + t.Assembly);
-            UnityEngine.Debug.Log("name: " + t.Name);
-            UnityEngine.Debug.Log("full name: " + t.FullName);
-            UnityEngine.Debug.Log("assembly qualified:" + t.AssemblyQualifiedName);
+            BB.Log("assembly: " + t.Assembly);
+            BB.Log("name: " + t.Name);
+            BB.Log("full name: " + t.FullName);
+            BB.Log("assembly qualified:" + t.AssemblyQualifiedName);
             string typeName = t.AssemblyQualifiedName;
-            UnityEngine.Debug.Log("type: " + Type.GetType(typeName));
+            BB.Log("type: " + Type.GetType(typeName));
             var d = defs.Get<BldgMineableDef>("BB:Rock");
             BuildingProtoResource b = (BuildingProtoResource)Activator.CreateInstance(Type.GetType(typeName), d);
             */
@@ -52,12 +52,12 @@ namespace BB
                         systems.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
                 } catch (MissingMethodException)
                 {
-                    UnityEngine.Debug.Log("Failed to instatiate work system '" + workSystem.FullName +
+                    BB.Log("Failed to instatiate work system '" + workSystem.FullName +
                         "': missing constructor taking single argument GameController");
 
                 }
             }
-            UnityEngine.Debug.Log("found " + systems.Count + " work systems.");
+            BB.Log("found " + systems.Count + " work systems.");
         }
 
         private IEnumerable<Type> GetTypesForInterface<TInterface>()

@@ -38,6 +38,9 @@ namespace BB
                 mineable = (IMineable)system.game.Tile(pos).building;
                 BB.Assert(mineable != null);
 
+                // TODO: move this more general?
+                // would probably require some kind of HasJobHandles
+                // style interface
                 mineable.jobHandles.Add(this);
             }
 
@@ -49,8 +52,8 @@ namespace BB
 
             public override IEnumerable<Task2> GetTasks()
             {
-                yield return Minion.TaskGoTo.Adjacent(systemTyped.game, pos);
-                yield return new TaskMine(systemTyped.game, this);
+                yield return Minion.TaskGoTo.Adjacent(game, pos);
+                yield return new TaskMine(game, this);
             }
         }
 

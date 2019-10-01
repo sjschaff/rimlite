@@ -27,5 +27,11 @@ namespace BB
             int j = Array.IndexOf<T>(Arr, src) + 1;
             return (Arr.Length == j) ? Arr[0] : Arr[j];
         }
+
+        public static void Log(string msg)
+        {
+            System.Diagnostics.Debug.WriteLine(msg);
+            UnityEngine.Debug.Log(msg);
+        }
     }
 }
