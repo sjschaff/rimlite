@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System;
-using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -16,7 +14,7 @@ namespace BB
         float mineTotal { get; }
     }
 
-    public class MiningSystem : OrdersBase<MiningSystem.MineWork>, IWorkSystem
+    public class MiningSystem : WorkSystemAsOrders<MiningSystem.MineWork>
     {
         public class MineWork : WorkHandle
         {
@@ -40,24 +38,18 @@ namespace BB
             sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
         }
 
-        public IEnumerable<Job2> QueryJobs()
+        protected override Job2 JobForWork(MineWork work)
         {
-            foreach (var work in works.Values)
-            {
-                if (work.activeJob == null)
+            return new Job2(
+                new TaskLambda(game, (job) =>
                 {
-                    yield return new Job2(
-                        new TaskLambda(game, (job) =>
-                        {
-                            if (work.activeJob != null)
-                                return false;
-                            work.activeJob = job;
-                            return true;
-                        }),
-                        Minion.TaskGoTo.Adjacent(game, work.pos),
-                        new TaskMine(game, work));
-                }
-            }
+                    if (work.activeJob != null)
+                        return false;
+                    work.activeJob = job;
+                    return true;
+                }),
+                Minion.TaskGoTo.Adjacent(game, work.pos),
+                new TaskMine(game, work));
         }
 
         private void MineFinished(MineWork work, bool canceled)
@@ -83,11 +75,9 @@ namespace BB
         protected override MineWork CreateWork(Vec2I pos)
             => new MineWork(this, pos);
 
-        public IOrdersGiver orders => this;
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
         protected override SpriteDef sprite { get; }
         public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
-        public override bool ApplicableToItem(Item item) => throw new NotSupportedException();
 
         private class TaskMine : TaskTimed
         {

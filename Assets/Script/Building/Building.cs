@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
@@ -37,6 +38,7 @@ namespace BB
         }
     }
 
+    [Flags]
     public enum RenderFlags
     {
         None = 0,
@@ -60,9 +62,9 @@ namespace BB
     public static class BuildingExt
     {
         public static bool TiledRender(this IBuilding bldg)
-            => (bldg.renderFlags & RenderFlags.Tiled) != 0;
+            => bldg.renderFlags.HasFlag(RenderFlags.Tiled);
         public static bool Oversized(this IBuilding bldg)
-            => (bldg.renderFlags & RenderFlags.Oversized) != 0;
+            => bldg.renderFlags.HasFlag(RenderFlags.Oversized);
 
         public static IEnumerable<Vec2I> AllTiles(this IBuilding bldg, Vec2I pos)
         {

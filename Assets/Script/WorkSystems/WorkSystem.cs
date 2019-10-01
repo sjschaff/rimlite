@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
@@ -33,6 +34,7 @@ namespace BB
         IEnumerable<Job2> QueryJobs();
     }
 
+    [Flags]
     public enum OrdersFlags
     {
         None = 0,
@@ -43,13 +45,14 @@ namespace BB
 
     public interface IOrdersGiver
     {
-        OrdersFlags flags { get; }
-        bool ApplicableToItem(Item item);
-        bool ApplicableToBuilding(IBuilding building);
         bool HasOrder(Vec2I pos);
         void AddOrder(Vec2I pos);
         void CancelOrder(WorkHandle work);
         Transform CreateOverlay(Vec2I pos);
+
+        OrdersFlags flags { get; }
+        bool ApplicableToItem(Item item);
+        bool ApplicableToBuilding(IBuilding building);
     }
 
     public abstract class OrdersBase<TWork> : IOrdersGiver where TWork : WorkHandle
@@ -63,8 +66,20 @@ namespace BB
         protected abstract SpriteDef sprite { get; }
         protected abstract TWork CreateWork(Vec2I pos);
         public abstract OrdersFlags flags { get; }
-        public abstract bool ApplicableToBuilding(IBuilding building);
-        public abstract bool ApplicableToItem(Item item);
+
+        private bool ApplicableErrorCheck(OrdersFlags flag)
+        {
+            if (flags.HasFlag(flag))
+                throw new NotImplementedException();
+            else
+                throw new NotSupportedException();
+        }
+
+        public virtual bool ApplicableToBuilding(IBuilding building)
+            => ApplicableErrorCheck(OrdersFlags.AppliesBuilding);
+
+        public virtual bool ApplicableToItem(Item item)
+            => ApplicableErrorCheck(OrdersFlags.AppliesItem);
 
 
         public bool HasOrder(Vec2I pos) => works.ContainsKey(pos);
@@ -100,5 +115,24 @@ namespace BB
 
         public Transform CreateOverlay(Vec2I pos)
             => game.assets.CreateJobOverlay(game.transform, pos, sprite).transform;
+    }
+
+    public abstract class WorkSystemAsOrders<TWork> : OrdersBase<TWork>, IWorkSystem
+        where TWork : WorkHandle
+    {
+        protected abstract Job2 JobForWork(TWork work);
+
+        public WorkSystemAsOrders(GameController game) : base(game) { }
+
+        public IOrdersGiver orders => this;
+
+        public IEnumerable<Job2> QueryJobs()
+        {
+            foreach (var work in works.Values)
+            {
+                if (work.activeJob == null)
+                    yield return JobForWork(work);
+            }
+        }
     }
 }
