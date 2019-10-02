@@ -129,19 +129,6 @@ namespace BB
 
                 if (building.HasAllMaterials())
                 {
-                    if (!building.buildProto.passable)
-                        yield return new TaskLambda(game,
-                            (work) =>
-                            {
-                                game.VacateTile(pos);
-                                if (!game.IsTileOccupied(pos, work.minion))
-                                {
-                                    game.RerouteMinions(pos, true);
-                                    return true;
-                                }
-
-                                return false;
-                            });
                     // TODO: should this go before or after the vacate task?
                     yield return Capture(new TaskClaim(game,
                         (work) =>
@@ -152,6 +139,22 @@ namespace BB
                             building.hasBuilder = true;
                             return new Work.ClaimLambda(() => building.hasBuilder = false);
                         }), out var buildClaim);
+
+                    if (!building.buildProto.passable)
+                        yield return new TaskLambda(game,
+                            (work) =>
+                            {
+                                game.VacateTile(pos);
+                                if (!game.IsTileOccupied(pos, work.minion))
+                                {
+                                    building.constructionBegan = true;
+                                    game.RerouteMinions(pos, true);
+                                    return true;
+                                }
+
+                                return false;
+                            });
+
                     yield return Minion.TaskGoTo.Adjacent(game, pos);
                     yield return new TaskTimedLambda(
                         game, pos, MinionAnim.Slash, Tool.Hammer, 2, _ => 1,

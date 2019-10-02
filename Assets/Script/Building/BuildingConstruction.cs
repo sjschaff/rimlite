@@ -72,7 +72,7 @@ namespace BB
                     .Select(i => new MaterialInfo(i)));
             }
 
-            public override bool passable => true;
+            public override bool passable => constructionBegan ? buildProto.passable : true;
             public override BuildingBounds bounds => buildProto.bounds;
             public override RenderFlags renderFlags => buildProto.renderFlags;
 

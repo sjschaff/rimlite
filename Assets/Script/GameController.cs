@@ -102,18 +102,15 @@ namespace BB
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(Vec2I pos, bool required)
         {
-            if (required)
-                throw new NotImplementedException();
-            /*
             // TODO: check if minions can reroute more efficiently
             if (!required)
                 return;
 
             foreach (var minion in minions)
             {
-                if (minion.hasJob)
-                    minion.Reroute(pos);
-            }*/
+                if (minion.hasWork && minion.currentWork.activeTask != null)
+                    minion.currentWork.activeTask.Reroute(pos);
+            }
         }
 
         private void RerouteMinions(Vec2I pos, bool wasPassable, bool nowPassable)

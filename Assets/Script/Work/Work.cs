@@ -13,7 +13,7 @@ namespace BB
         private readonly JobHandle job;
         private readonly HashSet<IClaim> claims;
         private readonly IEnumerator<Task> tasks;
-        private Task activeTask;
+        public Task activeTask { get; private set; }
 
         public Minion minion { get; private set; }
 
@@ -137,6 +137,8 @@ namespace BB
                 activeTask.EndTask(false);
                 MoveToNextTask();
             }
+            else
+                Cancel();
         }
 
         #endregion

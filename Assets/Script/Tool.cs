@@ -164,7 +164,9 @@ namespace BB
 
         public override void OnClick(Vec2I pos)
         {
-            game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
+            //game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
+            game.AddBuilding(pos, game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"))
+                .CreateBuilding());
         }
     }
 }

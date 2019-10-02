@@ -1,4 +1,6 @@
-﻿namespace BB
+﻿using Vec2I = UnityEngine.Vector2Int;
+
+namespace BB
 {
     public abstract class Task
     {
@@ -21,8 +23,7 @@
         }
 
         public void EndTask(bool canceled) => OnEndTask(canceled);
-
-
+        public virtual void Reroute(Vec2I updatedTile) { }
         protected abstract Status OnBeginTask();
         protected abstract void OnEndTask(bool canceled);
         public abstract Status PerformTask(float deltaTime);

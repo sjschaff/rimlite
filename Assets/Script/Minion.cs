@@ -19,8 +19,7 @@ namespace BB
 
         public readonly GameController game;
         public MinionSkin skin { get; }
-
-        private Work currentWork;
+        public Work currentWork { get; private set; }
 
         public Item carriedItem { get; private set; }
         public bool carryingItem => carriedItem != null;
@@ -114,7 +113,10 @@ namespace BB
 
             // TODO: handle case of not being Grid Aligned
             if (!GridAligned())
+            {
+                Debug.LogWarning("minion work removed while not grid aligned.");
                 realPos = pos;
+            }
         }
 
         public void AbandonWork()
@@ -130,6 +132,7 @@ namespace BB
             private readonly Vec2I endHint;
             // private readonly Func<Vec2I, float> hueFn;
 
+            private bool onFallbackPath;
             private LinkedList<Vec2I> path;
             private LineRenderer pathVis;
 
@@ -138,6 +141,7 @@ namespace BB
             {
                 this.dstFn = dstFn;
                 this.endHint = endHint;
+                this.onFallbackPath = false;
             }
 
             public static TaskGoTo Point(GameController game, Vec2I end)
@@ -208,26 +212,16 @@ namespace BB
             }
 
             // TODO: call this from somewhere useful
-            public void Reroute(Vec2I updatedTile)
+            public override void Reroute(Vec2I updatedTile)
             {
-                BB.Assert(path != null);
-
-                if (!path.Contains(updatedTile))
+                if (path == null || !path.Contains(updatedTile))
                     return;
 
                 if (!GetPath())
                 {
-                    work.Cancel();
-                     // actually this could track its failure state and
-                     // finish moving then return Fail
-                     // TODO: assign new job to minion to walk to nearest tile
-
-                    //// TODO: figure out how to handle edge case of currentently in or going into newly solid tile
-                    //path = new LinkedList<Vec2I>();
-                    //path.AddLast(pos.Floor());
-
-
-                    throw new NotImplementedException();
+                    path = new LinkedList<Vec2I>();
+                    path.AddLast(minion.realPos.Floor());
+                    onFallbackPath = true;
                 }
 
                 UpdatePathVis();
@@ -256,7 +250,7 @@ namespace BB
                         {
                             // TODO: delete path vis
                             minion.skin.SetAnimLoop(MinionAnim.None);
-                            return Status.Complete;
+                            return onFallbackPath ? Status.Fail : Status.Complete;
                         }
                     }
                 }
