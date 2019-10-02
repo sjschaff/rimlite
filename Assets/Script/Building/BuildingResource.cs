@@ -28,9 +28,6 @@ namespace BB
         public TileSprite GetSpriteOver(Map map, Vec2I pos)
             => map.game.assets.sprites.Get(def.spriteOver);
 
-        public IEnumerable<ItemInfoRO> GetBuildMaterials()
-            => throw new NotSupportedException("GetBuildMaterials called on BuildingResource");
-
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
         {
             public float mineAmt { get; set; }

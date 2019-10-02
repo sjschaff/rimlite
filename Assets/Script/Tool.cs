@@ -141,7 +141,7 @@ namespace BB
             // TODO: only work an valid tiles
             if (!game.Tile(pos).hasBuilding)
             {
-                IBuildingProto proto = null;
+                IBuildable proto = null;
                 switch (currentBuild)
                 {
                     case 0: proto = game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick")); break;

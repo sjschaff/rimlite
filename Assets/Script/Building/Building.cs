@@ -53,6 +53,7 @@ namespace BB
 
         bool passable { get; }
 
+        // bounds when facing down
         BuildingBounds bounds { get; }
         RenderFlags renderFlags { get; }
         TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);

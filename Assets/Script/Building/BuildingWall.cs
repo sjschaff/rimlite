@@ -4,7 +4,7 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public class BuildingProtoWall : BuildingProtoTiledRender
+    public class BuildingProtoWall : BuildingProtoTiledRender, IBuildable
     {
         public readonly BldgWallDef def;
 
@@ -82,7 +82,12 @@ namespace BB
             return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
         }
 
-        public override IEnumerable<ItemInfoRO> GetBuildMaterials()
+        public IEnumerable<MinionSkin.Dir> AllowedOrientations()
+        {
+            yield return MinionSkin.Dir.Down;
+        }
+
+        public IEnumerable<ItemInfoRO> GetBuildMaterials()
         {
             foreach (var item in def.materials)
                 yield return item;

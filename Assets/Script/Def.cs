@@ -113,10 +113,36 @@ namespace BB
         }
 
         public static BldgProtoDef Create<TProto, TDef>()
-            => new BldgProtoDef(TypeDef.Create<TProto>(), TypeDef.Create<TDef>());
+            where TDef : BldgDef<TDef>
+        {
+            var def = new BldgProtoDef(TypeDef.Create<TProto>(), TypeDef.Create<TDef>());
+            BldgDef<TDef>.SetProto(def);
+            return def;
+        }
     }
 
-    public class BldgMineableDef : DefNamed
+    public class BldgDef<TBldgDef> : DefNamed
+        where TBldgDef : BldgDef<TBldgDef>
+    {
+        public static void SetProto(BldgProtoDef def)
+        {
+            BB.AssertNotNull(def);
+            BB.AssertNull(protoInternal,
+                $"building prototype def <{def.defName}, {def.protoDefType.defName}> declared twice");
+            protoInternal = def;
+        }
+
+        private static BldgProtoDef protoInternal;
+        public BldgProtoDef proto => protoInternal;
+
+        public BldgDef(string defType, string defName, string name)
+            : base(defType, defName, name)
+        {
+            BB.AssertNotNull(proto, $"building def {defType}<{defName}> declared before proto def");
+        }
+    }
+
+    public class BldgMineableDef : BldgDef<BldgMineableDef>
     {
         public readonly Tool tool;
         public readonly ItemInfoRO[] resources;
@@ -142,40 +168,38 @@ namespace BB
             : this(defName, name, tool, new ItemInfoRO[] { resource }, sprite, spriteOver) { }
     }
 
-    public class BldgFloorDef : DefNamed
+    public class BldgFloorDef : BldgDef<BldgFloorDef>
     {
         public readonly ItemInfoRO[] materials;
         public readonly AtlasDef atlas;
         public readonly Vec2I spriteOrigin;
 
-        public BldgFloorDef(string defName, string name, ItemInfoRO[] materials, AtlasDef atlas, Vec2I spriteOrigin)
+        public BldgFloorDef(
+            string defName, string name, ItemInfoRO[] materials,
+            AtlasDef atlas, Vec2I spriteOrigin)
             : base("BB:Floor", defName, name)
         {
             this.materials = materials;
             this.atlas = atlas;
             this.spriteOrigin = spriteOrigin;
         }
-
-        public BldgFloorDef(string defName, string name, ItemInfoRO material, AtlasDef atlas, Vec2I spriteOrigin)
-            : this(defName, name, new ItemInfoRO[] { material }, atlas, spriteOrigin) { }
     }
 
-    public class BldgWallDef : DefNamed
+    public class BldgWallDef : BldgDef<BldgWallDef>
     {
         public readonly ItemInfoRO[] materials;
         public readonly AtlasDef atlas;
         public readonly Vec2I spriteOrigin;
 
-        public BldgWallDef(string defName, string name, ItemInfoRO[] materials, AtlasDef atlas, Vec2I spriteOrigin)
+        public BldgWallDef(
+            string defName, string name, ItemInfoRO[] materials,
+            AtlasDef atlas, Vec2I spriteOrigin)
             : base("BB:Wall", defName, name)
         {
             this.materials = materials;
             this.atlas = atlas;
             this.spriteOrigin = spriteOrigin;
         }
-
-        public BldgWallDef(string defName, string name, ItemInfoRO material, AtlasDef atlas, Vec2I spriteOrigin)
-            : this(defName, name, new ItemInfoRO[] { material }, atlas, spriteOrigin) { }
     }
 
     // TODO: alls these building defs are getting quite unwieldy
@@ -231,12 +255,14 @@ namespace BB
                 Get<SpriteDef>("BB:BldgTree"),
                 Get<SpriteDef>("BB:BldgTreeOver")));
 
+            Register(BldgProtoDef.Create<BuildingProtoFloor, BldgFloorDef>());
             Register(new BldgFloorDef("BB:StoneBrick", "Stone Brick Floor",
-                new ItemInfoRO(Get<ItemDef>("BB:Stone"), 5),
+                 new[] { new ItemInfoRO(Get<ItemDef>("BB:Stone"), 5) },
                tileset64, new Vec2I(0, 9)));
 
+            Register(BldgProtoDef.Create<BuildingProtoWall, BldgWallDef>());
             Register(new BldgWallDef("BB:StoneBrick", "Stone Brick Wall",
-                new ItemInfoRO(Get<ItemDef>("BB:Stone"), 10),
+                new[] { new ItemInfoRO(Get<ItemDef>("BB:Stone"), 10) },
                 tileset64, new Vec2I(0, 12)));
         }
 

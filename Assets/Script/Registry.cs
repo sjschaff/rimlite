@@ -57,7 +57,9 @@ namespace BB
 
                 }
             }
-            BB.LogInfo("found " + systems.Count + " work systems.");
+            BB.LogInfo("Found " + systems.Count + " work systems:");
+            foreach (var system in systems)
+                BB.LogInfo("    " + system.GetType().FullName);
         }
 
         private IEnumerable<Type> GetTypesForInterface<TInterface>()

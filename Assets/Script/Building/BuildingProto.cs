@@ -7,7 +7,6 @@ namespace BB
     public interface IBuildingProto
     {
         IBuilding CreateBuilding();
-        IEnumerable<ItemInfoRO> GetBuildMaterials();
 
         bool passable { get; }
         BuildingBounds bounds { get; }

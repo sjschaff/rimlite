@@ -10,7 +10,6 @@ namespace BB
         protected BuildingProtoTiledRender() { }
 
         public abstract IBuilding CreateBuilding();
-        public abstract IEnumerable<ItemInfoRO> GetBuildMaterials();
         public abstract bool passable { get; }
         public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
 

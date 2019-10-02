@@ -6,6 +6,12 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public interface IBuildable : IBuildingProto
+    {
+        IEnumerable<MinionSkin.Dir> AllowedOrientations();
+        IEnumerable<ItemInfoRO> GetBuildMaterials();
+    }
+
     public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
     {
         public static SystemBuild K_instance;
@@ -20,7 +26,7 @@ namespace BB
 
         public override IOrdersGiver orders => null;
 
-        public void CreateBuild(IBuildingProto proto, Vec2I pos)
+        public void CreateBuild(IBuildable proto, Vec2I pos)
             => AddJob(new JobBuild(this, pos, proto));
 
         public override void WorkAbandoned(JobHandle job, Work work) { }
@@ -36,7 +42,7 @@ namespace BB
         {
             public readonly BuildingProtoConstruction.BuildingConstruction building;
 
-            public JobBuild(SystemBuild build, Vec2I pos, IBuildingProto proto)
+            public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto)
                 : base(build, pos)
             {
                 building = build.proto.Create(proto);
@@ -49,7 +55,6 @@ namespace BB
                 public readonly Item item;
                 public ItemPriority(Item item) => this.item = item;
             }
-
 
             public IEnumerable<Task> GetTasks()
             {

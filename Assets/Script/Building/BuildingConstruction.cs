@@ -11,12 +11,12 @@ namespace BB
     {
         public BuildingProtoConstruction() { }
 
-        public BuildingConstruction Create(IBuildingProto proto)
+        public BuildingConstruction Create(IBuildable proto)
             => new BuildingConstruction(this, proto);
 
         public class BuildingConstruction : BuildingBase<BuildingProtoConstruction>
         {
-            public readonly IBuildingProto buildProto;
+            public readonly IBuildable buildProto;
 
             public class MaterialInfo
             {
@@ -61,7 +61,7 @@ namespace BB
                 return true;
             }
 
-            public BuildingConstruction(BuildingProtoConstruction proto, IBuildingProto buildProto)
+            public BuildingConstruction(BuildingProtoConstruction proto, IBuildable buildProto)
                 : base(proto)
             {
                 this.buildProto = buildProto;
@@ -88,8 +88,6 @@ namespace BB
 
         public IBuilding CreateBuilding()
             => throw new NotSupportedException("CreateBuilding called on BuildingProtoConstruction");
-        public IEnumerable<ItemInfoRO> GetBuildMaterials()
-            => throw new NotSupportedException("GetBuildMaterials called on BuildingProtoConstruction");
         public bool passable
             => throw new NotSupportedException("passable called on BuildingProtoConstruction");
         public BuildingBounds bounds
