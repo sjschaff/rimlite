@@ -50,7 +50,7 @@ namespace BB
                 base.Destroy();
             }
 
-            public override IEnumerable<Task2> GetTasks()
+            public override IEnumerable<Task> GetTasks()
             {
                 yield return Minion.TaskGoTo.Adjacent(game, pos);
                 yield return new TaskMine(game, this);

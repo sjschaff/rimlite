@@ -8,6 +8,8 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public enum Tool { None, Hammer, Pickaxe, Axe };
+
     public class Minion
     {
 #if DEBUG
@@ -122,7 +124,7 @@ namespace BB
             RemoveWork(currentWork);
         }
 
-        public class TaskGoTo : Task2
+        public class TaskGoTo : Task
         {
             private readonly Func<Vec2I, bool> dstFn;
             private readonly Vec2I endHint;

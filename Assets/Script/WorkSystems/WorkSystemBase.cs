@@ -75,7 +75,7 @@ namespace BB
 
             public JobBasic(TThis system, Vec2I pos) : base(system, pos) { }
 
-            public abstract IEnumerable<Task2> GetTasks();
+            public abstract IEnumerable<Task> GetTasks();
 
             public override void Destroy()
             {

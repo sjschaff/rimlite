@@ -51,7 +51,7 @@ namespace BB
             }
 
 
-            public IEnumerable<Task2> GetTasks()
+            public IEnumerable<Task> GetTasks()
             {
                 while (building.HasAvailableHauls())
                 {

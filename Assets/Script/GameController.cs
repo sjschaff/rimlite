@@ -203,19 +203,6 @@ namespace BB
         public void K_MoveMinion(Vec2I pos) 
             => D_minionNoTask.AssignWork(WalkSystemDummy.Create(Minion.TaskGoTo.Point(this, pos)));
 
-        public void AddJob(IJob job)
-        {
-            BB.LogInfo("Added Job: " + job + "(" + job.GetHashCode() + ")");
-            throw new NotSupportedException();
-           // currentJobs.AddLast(job);
-        }
-
-        public void RemoveJob(IJob job)
-        {
-            //currentJobs.Remove(job);
-            throw new NotSupportedException();
-        }
-
         public bool IsTileOccupied(Vec2I pos, Minion minionIgnore)
         {
             foreach (Minion minion in minions)

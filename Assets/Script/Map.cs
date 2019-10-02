@@ -4,7 +4,6 @@ namespace BB
 {
     public interface ITile
     {
-        IJob K_activeJob { get; set; }
         bool passable { get; }
         bool hasBuilding { get; }
         IBuilding building { get; }
@@ -37,8 +36,6 @@ namespace BB
             }
         }
 
-        public IJob K_activeJob { get; set; }
-
         public void K_SetBuilding(IBuilding bldg)
         {
             this.bldgMain = bldg;
@@ -47,9 +44,6 @@ namespace BB
         public TBldg GetBuilding<TBldg>() where TBldg : IBuilding
             => (TBldg)building;
 
-        public IJob activeJob;
-
-        public bool hasJob => activeJob != null;
         public bool passable => terrain.passable && (hasBuilding ? building.passable : true);
         public bool hasBuilding => bldgMain != null || bldgAdj != null;
 

@@ -5,7 +5,7 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public abstract class TaskTimed : Task2
+    public abstract class TaskTimed : Task
     {
         private float workAmt;
         private readonly Vec2I workTarget;

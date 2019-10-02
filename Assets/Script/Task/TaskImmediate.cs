@@ -2,7 +2,7 @@
 
 namespace BB
 {
-    public abstract class TaskImmediate : Task2
+    public abstract class TaskImmediate : Task
     {
         public TaskImmediate(GameController game) : base(game) { }
         public override Status PerformTask(float deltaTime)
