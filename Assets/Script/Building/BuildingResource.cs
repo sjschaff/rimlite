@@ -11,10 +11,8 @@ namespace BB
         private readonly BldgMineableDef def;
 
         public BuildingProtoResource(BldgMineableDef def)
-        {
-            this.def = def;
-            BB.Log("instantiated with: " + def.name);
-        }
+            => this.def = def;
+
         public IBuilding CreateBuilding() => new BuildingResource(this);
 
         public bool passable => false;

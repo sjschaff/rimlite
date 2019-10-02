@@ -133,7 +133,7 @@ namespace BB
         public override void OnTab()
         {
             currentBuild = (currentBuild + 1) % 2;
-            BB.Log("Build " + currentBuild);
+            BB.LogInfo("Build " + currentBuild);
         }
 
         public override void OnClick(Vec2I pos)

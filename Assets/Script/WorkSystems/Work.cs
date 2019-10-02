@@ -150,7 +150,7 @@ namespace BB
         {
             BB.Assert(claims.Count == 0);
             if (claims.Count != 0)
-                BB.Log("Task completed with claims left over, this is a bug");
+                BB.LogError("Task completed with claims left over, this is a bug");
             ClearClaims();
             minion.RemoveWork(this);
         }

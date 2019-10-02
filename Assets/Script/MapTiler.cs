@@ -235,7 +235,7 @@ namespace BB
             tilemapBuildingOver = new Tilemap<VirtualTileBuildingOver>(map, layout, material, RenderLayer.OverMap.Layer(0), bounds, tileBuffer);
 
             sw.Stop();
-            BB.Log("tiles took " + sw.ElapsedMilliseconds + "ms");
+            BB.LogInfo("tiles took " + sw.ElapsedMilliseconds + "ms");
         }
 
         private Transform CreateGridLayout()

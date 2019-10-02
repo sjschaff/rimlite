@@ -58,12 +58,8 @@ namespace BB
         private UITool tool => currentTool.Value;
 
         // TODO: figure out what should be in awake and what should be in start
-        private void Awake()
-        {
-            Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-        }
+        private void Awake() { }
 
-        // Start is called before the first frame update
         void Start()
         {
             registry = new Registry(this);
@@ -209,7 +205,7 @@ namespace BB
 
         public void AddJob(IJob job)
         {
-            BB.Log("Added Job: " + job + "(" + job.GetHashCode() + ")");
+            BB.LogInfo("Added Job: " + job + "(" + job.GetHashCode() + ")");
             throw new NotSupportedException();
            // currentJobs.AddLast(job);
         }
@@ -283,7 +279,7 @@ namespace BB
                 if (currentTool == null)
                     currentTool = tools.First;
 
-                BB.Log("Current Tool: " + tool);
+                BB.LogInfo("Current Tool: " + tool);
             }
 
             if (Input.GetMouseButtonDown(0))

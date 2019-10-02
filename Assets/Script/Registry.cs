@@ -52,12 +52,12 @@ namespace BB
                         systems.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
                 } catch (MissingMethodException)
                 {
-                    BB.Log("Failed to instatiate work system '" + workSystem.FullName +
+                    BB.LogWarning("Failed to instatiate work system '" + workSystem.FullName +
                         "': missing constructor taking single argument GameController");
 
                 }
             }
-            BB.Log("found " + systems.Count + " work systems.");
+            BB.LogInfo("found " + systems.Count + " work systems.");
         }
 
         private IEnumerable<Type> GetTypesForInterface<TInterface>()

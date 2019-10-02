@@ -1,23 +1,38 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace BB
 {
+    [UnityEditor.InitializeOnLoad]
     public static class BB
     {
+        static BB()
+        {
+            UnityEngine.Application.SetStackTraceLogType(
+               UnityEngine.LogType.Log, UnityEngine.StackTraceLogType.None);
+        }
+
+        [Conditional("DEBUG")]
         public static void Assert(bool a, string msg = null)
         {
-            // TODO: make debug only
             if (!a)
             {
-                throw new Exception("Assert failed - " + msg);
+                UnityEngine.Debug.LogAssertion("Assert Failed: " + msg);
+                Log(msg, "Assert");
+                // Note if a debugger is not attacked this will prompt
+                // to attach a debugger, might be handy
+                if (Debugger.IsAttached)
+                    Debugger.Break();
             }
         }
 
+        [Conditional("DEBUG")]
         public static void AssertNotNull<T>(T t, string msg = null) where T : class
-            => Assert(t != null, msg);
+            => Assert(t != null, msg ?? typeof(T).Name + " != null");
 
+        [Conditional("DEBUG")]
         public static void AssertNull<T>(T t, string msg = null) where T : class
-            => Assert(t == null, msg);
+            => Assert(t == null, msg ?? typeof(T).Name + " == null");
 
         public static T Next<T>(this T src) where T : struct
         {
@@ -28,10 +43,29 @@ namespace BB
             return (Arr.Length == j) ? Arr[0] : Arr[j];
         }
 
-        public static void Log(string msg)
+        private static void Log(string msg, string level)
         {
-            System.Diagnostics.Debug.WriteLine(msg);
+            // Something (probably unity) is injecting an extra
+            // new line so we'll skip it here
+            Debug.Write("[" + level + "]: " + msg);
+        }
+
+        public static void LogInfo(string msg)
+        {
             UnityEngine.Debug.Log(msg);
+            Log(msg, "Info");
+        }
+
+        public static void LogWarning(string msg)
+        {
+            UnityEngine.Debug.LogError(msg);
+            Log(msg, "Warning");
+        }
+
+        public static void LogError(string msg)
+        {
+            UnityEngine.Debug.LogError(msg);
+            Log(msg, "Error");
         }
     }
 }

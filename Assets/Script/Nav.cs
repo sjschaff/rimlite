@@ -239,7 +239,7 @@ namespace BB
                 string log = "pts = ";
                 foreach (int i in pts)
                     log += i.ToString() + ", ";
-                BB.Log(log);
+                BB.LogInfo(log);
             }
             return pts == null ? null : new Edge(pts.Select(i => new Vec2I(i, aDim - 1)).ToArray());
         }
@@ -284,17 +284,17 @@ namespace BB
 
         private void AddPointsForSeq(int start, int len, List<int> pts)
         {
-            if (KD_log) BB.Log("found sequence: " + start + ", " + len);
+            if (KD_log) BB.LogInfo("found sequence: " + start + ", " + len);
             if (len > maxSeq)
             {
-                if (KD_log) BB.Log("splitting sequence");
+                if (KD_log) BB.LogInfo("splitting sequence");
                 int lenSplit = len / 2;
                 AddPointsForSeq(start, lenSplit, pts);
                 AddPointsForSeq(start + lenSplit, len - lenSplit, pts);
             }
             else if (len == maxSeq)
             {
-                if (KD_log) BB.Log("max sequence, adding 2");
+                if (KD_log) BB.LogInfo("max sequence, adding 2");
                 pts.Add(start);
                 pts.Add(start + len - 1);
             }
@@ -302,7 +302,7 @@ namespace BB
             {
                 int mid = (len - 1) / 2;
                 pts.Add(start + mid);
-                if (KD_log) BB.Log("mid = " + mid + " => " + (start + mid));
+                if (KD_log) BB.LogInfo("mid = " + mid + " => " + (start + mid));
             }
 
             // 4, 4     0 - - 0|0 - - 0
