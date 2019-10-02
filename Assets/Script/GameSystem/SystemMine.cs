@@ -52,7 +52,7 @@ namespace BB
 
             public override IEnumerable<Task> GetTasks()
             {
-                yield return Minion.TaskGoTo.Adjacent(game, pos);
+                yield return new TaskGoTo(game, PathCfg.Adjacent(pos));
                 yield return new TaskMine(game, this);
             }
         }

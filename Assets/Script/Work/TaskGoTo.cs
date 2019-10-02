@@ -8,42 +8,33 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    // Wrapper for aesthetics
+    public class TaskGoTo : Minion.InternalTaskGoTo
+    {
+        public TaskGoTo(GameController game, PathCfg cfg)
+            : base(game, cfg) { }
+    }
+
     public partial class Minion
     {
-        public class TaskGoTo : Task
+        public abstract class InternalTaskGoTo : Task
         {
-            private readonly Func<Vec2I, bool> dstFn;
-            private readonly Vec2I endHint;
-            // private readonly Func<Vec2I, float> hueFn;
+            private readonly PathCfg cfg;
 
             private bool onFallbackPath;
             private LinkedList<Vec2I> path;
             private LineRenderer pathVis;
 
-            private TaskGoTo(GameController game, Func<Vec2I, bool> dstFn, Vec2I endHint)
+            protected InternalTaskGoTo(GameController game, PathCfg cfg)
                 : base(game)
             {
-                this.dstFn = dstFn;
-                this.endHint = endHint;
+                this.cfg = cfg;
                 this.onFallbackPath = false;
             }
 
-            public static TaskGoTo Point(GameController game, Vec2I end)
-                => new TaskGoTo(game, pt => pt == end, end);
-
-            // TODO: this is gonna get interesting with claims, well have to find a path first
-            // then claim the endpoint, pathfinding will also need to not allow claimed tiles
-            // also the hueristic for this is totalled f'ed right now
-            public static TaskGoTo Vacate(GameController game, Vec2I pos)
-                => new TaskGoTo(game, v => v != pos, pos);
-
-            // TODO: see Vacate, also take building size or something instead
-            public static TaskGoTo Adjacent(GameController game, Vec2I pos)
-                => new TaskGoTo(game, v => v.Adjacent(pos), pos);
-
             private bool GetPath()
             {
-                var pts = game.GetPath(minion.realPos.Floor(), endHint, dstFn);
+                var pts = game.GetPath(minion.realPos.Floor(), cfg);
                 if (pts == null)
                     return false;
 
@@ -72,7 +63,7 @@ namespace BB
 
             protected override Status OnBeginTask()
             {
-                if (minion.GridAligned() && dstFn(minion.pos))
+                if (minion.GridAligned() && cfg.destinationFn(minion.pos))
                     return Status.Complete;
 
                 if (!GetPath())

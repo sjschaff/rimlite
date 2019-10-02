@@ -138,8 +138,11 @@ namespace BB
         }
 
         public static Path FindPath(
-            ISearchCache searchCache, Func<Vec2I, bool> passFn,
-            Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFn)
+            ISearchCache searchCache,
+            Vec2I start,
+            Func<Vec2I, bool> passableFn,
+            Func<Vec2I, bool> destinationFn,
+            Func<Vec2I, float> heuristicFn)
         {
             var cache = (searchCache as SearchCache);
             cache.Reset();
@@ -148,19 +151,19 @@ namespace BB
             while (cache.hasOpen)
             {
                 Node n = cache.NextOpen();
-                if (dstFn(n.pos))
+                if (destinationFn(n.pos))
                     return ConstructPath(n);
 
                 foreach (Vec2I dir in directions)
                 {
                     Vec2I pos = n.pos + dir;
-                    if (!MathExt.InGrid(cache.size, pos) || cache.Closed(pos) || !passFn(pos))
+                    if (!MathExt.InGrid(cache.size, pos) || cache.Closed(pos) || !passableFn(pos))
                         continue;
 
                     if (dir.x != 0 && dir.y != 0)
                     {
-                        if (!passFn(n.pos + new Vec2I(dir.x, 0)) ||
-                            !passFn(n.pos + new Vec2I(0, dir.y)))
+                        if (!passableFn(n.pos + new Vec2I(dir.x, 0)) ||
+                            !passableFn(n.pos + new Vec2I(0, dir.y)))
                             continue;
                     }
 
@@ -178,7 +181,7 @@ namespace BB
                     }
                     else
                     {
-                        cache.Open(n, pos, g, Vec2I.Distance(start, endHint));
+                        cache.Open(n, pos, g, heuristicFn(pos));
                     }
                 }
             }

@@ -6,6 +6,29 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public struct PathCfg
+    {
+        public readonly Func<Vec2I, bool> destinationFn;
+        public readonly Func<Vec2I, float> hueristicFn;
+
+        public PathCfg(Func<Vec2I, bool> destinationFn, Func<Vec2I, float> hueristicFn)
+        {
+            this.destinationFn = destinationFn;
+            this.hueristicFn = hueristicFn;
+        }
+
+        public static PathCfg Point(Vec2I pos)
+            => new PathCfg(pt => pt == pos, pt => Vec2I.Distance(pt, pos));
+
+        // TODO: this hueristic is probably wrong
+        public static PathCfg Vacate(Vec2I pos)
+            => new PathCfg(pt => pt != pos, pt => Vec2I.Distance(pt, pos));
+
+        // TODO: this hueristic is probably wrong
+        public static PathCfg Adjacent(Vec2I pos)
+            => new PathCfg(pt => pt.Adjacent(pos), pt => Vec2I.Distance(pt, pos));
+    }
+
     public class Nav
     {
         private readonly AStar.ISearchCache searchCache;
@@ -17,8 +40,8 @@ namespace BB
             passFn = pt => map.Tile(pt).passable;
         }
 
-        public Vec2I[] GetPath(Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFn)
-            => AStar.FindPath(searchCache, passFn, start, endHint, dstFn)?.pts;
+        public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
+            => AStar.FindPath(searchCache, start, passFn, cfg.destinationFn, cfg.hueristicFn)?.pts;
     }
 
     // Initial half implementation of hierarchical A* 
@@ -190,7 +213,8 @@ namespace BB
                         for (int b = 0; b < edgeB.pts.Length; ++b)
                         {
                             Vec2I ptB = edgeB.pts[b];
-                            var path = AStar.FindPath(cacheInternal, tile.passFn, ptA, ptB, pt => pt == ptB);
+                            var path = AStar.FindPath(
+                                cacheInternal, ptA, tile.passFn, pt => pt == ptB, pt => Vec2I.Distance(ptB, pt));
                             if (shortestPath == null || path.g < shortestPath.g)
                                 shortestPath = path;
                         }

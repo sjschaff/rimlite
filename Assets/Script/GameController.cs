@@ -94,8 +94,8 @@ namespace BB
             currentTool = tools.First;
         }
 
-        public Vec2I[] GetPath(Vec2I start, Vec2I endHint, Func<Vec2I, bool> dstFn)
-            => map.nav.GetPath(start, endHint, dstFn);
+        public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
+            => map.nav.GetPath(start, cfg);
 
         public ITile Tile(Vec2I pos) => map.Tile(pos);
 
@@ -197,8 +197,9 @@ namespace BB
             }
         }
 
-        public void K_MoveMinion(Vec2I pos) 
-            => D_minionNoTask.AssignWork(SystemWalkDummy.Create(Minion.TaskGoTo.Point(this, pos)));
+        public void K_MoveMinion(Vec2I pos)
+            => D_minionNoTask.AssignWork(SystemWalkDummy.Create(
+                new TaskGoTo(this, PathCfg.Point(pos))));
 
         public bool IsTileOccupied(Vec2I pos, Minion minionIgnore)
         {
@@ -216,7 +217,8 @@ namespace BB
             foreach (Minion minion in minions)
             {
                 if (!minion.hasWork && minion.pos == pos)
-                    minion.AssignWork(SystemWalkDummy.Create(Minion.TaskGoTo.Vacate(this, pos)));
+                    minion.AssignWork(SystemWalkDummy.Create(
+                        new TaskGoTo(this, PathCfg.Vacate(pos))));
             }
         }
 

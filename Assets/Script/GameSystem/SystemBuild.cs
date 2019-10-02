@@ -91,9 +91,9 @@ namespace BB
                                     return new Work.ClaimLambda(() => mat.amtClaimed -= haulAmt);
                                 }), out var claimHaul);
                             yield return Capture(new TaskClaimItem(game, itemHaul, haulAmt), out var claimItem);
-                            yield return Minion.TaskGoTo.Point(game, itemHaul.pos);
+                            yield return new TaskGoTo(game, PathCfg.Point(itemHaul.pos));
                             yield return new TaskPickupItem(claimItem);
-                            yield return Minion.TaskGoTo.Point(game, pos); // TODO: this could be anywhere in the building
+                            yield return new TaskGoTo(game, PathCfg.Point(pos)); // TODO: this could be anywhere in the building
                             yield return new TaskLambda(game,
                                 (work) =>
                                 {
@@ -155,7 +155,7 @@ namespace BB
                                 return false;
                             });
 
-                    yield return Minion.TaskGoTo.Adjacent(game, pos);
+                    yield return new TaskGoTo(game, PathCfg.Adjacent(pos));
                     yield return new TaskTimedLambda(
                         game, pos, MinionAnim.Slash, Tool.Hammer, 2, _ => 1,
                         // TODO: track work amount on building

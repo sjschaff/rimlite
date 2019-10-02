@@ -15,7 +15,7 @@ namespace BB
         public IEnumerable<Work> QueryWork() { yield break; }
         public void WorkAbandoned(JobHandle job, Work work) { }
 
-        public static Work Create(Minion.TaskGoTo task)
+        public static Work Create(TaskGoTo task)
             => new Work(dummy, task);
     }
 }
