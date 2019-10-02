@@ -384,22 +384,23 @@ namespace BB
 
         // TODO: this is kinda jank
         // shouldnt be new'ing defs, and we'll end up with duplicate sprites
-        public static bool SplitSprite(SpriteDef sprite, out SpriteDef lower, out SpriteDef upper)
+        public static bool SplitSprite(SpriteDef sprite, int height, out SpriteDef lower, out SpriteDef upper)
         {
             var atlas = sprite.atlas;
-            int tilesPerUnit = atlas.tilesPerUnit;
+            var heightTiles = height * atlas.tilesPerUnit;
             var rect = sprite.rect;
-            if (sprite.rect.size.y > tilesPerUnit)
+
+            if (sprite.rect.size.y > heightTiles)
             {
                 lower = new SpriteDef(null, atlas, new Atlas.Rect(
                     rect.origin,
-                    new Vec2I(rect.size.x, tilesPerUnit),
+                    new Vec2I(rect.size.x, heightTiles),
                     rect.anchor));
 
-                var upperOfs = new Vec2I(0, tilesPerUnit);
+                var upperOfs = new Vec2I(0, heightTiles);
                 upper = new SpriteDef(null, atlas, new Atlas.Rect(
                     rect.origin + upperOfs,
-                    new Vec2I(rect.size.x, rect.size.y - tilesPerUnit),
+                    new Vec2I(rect.size.x, rect.size.y - heightTiles),
                     rect.anchor - upperOfs));
 
                 return true;

@@ -9,12 +9,8 @@ namespace BB
         public readonly GameController game;
         public readonly Defs defs;
 
-        // TODO: something more general/interesting
-        // also not cache since, everything should be registered up front
-        public readonly Cache<BldgMineableDef, BuildingProtoResource> resources;
-        public readonly Cache<BldgFloorDef, BuildingProtoFloor> floors;
-        public readonly Cache<BldgWallDef, BuildingProtoWall> walls;
-
+        // TODO: make these readonly, or at the very list private
+        public readonly Dictionary<BldgDef, IBuildingProto> buildings;
         public readonly List<IGameSystem> systems = new List<IGameSystem>();
 
         public Registry(GameController game)
@@ -22,44 +18,66 @@ namespace BB
             this.game = game;
             defs = new Defs();
 
-            resources = new Cache<BldgMineableDef, BuildingProtoResource>(
-                def => new BuildingProtoResource(game, def));
-            floors = new Cache<BldgFloorDef, BuildingProtoFloor>(
-                def => new BuildingProtoFloor(def));
-            walls = new Cache<BldgWallDef, BuildingProtoWall>(
-                def => new BuildingProtoWall(def));
+            buildings = new Dictionary<BldgDef, IBuildingProto>();
         }
 
         public void LoadTypes()
         {
-            // test
-            /*var t = typeof(BuildingProtoResource);
-            BB.Log("assembly: " + t.Assembly);
-            BB.Log("name: " + t.Name);
-            BB.Log("full name: " + t.FullName);
-            BB.Log("assembly qualified:" + t.AssemblyQualifiedName);
-            string typeName = t.AssemblyQualifiedName;
-            BB.Log("type: " + Type.GetType(typeName));
-            var d = defs.Get<BldgMineableDef>("BB:Rock");
-            BuildingProtoResource b = (BuildingProtoResource)Activator.CreateInstance(Type.GetType(typeName), d);
-            */
-
             foreach (var workSystem in GetTypesForInterface<IGameSystem>())
             {
-                try
+                if (!workSystem.GetCustomAttributes(typeof(AttributeDontInstantiate), false).Any())
                 {
-                    if (!workSystem.GetCustomAttributes(typeof(AttributeDontInstantiate), false).Any())
-                        systems.Add((IGameSystem)Activator.CreateInstance(workSystem, (object)game));
-                } catch (MissingMethodException)
-                {
-                    BB.LogWarning("Failed to instatiate work system '" + workSystem.FullName +
-                        "': missing constructor taking single argument GameController");
-
+                    var system = TryInstantiate<IGameSystem>("work system", workSystem, game);
+                    if (system != null)
+                        systems.Add(system);
                 }
             }
+
             BB.LogInfo("Found " + systems.Count + " work systems:");
             foreach (var system in systems)
-                BB.LogInfo("    " + system.GetType().FullName);
+                BB.LogInfo($"    {system.GetType().FullName}");
+
+
+            foreach (var def in defs.GetDefs<BldgDef>())
+            {
+                BldgProtoDef protoDef = def.proto;
+                Type typeProto = protoDef.protoType;
+                Type typeDef = protoDef.protoDefType;
+                if (typeDef != def.GetType())
+                {
+                    BB.Assert(false, $"{def.GetType().Name}{def} registered with mismatched prototype (expected a {typeDef.Name}).");
+                    continue;
+                }
+
+                var proto = TryInstantiate<IBuildingProto>("prototype", typeProto, game, def);
+                if (proto != null)
+                    buildings.Add(def, proto);
+            }
+
+            BB.LogInfo($"Found {buildings.Count} buildings:");
+            foreach (var def in buildings.Keys)
+                BB.LogInfo($"    {def}");
+        }
+
+        private T TryInstantiate<T>(string failName, Type type, params object[] args) where T : class
+        {
+            // TODO: use reflection to check first so we dont have to deal with exceptions
+            try
+            {
+                return (T)Activator.CreateInstance(type, args);
+            } catch (MissingMethodException)
+            {
+                string ctor = $"{type.Name}(";
+                if (args.Length > 0)
+                    ctor += args[0].GetType().Name;
+                for (int i = 1; i < args.Length; ++i)
+                    ctor += ", " + args[i].GetType().Name;
+                ctor += ")";
+                BB.LogWarning($"Failed to instatiate {failName} '{type.FullName}': " +
+                   $"missing constructor {ctor}");
+            }
+
+            return null;
         }
 
         private IEnumerable<Type> GetTypesForInterface<TInterface>()

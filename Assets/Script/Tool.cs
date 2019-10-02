@@ -144,8 +144,8 @@ namespace BB
                 IBuildable proto = null;
                 switch (currentBuild)
                 {
-                    case 0: proto = game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick")); break;
-                    case 1: proto = game.registry.floors.Get(game.defs.Get<BldgFloorDef>("BB:StoneBrick")); break;
+                    case 0: proto = (IBuildable)game.registry.buildings[game.defs.Get<BldgWallDef>("BB:StoneBrick")]; break;
+                    case 1: proto = (IBuildable)game.registry.buildings[game.defs.Get<BldgFloorDef>("BB:StoneBrick")]; break;
                 }
 
                 SystemBuild.K_instance.CreateBuild(proto, pos);
@@ -166,8 +166,8 @@ namespace BB
         public override void OnClick(Vec2I pos)
         {
             //game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
-            game.AddBuilding(pos, game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"))
-                .CreateBuilding());
+           // game.AddBuilding(pos, game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"))
+           //     .CreateBuilding());
         }
     }
 }

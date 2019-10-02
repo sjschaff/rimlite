@@ -8,7 +8,7 @@ namespace BB
     {
         public readonly BldgWallDef def;
 
-        public BuildingProtoWall(BldgWallDef def) => this.def = def;
+        public BuildingProtoWall(GameController game, BldgWallDef def) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingWall(this);
 
@@ -88,10 +88,7 @@ namespace BB
         }
 
         public IEnumerable<ItemInfoRO> GetBuildMaterials()
-        {
-            foreach (var item in def.materials)
-                yield return item;
-        }
+            => def.materials;
 
         private class BuildingWall : BuildingBase<BuildingProtoWall>
         {

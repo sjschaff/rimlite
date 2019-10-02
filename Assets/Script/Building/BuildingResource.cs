@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
 
-using Vec2I = UnityEngine.Vector2Int;
-using UnityEngine;
-
 namespace BB
 {
     public class BuildingProtoResource : BuildingProtoSpriteRender
@@ -10,7 +7,7 @@ namespace BB
         private readonly BldgMineableDef def;
 
         public BuildingProtoResource(GameController game, BldgMineableDef def)
-            : base(game, def.sprite)
+            : base(game, def.sprite, 1)
             => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingResource(this);

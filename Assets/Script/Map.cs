@@ -102,7 +102,10 @@ namespace BB
                 new int[] { 1, 1, 1 }
             };
 
-            var proto = game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"));
+            var wallProto = game.registry.buildings[game.defs.Get<BldgWallDef>("BB:StoneBrick")];
+            var rockProto = game.registry.buildings[game.defs.Get<BldgMineableDef>("BB:Rock")];
+            var treeProto = game.registry.buildings[game.defs.Get<BldgMineableDef>("BB:Tree")];
+
             for (int t = 0; t < perm.Length; ++t)
             {
                 for (int b = 0; b < perm.Length; ++b)
@@ -118,14 +121,12 @@ namespace BB
                             if (y == 0 && perm[b][x] == 0)
                                 continue;
 
-                            tiles[xofs + x, 2 + y].K_SetBuilding(proto.CreateBuilding());
+                            tiles[xofs + x, 2 + y].K_SetBuilding(wallProto.CreateBuilding());
                         }
                     }
                 }
             }
 
-            var rockProto = game.registry.resources.Get(game.defs.Get<BldgMineableDef>("BB:Rock"));
-            var treeProto = game.registry.resources.Get(game.defs.Get<BldgMineableDef>("BB:Tree"));
             tiles[5, 5].K_SetBuilding(rockProto.CreateBuilding());
             tiles[6, 5].K_SetBuilding(treeProto.CreateBuilding());
 

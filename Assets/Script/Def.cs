@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
+using System.Collections;
 
 namespace BB
 {
@@ -16,6 +17,8 @@ namespace BB
             this.defType = defType;
             this.defName = defName;
         }
+
+        public override string ToString() => $"<{defType}|{defName}>";
     }
 
     public abstract class DefNamed : Def
@@ -35,6 +38,8 @@ namespace BB
         public TypeDef(string typeName) : this(Type.GetType(typeName)) { }
 
         public static TypeDef Create<T>() => new TypeDef(typeof(T));
+
+        public static implicit operator Type(TypeDef t) => t.type;
     }
 
     public class AtlasDef : Def
@@ -117,17 +122,27 @@ namespace BB
         }
 
         public static BldgProtoDef Create<TProto, TDef>()
-            where TDef : BldgDef<TDef>
+            where TDef : BldgDefG<TDef>
         {
             var def = new BldgProtoDef(TypeDef.Create<TProto>(), TypeDef.Create<TDef>());
-            BldgDef<TDef>.SetProto(def);
+            BldgDefG<TDef>.SetProto(def);
             return def;
         }
     }
 
-    public class BldgDef<TBldgDef> : DefNamed
-        where TBldgDef : BldgDef<TBldgDef>
+    public abstract class BldgDef : DefNamed
     {
+        public abstract BldgProtoDef proto { get; }
+
+        protected BldgDef(string defType, string defName, string name)
+            : base(defType, defName, name) { }
+    }
+
+    public class BldgDefG<TBldgDef> : BldgDef
+        where TBldgDef : BldgDefG<TBldgDef>
+    {
+        private static BldgProtoDef protoInternal;
+
         public static void SetProto(BldgProtoDef def)
         {
             BB.AssertNotNull(def);
@@ -136,17 +151,16 @@ namespace BB
             protoInternal = def;
         }
 
-        private static BldgProtoDef protoInternal;
-        public BldgProtoDef proto => protoInternal;
+        public override BldgProtoDef proto => protoInternal;
 
-        public BldgDef(string defType, string defName, string name)
+        public BldgDefG(string defType, string defName, string name)
             : base(defType, defName, name)
         {
             BB.AssertNotNull(proto, $"building def {defType}<{defName}> declared before proto def");
         }
     }
 
-    public class BldgMineableDef : BldgDef<BldgMineableDef>
+    public class BldgMineableDef : BldgDefG<BldgMineableDef>
     {
         public readonly Tool tool;
         public readonly ItemInfoRO[] resources;
@@ -170,7 +184,7 @@ namespace BB
             : this(defName, name, tool, new ItemInfoRO[] { resource }, sprite) { }
     }
 
-    public class BldgFloorDef : BldgDef<BldgFloorDef>
+    public class BldgFloorDef : BldgDefG<BldgFloorDef>
     {
         public readonly ItemInfoRO[] materials;
         public readonly AtlasDef atlas;
@@ -187,7 +201,7 @@ namespace BB
         }
     }
 
-    public class BldgWallDef : BldgDef<BldgWallDef>
+    public class BldgWallDef : BldgDefG<BldgWallDef>
     {
         public readonly ItemInfoRO[] materials;
         public readonly AtlasDef atlas;
@@ -201,6 +215,27 @@ namespace BB
             this.materials = materials;
             this.atlas = atlas;
             this.spriteOrigin = spriteOrigin;
+        }
+    }
+
+    public class BldgWorkbenchDef : BldgDefG<BldgWorkbenchDef>
+    {
+        public readonly Vec2I size;
+        public readonly Vec2I workSpot;
+        public readonly SpriteDef sprite;
+        public readonly ItemInfoRO[] materials;
+        // TODO: recipes
+
+        public BldgWorkbenchDef(
+            string defName, string name, Vec2I size,
+            Vec2I workSpot, SpriteDef sprite,
+            ItemInfoRO[] materials)
+            : base("BB:Workbench", defName, name)
+        {
+            this.size = size;
+            this.workSpot = workSpot;
+            this.sprite = sprite;
+            this.materials = materials;
         }
     }
 
@@ -240,6 +275,7 @@ namespace BB
             Register(new SpriteDef("BB:Wood", sprites32, new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BldgRock", sprites32, new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
             Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(0, 4), new Vec2I(8, 14), new Vec2I(2, 0)));
+            Register(new SpriteDef("BB:WoodcuttingTable", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), Vec2I.one));
             Register(new SpriteDef("BB:MineOverlay", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
@@ -264,19 +300,38 @@ namespace BB
             Register(new BldgWallDef("BB:StoneBrick", "Stone Brick Wall",
                 new[] { new ItemInfoRO(Get<ItemDef>("BB:Stone"), 10) },
                 tileset64, new Vec2I(0, 12)));
+
+            Register(BldgProtoDef.Create<BuildingProtoWorkbench, BldgWorkbenchDef>());
+            Register(new BldgWorkbenchDef("BB:Woodcutter", "Woodcutting Table",
+                new Vec2I(3, 1), new Vec2I(1, -1), Get<SpriteDef>("BB:WoodcuttingTable"),
+                new[] { new ItemInfoRO(Get<ItemDef>("BB:Wood"), 10) }));
         }
 
-        private interface IDefList { }
+        private interface IDefList : IEnumerable<Def>
+        {
+            bool ContainsType(Type type);
+        }
+
         public class DefList<TDef> : IDefList where TDef : Def
         {
             private readonly Dictionary<string, TDef> defs
                 = new Dictionary<string, TDef>();
+
+            public bool ContainsType(Type type)
+                => type == typeof(TDef) || typeof(TDef).IsSubclassOf(type);
 
             public void Register(TDef def)
             {
                 BB.Assert(!defs.ContainsKey(def.defName));
                 defs.Add(def.defName, def);
             }
+
+            // TODO: is this boxing or something? what is this type wizardry?
+            IEnumerator<Def> IEnumerable<Def>.GetEnumerator()
+                => defs.Values.GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator()
+                => defs.Values.GetEnumerator();
 
             public TDef this[string defName]
             {
@@ -317,5 +372,17 @@ namespace BB
 
         public TDef Get<TDef>(string name) where TDef : Def
             => GetList<TDef>()[name];
+
+        public IEnumerable<TDef> GetDefs<TDef>() where TDef : Def
+        {
+            foreach (var list in lists.Values)
+            {
+                if (list.ContainsType(typeof(TDef)))
+                {
+                    foreach (var def in list)
+                        yield return (TDef)def;
+                }
+            }
+        }
     }
 }

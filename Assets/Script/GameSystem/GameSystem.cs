@@ -29,6 +29,7 @@ namespace BB
 
     public interface IGameSystem
     {
+        /*IGameSystem(GameController game);*/
         IOrdersGiver orders { get; }
         IEnumerable<Work> QueryWork();
         void CancelJob(JobHandle job);

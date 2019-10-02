@@ -7,9 +7,9 @@ namespace BB
         private readonly Sprite sprite;
         private readonly Sprite spriteOver;
 
-        protected BuildingProtoSpriteRender(GameController game, SpriteDef spriteDef)
+        protected BuildingProtoSpriteRender(GameController game, SpriteDef spriteDef, int height)
         {
-            if (Tiling.SplitSprite(spriteDef, out var defLower, out var defUpper))
+            if (Tiling.SplitSprite(spriteDef, height, out var defLower, out var defUpper))
             {
                 sprite = game.assets.sprites.Get(defLower);
                 spriteOver = game.assets.sprites.Get(defUpper);
@@ -22,10 +22,7 @@ namespace BB
 
         public abstract IBuilding CreateBuilding();
         public abstract bool passable { get; }
-
-        // TODO:
-        public virtual BuildingBounds bounds
-            => throw new System.NotImplementedException();
+        public abstract BuildingBounds bounds { get; }
 
         public RenderFlags renderFlags
             => spriteOver == null ? RenderFlags.None : RenderFlags.Oversized;

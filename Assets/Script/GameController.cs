@@ -64,9 +64,9 @@ namespace BB
         {
             registry = new Registry(this);
             assets = new AssetSrc();
-            map = new Map(this);
-
             registry.LoadTypes();
+
+            map = new Map(this);
 
             mouseHighlight = assets.CreateLine(
                 transform, Vec2.zero, "Mouse Highlight",
