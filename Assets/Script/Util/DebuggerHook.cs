@@ -2,19 +2,64 @@
 
 using UnityEditor;
 using System.Diagnostics;
+using System.IO;
 
 [InitializeOnLoad]
 public class DebuggerHook
 {
     static DebuggerHook() => EditorApplication.update += Update;
 
+    static bool checkedFile = false;
+    static bool startedFromDebugger = false;
+
     static void Update()
     {
-        if (Debugger.IsAttached && !EditorApplication.isPlaying)
-            EditorApplication.EnterPlaymode();
+        if (Debugger.IsAttached)
+        {
+            if (EditorApplication.isPlaying)
+            {
+                if (!startedFromDebugger)
+                {
+                    checkedFile = true;
+                    startedFromDebugger = true;
+                }
+            }
+            else
+            {
+                Touch();
+                EditorApplication.EnterPlaymode();
+            }
+        }
         else if (!Debugger.IsAttached && EditorApplication.isPlaying)
-            EditorApplication.ExitPlaymode();
+        {
+            if (!checkedFile)
+            {
+                startedFromDebugger = Exists();
+                checkedFile = true;
+                if (startedFromDebugger)
+                    Delete();
+            }
+
+            if (startedFromDebugger)
+            {
+                startedFromDebugger = false;
+                EditorApplication.ExitPlaymode();
+            }
+        }
     }
+
+    private const string tmpName = "bb_debugger_hook.bool";
+    private static readonly string tmpFile = Path.GetTempPath() + tmpName;
+
+    private static void Touch()
+    {
+        FileStream myFileStream = File.Open(tmpFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+        myFileStream.Close();
+        myFileStream.Dispose();
+    }
+
+    private static void Delete() => File.Delete(tmpFile);
+    private static bool Exists() => File.Exists(tmpFile); 
 }
 
 #endif
