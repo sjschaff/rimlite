@@ -11,6 +11,8 @@ public class DebuggerHook
 
     static bool checkedFile = false;
     static bool startedFromDebugger = false;
+    static bool startedDuringPlay = EditorApplication.isPlaying;
+    static bool dontPlay = startedDuringPlay && Debugger.IsAttached;
 
     static void Update()
     {
@@ -24,7 +26,7 @@ public class DebuggerHook
                     startedFromDebugger = true;
                 }
             }
-            else
+            else if (!dontPlay)
             {
                 Touch();
                 EditorApplication.EnterPlaymode();
@@ -43,6 +45,7 @@ public class DebuggerHook
             if (startedFromDebugger)
             {
                 startedFromDebugger = false;
+                dontPlay = false;
                 EditorApplication.ExitPlaymode();
             }
         }
