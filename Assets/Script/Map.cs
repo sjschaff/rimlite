@@ -94,6 +94,36 @@ namespace BB
                 for (int y = 2; y < 5; ++y)
                     tiles[x, y].terrain = water;
 
+            int[][] perm =
+            {
+                new int[] { 0, 1, 0 },
+                new int[] { 1, 1, 0 },
+                new int[] { 0, 1, 1 },
+                new int[] { 1, 1, 1 }
+            };
+
+            var proto = game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"));
+            for (int t = 0; t < perm.Length; ++t)
+            {
+                for (int b = 0; b < perm.Length; ++b)
+                {
+                    int xofs = (b* perm.Length + t) * 4 + 12;
+
+                    for (int x = 0; x < 3; ++x)
+                    {
+                        for (int y = 0; y < 3; ++y)
+                        {
+                            if (y == 2 && perm[t][x] == 0)
+                                continue;
+                            if (y == 0 && perm[b][x] == 0)
+                                continue;
+
+                            tiles[xofs + x, 2 + y].K_SetBuilding(proto.CreateBuilding());
+                        }
+                    }
+                }
+            }
+
             var rockProto = game.registry.resources.Get(game.defs.Get<BldgMineableDef>("BB:Rock"));
             var treeProto = game.registry.resources.Get(game.defs.Get<BldgMineableDef>("BB:Tree"));
             tiles[5, 5].K_SetBuilding(rockProto.CreateBuilding());

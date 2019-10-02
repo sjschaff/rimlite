@@ -47,7 +47,18 @@ namespace BB
             }
             else if (!adj[0, 0] || !adj[2, 0])
             {
-                if (ttype == Tiling.TileType.ConcaveBL)
+                if (ttype == Tiling.TileType.Base)
+                {
+                    if (subTile.y == 1)
+                    {
+                        if (subTile.x == 0 && !adj[0, 0])
+                            ttype = Tiling.TileType.ConcaveBL;
+                        if (subTile.x == 1 && !adj[2, 0])
+                            ttype = Tiling.TileType.ConcaveBR;
+                      //  return Tiling.SpriteOffset(ttype) + new Vec2I(10, 1);
+                    }
+                }
+                else if (ttype == Tiling.TileType.ConcaveBL)
                     ttype = Tiling.TileType.SideL;
                 else if (ttype == Tiling.TileType.ConcaveBR)
                     ttype = Tiling.TileType.SideR;
