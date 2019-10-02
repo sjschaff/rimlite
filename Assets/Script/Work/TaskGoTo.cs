@@ -9,13 +9,13 @@ using Vec2I = UnityEngine.Vector2Int;
 namespace BB
 {
     // Wrapper for aesthetics
-    public class TaskGoTo : Minion.InternalTaskGoTo
+    public class TaskGoTo : Agent.InternalTaskGoTo 
     {
         public TaskGoTo(GameController game, PathCfg cfg)
             : base(game, cfg) { }
     }
 
-    public partial class Minion
+    public partial class Agent
     {
         public abstract class InternalTaskGoTo : Task
         {
@@ -34,12 +34,12 @@ namespace BB
 
             private bool GetPath()
             {
-                var pts = game.GetPath(minion.realPos.Floor(), cfg);
+                var pts = game.GetPath(agent.realPos.Floor(), cfg);
                 if (pts == null)
                     return false;
 
                 path = new LinkedList<Vec2I>(pts);
-                var dir = pts[0] - minion.realPos;
+                var dir = pts[0] - agent.realPos;
                 if (pts.Length > 1 && (dir.magnitude < float.Epsilon || Vec2.Dot(dir, pts[1] - pts[0]) < -float.Epsilon))
                     path.RemoveFirst();
 
@@ -52,7 +52,7 @@ namespace BB
 
                 Vec2 ofs = new Vec2(.5f, .5f);
                 pathVis.positionCount = path.Count + 1;
-                pathVis.SetPosition(0, minion.realPos + ofs);
+                pathVis.SetPosition(0, agent.realPos + ofs);
                 var n = path.First;
                 for (int i = 1; i < pathVis.positionCount; ++i)
                 {
@@ -63,7 +63,7 @@ namespace BB
 
             protected override Status OnBeginTask()
             {
-                if (minion.GridAligned() && cfg.destinationFn(minion.pos))
+                if (agent.GridAligned() && cfg.destinationFn(agent.pos))
                     return Status.Complete;
 
                 if (!GetPath())
@@ -76,7 +76,7 @@ namespace BB
                     1 / 32f, false, true, null);
                 UpdatePathVis();
 
-                minion.skin.SetAnimLoop(MinionAnim.Walk);
+                agent.SetAnim(MinionAnim.Walk);
                 return Status.Continue;
             }
 
@@ -95,7 +95,7 @@ namespace BB
                 if (!GetPath())
                 {
                     path = new LinkedList<Vec2I>();
-                    path.AddLast(minion.realPos.Floor());
+                    path.AddLast(agent.realPos.Floor());
                     onFallbackPath = true;
                 }
 
@@ -104,27 +104,26 @@ namespace BB
 
             public override Status PerformTask(float deltaTime)
             {
-                float distance = deltaTime * minion.speed;
+                float distance = deltaTime * agent.speed;
                 while (true)
                 {
-                    Vec2 dir = path.First.Value - minion.realPos;
+                    Vec2 dir = path.First.Value - agent.realPos;
                     if (dir.magnitude > distance)
                     {
-                        minion.realPos += dir.normalized * distance;
+                        agent.realPos += dir.normalized * distance;
 
-                        minion.SetFacing(path.First.Value - minion.realPos);
+                        agent.SetFacing(path.First.Value - agent.realPos);
                         UpdatePathVis();
                         return Status.Continue;
                     }
                     else
                     {
-                        minion.realPos = path.First.Value;
+                        agent.realPos = path.First.Value;
                         distance -= dir.magnitude;
                         path.RemoveFirst();
                         if (!path.Any())
                         {
-                            // TODO: delete path vis
-                            minion.skin.SetAnimLoop(MinionAnim.None);
+                            agent.SetAnim(MinionAnim.None);
                             return onFallbackPath ? Status.Fail : Status.Complete;
                         }
                     }

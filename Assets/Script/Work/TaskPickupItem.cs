@@ -25,7 +25,7 @@
             {
                 work.Unclaim(claim);
                 Item item = game.TakeItem(claim.item, claim.amt);
-                minion.PickupItem(item);
+                agent.PickupItem(item);
             }
         }
 

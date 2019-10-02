@@ -15,6 +15,7 @@ namespace BB
         private readonly IEnumerator<Task> tasks;
         public Task activeTask { get; private set; }
 
+        public Agent agent { get; private set; }
         public Minion minion { get; private set; }
 
         #region Public API
@@ -35,19 +36,21 @@ namespace BB
         public Work(JobHandle job, params Task[] tasks)
             : this(job, (IEnumerable<Task>)tasks) { }
 
-        public bool ClaimWork(Minion minion)
+        public bool ClaimWork(Agent agent)
         {
-            BB.AssertNull(this.minion);
+            BB.AssertNull(this.agent);
             BB.AssertNull(activeTask);
-            this.minion = minion;
+            this.agent = agent;
+            if (agent is Minion minion)
+                this.minion = minion;
 
             return MoveToNextTask();
         }
 
-        public void Abandon(Minion minion)
+        public void Abandon(Agent agent)
         {
-            BB.AssertNotNull(this.minion);
-            BB.Assert(this.minion == minion);
+            BB.AssertNotNull(this.agent);
+            BB.Assert(this.agent == agent);
             if (activeTask != null)
                 activeTask.EndTask(true);
             job.AbandonWork(this);
@@ -55,10 +58,11 @@ namespace BB
 
         public void Cancel()
         {
-            BB.Assert(this.minion != null);
+            BB.Assert(this.agent != null);
             ClearClaims();
-            minion.AbandonWork();
+            agent.AbandonWork();
         }
+
         public void MakeClaim(IClaim claim) => claims.Add(claim);
 
         public void Unclaim(TaskClaim task) => Unclaim(task.claim);
@@ -86,7 +90,7 @@ namespace BB
             if (claims.Count != 0)
                 BB.LogError("Task completed with claims left over, this is a bug");
             ClearClaims();
-            minion.RemoveWork(this);
+            agent.RemoveWork(this);
         }
 
         private bool MoveToNextTask()
@@ -129,8 +133,8 @@ namespace BB
             if (status == Task.Status.Continue)
                 return;
 
-            minion.skin.SetTool(Tool.None);
-            minion.skin.SetAnimLoop(MinionAnim.None);
+            agent.SetTool(Tool.None);
+            agent.SetAnim(MinionAnim.None);
 
             if (status == Task.Status.Complete)
             {

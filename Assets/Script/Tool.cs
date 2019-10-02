@@ -138,6 +138,7 @@ namespace BB
 
         public override void OnClick(Vec2I pos)
         {
+            // TODO: only work an valid tiles
             if (!game.Tile(pos).hasBuilding)
             {
                 IBuildingProto proto = null;

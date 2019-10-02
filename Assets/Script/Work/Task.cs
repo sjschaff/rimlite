@@ -9,7 +9,7 @@ namespace BB
 
         public readonly GameController game;
         public Work work { get; private set; }
-        public Minion minion => work.minion;
+        public Agent agent => work.agent;
 
         public Task(GameController game) => this.game = game;
 
@@ -17,7 +17,7 @@ namespace BB
         {
             BB.AssertNull(this.work);
             BB.AssertNotNull(work);
-            BB.AssertNotNull(work.minion);
+            BB.AssertNotNull(work.agent);
             this.work = work;
             return OnBeginTask();
         }

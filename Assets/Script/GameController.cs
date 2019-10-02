@@ -86,7 +86,7 @@ namespace BB
 
             for (int i = 0; i < 10; ++i)
             {
-                minions.AddLast(new Minion(this, new Vec2(1 + i, 1)));
+                minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
             }
             D_minionNoTask = minions.First.Value;
 
@@ -201,11 +201,11 @@ namespace BB
             => D_minionNoTask.AssignWork(SystemWalkDummy.Create(
                 new TaskGoTo(this, PathCfg.Point(pos))));
 
-        public bool IsTileOccupied(Vec2I pos, Minion minionIgnore)
+        public bool IsTileOccupied(Vec2I pos, Agent agentIgnore)
         {
             foreach (Minion minion in minions)
             {
-                if (minion != minionIgnore && minion.InTile(pos))
+                if (minion != agentIgnore && minion.InTile(pos))
                     return true;
             }
 

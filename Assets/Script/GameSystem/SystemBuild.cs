@@ -97,15 +97,15 @@ namespace BB
                             yield return new TaskLambda(game,
                                 (work) =>
                                 {
-                                    if (!work.minion.carryingItem)
+                                    if (!work.agent.carryingItem)
                                         return false;
 
-                                    Item item = work.minion.RemoveItem();
+                                    Item item = work.agent.RemoveItem();
                                     int amt = haulAmt;
                                     if (item.amt > haulAmt)
                                     {
                                         item.Remove(haulAmt);
-                                        game.DropItem(work.minion.pos, item);
+                                        game.DropItem(work.agent.pos, item);
                                     }
                                     else
                                     {
@@ -145,7 +145,7 @@ namespace BB
                             (work) =>
                             {
                                 game.VacateTile(pos);
-                                if (!game.IsTileOccupied(pos, work.minion))
+                                if (!game.IsTileOccupied(pos, work.agent))
                                 {
                                     building.constructionBegan = true;
                                     game.RerouteMinions(pos, true);

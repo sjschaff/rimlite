@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
@@ -10,7 +7,7 @@ namespace BB
 {
     public enum Tool { None, Hammer, Pickaxe, Axe };
 
-    public partial class Minion
+    public abstract partial class Agent
     {
 #if DEBUG
         private static int D_nextID = 0;
@@ -18,18 +15,39 @@ namespace BB
 #endif
 
         public readonly GameController game;
-        public MinionSkin skin { get; }
+        protected readonly Transform transform;
+
         public Work currentWork { get; private set; }
+        public bool hasWork => currentWork != null;
 
         public Item carriedItem { get; private set; }
         public bool carryingItem => carriedItem != null;
+
+        // TODO: make an api that doesn't suck
+        public abstract void SetTool(Tool tool);
+        public abstract void SetAnim(MinionAnim anim);
+        public abstract void SetFacing(Vec2 dir);
+        protected abstract void ReconfigureItem(); // Jank AF
+
+
+        public Agent(GameController game, Vec2I pos, string nodeName)
+        {
+#if DEBUG
+            D_uniqueID = D_nextID;
+            ++D_nextID;
+#endif
+            this.game = game;
+            transform = new GameObject(nodeName).transform;
+            transform.SetParent(game.transform, false);
+            realPos = pos;
+        }
+
         public float speed => 2;
-        public bool hasWork => currentWork != null;
 
         private Vec2 realPos
         {
-            get => skin.transform.position.xy();
-            set => skin.transform.position = value;
+            get => transform.position.xy();
+            set => transform.position = value;
         }
 
         public Vec2I pos { get { BB.Assert(GridAligned()); return realPos.Floor(); } }
@@ -42,41 +60,11 @@ namespace BB
 
         public bool InTile(Vec2I tile) => Vec2.Distance(realPos, tile) < .9f;
 
-        public Minion(GameController game, Vec2 pos)
-        {
-#if DEBUG
-            D_uniqueID = D_nextID;
-            ++D_nextID;
-#endif
-
-            this.game = game;
-            skin = new GameObject("Minion").AddComponent<MinionSkin>();
-            skin.transform.SetParent(game.transform, false);
-            skin.Init(game.assets);
-            realPos = pos;
-        }
-
-        public void SetFacing(Vec2 dir)
-        {
-            skin.SetDir(dir);
-            if (carriedItem != null)
-                ReconfigureItem();
-        }
-
-        private void ReconfigureItem()
-        {
-            BB.AssertNotNull(carriedItem);
-            carriedItem.Configure(
-                skin.dir == MinionSkin.Dir.Up ?
-                    Item.Config.PlayerBelow :
-                    Item.Config.PlayerAbove);
-        }
-
         public void PickupItem(Item item)
         {
             BB.Assert(!carryingItem);
             carriedItem = item;
-            carriedItem.ReParent(skin.transform, new Vec2(0, .2f));
+            carriedItem.ReParent(transform, new Vec2(0, .2f));
             ReconfigureItem();
         }
 

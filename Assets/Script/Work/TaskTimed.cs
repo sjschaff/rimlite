@@ -28,10 +28,10 @@ namespace BB
         protected override Status OnBeginTask()
         {
             // TODO: make loading bar
-            minion.skin.SetTool(tool);
-            minion.skin.SetAnimLoop(anim);
-            if (minion.pos != workTarget)
-                minion.SetFacing(workTarget - minion.pos);
+            agent.SetTool(tool);
+            agent.SetAnim(anim);
+            if (agent.pos != workTarget)
+                agent.SetFacing(workTarget - agent.pos);
 
             return Status.Continue;
         }
