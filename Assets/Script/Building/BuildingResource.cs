@@ -1,32 +1,23 @@
 ﻿using System.Collections.Generic;
-using System;
 
 using Vec2I = UnityEngine.Vector2Int;
 using UnityEngine;
 
 namespace BB
 {
-    public class BuildingProtoResource : IBuildingProto
+    public class BuildingProtoResource : BuildingProtoSpriteRender
     {
         private readonly BldgMineableDef def;
 
-        public BuildingProtoResource(BldgMineableDef def)
+        public BuildingProtoResource(GameController game, BldgMineableDef def)
+            : base(game, def.sprite)
             => this.def = def;
 
-        public IBuilding CreateBuilding() => new BuildingResource(this);
+        public override IBuilding CreateBuilding() => new BuildingResource(this);
 
-        public bool passable => false;
+        public override bool passable => false;
 
-        public BuildingBounds bounds => BuildingBounds.Unit;
-
-        public RenderFlags renderFlags =>
-            def.spriteOver == null ? RenderFlags.None : RenderFlags.Oversized;
-
-        public TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-            => map.game.assets.sprites.Get(def.sprite);
-
-        public TileSprite GetSpriteOver(Map map, Vec2I pos)
-            => map.game.assets.sprites.Get(def.spriteOver);
+        public override BuildingBounds bounds => BuildingBounds.Unit;
 
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
         {

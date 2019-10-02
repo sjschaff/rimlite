@@ -23,7 +23,7 @@ namespace BB
             defs = new Defs();
 
             resources = new Cache<BldgMineableDef, BuildingProtoResource>(
-                def => new BuildingProtoResource(def));
+                def => new BuildingProtoResource(game, def));
             floors = new Cache<BldgFloorDef, BuildingProtoFloor>(
                 def => new BuildingProtoFloor(def));
             walls = new Cache<BldgWallDef, BuildingProtoWall>(

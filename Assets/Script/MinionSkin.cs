@@ -24,19 +24,19 @@ namespace BB
             }
         }
 
-        private readonly CacheNonNullable<AnimKey, Atlas.Key> keys;
+        private readonly CacheNonNullable<AnimKey, Atlas.Rect> keys;
         private readonly Cache<string, Atlas> atlases;
 
         public MetaAtlas()
         {
-            keys = new CacheNonNullable<AnimKey, Atlas.Key>(
+            keys = new CacheNonNullable<AnimKey, Atlas.Rect>(
                 animKey =>
                 {
                     var origin = new Vec2I(
                         OffsetFrame(animKey.frame),
                         20 - (OriginAnim(animKey.anim) + OffsetDir(animKey.dir)));
 
-                    return new Atlas.Key(
+                    return new Atlas.Rect(
                         origin * 2,
                         new Vec2I(2, 2),
                         new Vec2I(1, 0));

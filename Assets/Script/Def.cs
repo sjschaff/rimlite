@@ -42,30 +42,34 @@ namespace BB
         public readonly string file;
         public readonly int pixelsPerTile;
         public readonly int pixelsPerUnit;
+        public readonly int tilesPerUnit;
 
         public AtlasDef(string defName, string file, int pixelsPerTile, int pixelsPerUnit)
             : base("BB:Atlas", defName)
         {
+            BB.Assert(pixelsPerUnit > pixelsPerTile);
+            BB.Assert((pixelsPerUnit % pixelsPerTile) == 0);
             this.file = file;
             this.pixelsPerTile = pixelsPerTile;
             this.pixelsPerUnit = pixelsPerUnit;
+            this.tilesPerUnit = pixelsPerUnit / pixelsPerTile;
         }
     }
 
     public class SpriteDef : Def
     {
         public readonly AtlasDef atlas;
-        public readonly Atlas.Key key;
+        public readonly Atlas.Rect rect;
 
-        public SpriteDef(string defName, AtlasDef atlas, Atlas.Key key)
+        public SpriteDef(string defName, AtlasDef atlas, Atlas.Rect rect)
             : base("BB:Sprite", defName)
         {
             this.atlas = atlas;
-            this.key = key;
+            this.rect = rect;
         }
 
         public SpriteDef(string defName, AtlasDef atlas, Vec2I origin, Vec2I size, Vec2I anchor)
-            : this(defName, atlas, new Atlas.Key(origin, size, anchor)) { }
+            : this(defName, atlas, new Atlas.Rect(origin, size, anchor)) { }
     }
 
     public class TerrainDef : DefNamed
@@ -147,25 +151,23 @@ namespace BB
         public readonly Tool tool;
         public readonly ItemInfoRO[] resources;
         public readonly SpriteDef sprite;
-        public readonly SpriteDef spriteOver;
 
         public BldgMineableDef(
             string defName, string name,
             Tool tool, ItemInfoRO[] resources,
-            SpriteDef sprite, SpriteDef spriteOver = null)
+            SpriteDef sprite)
             : base("BB:BldgResource", defName, name)
         {
             this.tool = tool;
             this.resources = resources;
             this.sprite = sprite;
-            this.spriteOver = spriteOver;
         }
 
         public BldgMineableDef(
             string defName, string name,
             Tool tool, ItemInfoRO resource,
-            SpriteDef sprite, SpriteDef spriteOver = null)
-            : this(defName, name, tool, new ItemInfoRO[] { resource }, sprite, spriteOver) { }
+            SpriteDef sprite)
+            : this(defName, name, tool, new ItemInfoRO[] { resource }, sprite) { }
     }
 
     public class BldgFloorDef : BldgDef<BldgFloorDef>
@@ -237,8 +239,7 @@ namespace BB
             Register(new SpriteDef("BB:Stone", sprites32, Vec2I.zero, new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:Wood", sprites32, new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BldgRock", sprites32, new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
-            Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(2, 4), new Vec2I(4, 4), Vec2I.zero));
-            Register(new SpriteDef("BB:BldgTreeOver", sprites32, new Vec2I(0, 8), new Vec2I(8, 10), new Vec2I(2, -4)));
+            Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(0, 4), new Vec2I(8, 14), new Vec2I(2, 0)));
             Register(new SpriteDef("BB:MineOverlay", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
@@ -252,8 +253,7 @@ namespace BB
 
             Register(new BldgMineableDef("BB:Tree", "Tree", Tool.Axe,
                 new ItemInfoRO(Get<ItemDef>("BB:Wood"), 25),
-                Get<SpriteDef>("BB:BldgTree"),
-                Get<SpriteDef>("BB:BldgTreeOver")));
+                Get<SpriteDef>("BB:BldgTree")));
 
             Register(BldgProtoDef.Create<BuildingProtoFloor, BldgFloorDef>());
             Register(new BldgFloorDef("BB:StoneBrick", "Stone Brick Floor",

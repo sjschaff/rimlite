@@ -381,5 +381,32 @@ namespace BB
 
             throw new Exception("unkown ttype: " + ttype);
         }
+
+        // TODO: this is kinda jank
+        // shouldnt be new'ing defs, and we'll end up with duplicate sprites
+        public static bool SplitSprite(SpriteDef sprite, out SpriteDef lower, out SpriteDef upper)
+        {
+            var atlas = sprite.atlas;
+            int tilesPerUnit = atlas.tilesPerUnit;
+            var rect = sprite.rect;
+            if (sprite.rect.size.y > tilesPerUnit)
+            {
+                lower = new SpriteDef(null, atlas, new Atlas.Rect(
+                    rect.origin,
+                    new Vec2I(rect.size.x, tilesPerUnit),
+                    rect.anchor));
+
+                var upperOfs = new Vec2I(0, tilesPerUnit);
+                upper = new SpriteDef(null, atlas, new Atlas.Rect(
+                    rect.origin + upperOfs,
+                    new Vec2I(rect.size.x, rect.size.y - tilesPerUnit),
+                    rect.anchor - upperOfs));
+
+                return true;
+            }
+
+            lower = upper = null;
+            return false;
+        }
     }
 }

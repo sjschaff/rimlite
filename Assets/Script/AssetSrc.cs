@@ -23,7 +23,7 @@ namespace BB
                 def => new Atlas(Resources.Load<Texture2D>(def.file), def.pixelsPerTile, def.pixelsPerUnit));
 
             sprites = new Cache<SpriteDef, Sprite>(
-                def => atlases.Get(def.atlas).GetSprite(def.key));
+                def => atlases.Get(def.atlas).GetSprite(def.rect));
 
             fonts = new Cache<string, Font>(
                 font => Resources.GetBuiltinResource<Font>(font));
