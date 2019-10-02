@@ -147,7 +147,7 @@ namespace BB
                     case 1: proto = game.registry.floors.Get(game.defs.Get<BldgFloorDef>("BB:StoneBrick")); break;
                 }
 
-                BuildSystem.K_instance.CreateBuild(proto, pos);
+                SystemBuild.K_instance.CreateBuild(proto, pos);
             }
         }
 

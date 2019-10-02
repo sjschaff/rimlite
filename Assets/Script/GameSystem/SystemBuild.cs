@@ -6,13 +6,13 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public class BuildSystem : WorkSystemStandard<BuildSystem, BuildSystem.JobBuild>
+    public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
     {
-        public static BuildSystem K_instance;
+        public static SystemBuild K_instance;
 
         private readonly BuildingProtoConstruction proto = new BuildingProtoConstruction();
 
-        public BuildSystem(GameController game) : base(game)
+        public SystemBuild(GameController game) : base(game)
         {
             BB.AssertNull(K_instance);
             K_instance = this;
@@ -36,7 +36,7 @@ namespace BB
         {
             public readonly BuildingProtoConstruction.BuildingConstruction building;
 
-            public JobBuild(BuildSystem build, Vec2I pos, IBuildingProto proto)
+            public JobBuild(SystemBuild build, Vec2I pos, IBuildingProto proto)
                 : base(build, pos)
             {
                 building = build.proto.Create(proto);

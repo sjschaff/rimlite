@@ -201,7 +201,7 @@ namespace BB
         }
 
         public void K_MoveMinion(Vec2I pos) 
-            => D_minionNoTask.AssignWork(WalkSystemDummy.Create(Minion.TaskGoTo.Point(this, pos)));
+            => D_minionNoTask.AssignWork(SystemWalkDummy.Create(Minion.TaskGoTo.Point(this, pos)));
 
         public bool IsTileOccupied(Vec2I pos, Minion minionIgnore)
         {
@@ -219,7 +219,7 @@ namespace BB
             foreach (Minion minion in minions)
             {
                 if (!minion.hasWork && minion.pos == pos)
-                    minion.AssignWork(WalkSystemDummy.Create(Minion.TaskGoTo.Vacate(this, pos)));
+                    minion.AssignWork(SystemWalkDummy.Create(Minion.TaskGoTo.Vacate(this, pos)));
             }
         }
 

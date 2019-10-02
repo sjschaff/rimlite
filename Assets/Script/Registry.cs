@@ -15,7 +15,7 @@ namespace BB
         public readonly Cache<BldgFloorDef, BuildingProtoFloor> floors;
         public readonly Cache<BldgWallDef, BuildingProtoWall> walls;
 
-        public readonly List<IWorkSystem> systems = new List<IWorkSystem>();
+        public readonly List<IGameSystem> systems = new List<IGameSystem>();
 
         public Registry(GameController game)
         {
@@ -44,12 +44,12 @@ namespace BB
             BuildingProtoResource b = (BuildingProtoResource)Activator.CreateInstance(Type.GetType(typeName), d);
             */
 
-            foreach (var workSystem in GetTypesForInterface<IWorkSystem>())
+            foreach (var workSystem in GetTypesForInterface<IGameSystem>())
             {
                 try
                 {
                     if (!workSystem.GetCustomAttributes(typeof(AttributeDontInstantiate), false).Any())
-                        systems.Add((IWorkSystem)Activator.CreateInstance(workSystem, (object)game));
+                        systems.Add((IGameSystem)Activator.CreateInstance(workSystem, (object)game));
                 } catch (MissingMethodException)
                 {
                     BB.LogWarning("Failed to instatiate work system '" + workSystem.FullName +

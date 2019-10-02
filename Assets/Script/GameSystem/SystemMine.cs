@@ -14,9 +14,9 @@ namespace BB
         float mineTotal { get; }
     }
 
-    public class MiningSystem : WorkSystemAsOrders<MiningSystem, MiningSystem.JobMine>
+    public class SystemMine : GameSystemAsOrders<SystemMine, SystemMine.JobMine>
     {
-        public MiningSystem(GameController game) : base(game)
+        public SystemMine(GameController game) : base(game)
             => sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
 
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
@@ -30,7 +30,7 @@ namespace BB
         {
             public readonly IMineable mineable;
 
-            public JobMine(MiningSystem system, Vec2I pos) : base(system, pos)
+            public JobMine(SystemMine system, Vec2I pos) : base(system, pos)
             {
                 BB.Assert(system != null);
                 var building = system.game.Tile(pos).building;

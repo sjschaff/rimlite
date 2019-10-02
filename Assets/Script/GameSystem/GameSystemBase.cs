@@ -7,9 +7,9 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public abstract class WorkSystemStandard<TThis, TJob> : IWorkSystem
-        where TJob : WorkSystemStandard<TThis, TJob>.JobStandard
-        where TThis : WorkSystemStandard<TThis, TJob>
+    public abstract class GameSystemStandard<TThis, TJob> : IGameSystem
+        where TJob : GameSystemStandard<TThis, TJob>.JobStandard
+        where TThis : GameSystemStandard<TThis, TJob>
     {
         public abstract class JobStandard : JobHandle
         {
@@ -31,7 +31,7 @@ namespace BB
         private readonly Dictionary<Vec2I, TJob> jobs
             = new Dictionary<Vec2I, TJob>();
 
-        protected WorkSystemStandard(GameController game) => this.game = game;
+        protected GameSystemStandard(GameController game) => this.game = game;
 
         public abstract IOrdersGiver orders { get; }
         public abstract void WorkAbandoned(JobHandle job, Work work);
@@ -65,9 +65,9 @@ namespace BB
         }
     }
 
-    public abstract class WorkSystemBasic<TThis, TJob> : WorkSystemStandard<TThis, TJob>
-        where TJob : WorkSystemBasic<TThis, TJob>.JobBasic
-        where TThis : WorkSystemAsOrders<TThis, TJob>
+    public abstract class GameSystemBasic<TThis, TJob> : GameSystemStandard<TThis, TJob>
+        where TJob : GameSystemBasic<TThis, TJob>.JobBasic
+        where TThis : GameSystemAsOrders<TThis, TJob>
     {
         public abstract class JobBasic : JobStandard
         {
@@ -86,7 +86,7 @@ namespace BB
             }
         }
 
-        protected WorkSystemBasic(GameController game) : base(game) { }
+        protected GameSystemBasic(GameController game) : base(game) { }
 
         protected override IEnumerable<Work> QueryWorkForJob(TJob job)
         {
@@ -120,9 +120,9 @@ namespace BB
         }
     }
 
-    public abstract class WorkSystemAsOrders<TThis, TJob> : WorkSystemBasic<TThis, TJob>, IOrdersGiver
-        where TJob : WorkSystemBasic<TThis, TJob>.JobBasic
-        where TThis : WorkSystemAsOrders<TThis, TJob>
+    public abstract class GameSystemAsOrders<TThis, TJob> : GameSystemBasic<TThis, TJob>, IOrdersGiver
+        where TJob : GameSystemBasic<TThis, TJob>.JobBasic
+        where TThis : GameSystemAsOrders<TThis, TJob>
     {
         public abstract class JobHandleOrders : JobBasic
         {
@@ -138,7 +138,7 @@ namespace BB
             }
         }
 
-        protected WorkSystemAsOrders(GameController game) : base(game) { }
+        protected GameSystemAsOrders(GameController game) : base(game) { }
 
         protected abstract SpriteDef sprite { get; }
         protected abstract TJob CreateJob(Vec2I pos);

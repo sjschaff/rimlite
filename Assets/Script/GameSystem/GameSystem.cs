@@ -8,9 +8,9 @@ namespace BB
 {
     public class JobHandle
     {
-        public readonly IWorkSystem system;
+        public readonly IGameSystem system;
 
-        public JobHandle(IWorkSystem system)
+        public JobHandle(IGameSystem system)
         {
             BB.Assert(system != null);
             this.system = system;
@@ -27,9 +27,8 @@ namespace BB
         }
     }
 
-    public interface IWorkSystem
+    public interface IGameSystem
     {
-        // TODO: some way to track buildings added/removed
         IOrdersGiver orders { get; }
         IEnumerable<Work> QueryWork();
         void CancelJob(JobHandle job);

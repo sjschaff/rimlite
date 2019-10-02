@@ -4,9 +4,9 @@ using System;
 namespace BB
 {
     [AttributeDontInstantiate]
-    public class WalkSystemDummy : IWorkSystem
+    public class SystemWalkDummy : IGameSystem
     {
-        private static readonly WalkSystemDummy system = new WalkSystemDummy();
+        private static readonly SystemWalkDummy system = new SystemWalkDummy();
         private static readonly JobHandle dummy = new JobHandle(system);
 
         public IOrdersGiver orders => null;
