@@ -55,7 +55,6 @@ namespace BB
                             ttype = Tiling.TileType.ConcaveBL;
                         if (subTile.x == 1 && !adj[2, 0])
                             ttype = Tiling.TileType.ConcaveBR;
-                      //  return Tiling.SpriteOffset(ttype) + new Vec2I(10, 1);
                     }
                 }
                 else if (ttype == Tiling.TileType.ConcaveBL)
