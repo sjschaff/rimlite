@@ -24,26 +24,26 @@ namespace BB
 
         public bool IsAdjacent(Vec2I pos) => AsRect(Vec2I.zero).IsAdjacent(pos);
 
-        public BuildingBounds RotatedFromDown(MinionSkin.Dir dir)
+        public BuildingBounds RotatedFromDown(Dir dir)
         {
-            if (dir == MinionSkin.Dir.Down)
+            if (dir == Dir.Down)
                 return this;
 
             switch (dir)
             {
-                case MinionSkin.Dir.Down: return this;
+                case Dir.Down: return this;
 
-                case MinionSkin.Dir.Up:
+                case Dir.Up:
                     return new BuildingBounds(
                         size,
                         new Vec2I(size.x - 1 - origin.x, size.y - 1 - origin.y));
 
-                case MinionSkin.Dir.Left:
+                case Dir.Left:
                     return new BuildingBounds(
                         new Vec2I(size.y, size.x),
                         new Vec2I(origin.x, size.y - 1 - origin.x));
 
-                case MinionSkin.Dir.Right:
+                case Dir.Right:
                     return new BuildingBounds(
                         new Vec2I(size.y, size.x),
                         new Vec2I(size.y - 1 - origin.y, origin.x));
@@ -119,7 +119,7 @@ namespace BB
         }
 
         public virtual bool passable => proto.passable;
-        public virtual BuildingBounds bounds => proto.Bounds(MinionSkin.Dir.Down);
+        public virtual BuildingBounds bounds => proto.Bounds(Dir.Down);
         public virtual RenderFlags renderFlags => proto.renderFlags;
         public virtual TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
             => proto.GetSprite(map, pos, subTile);

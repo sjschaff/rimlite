@@ -22,7 +22,7 @@ namespace BB
 
         public abstract IBuilding CreateBuilding();
         public abstract bool passable { get; }
-        public abstract BuildingBounds Bounds(MinionSkin.Dir dir);
+        public abstract BuildingBounds Bounds(Dir dir);
 
         public RenderFlags renderFlags
             => spriteOver == null ? RenderFlags.None : RenderFlags.Oversized;

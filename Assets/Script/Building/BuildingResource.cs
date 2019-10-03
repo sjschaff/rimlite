@@ -14,9 +14,9 @@ namespace BB
 
         public override bool passable => false;
 
-        public override BuildingBounds Bounds(MinionSkin.Dir dir)
+        public override BuildingBounds Bounds(Dir dir)
         {
-            BB.Assert(dir == MinionSkin.Dir.Down);
+            BB.Assert(dir == Dir.Down);
             return BuildingBounds.Unit;
         }
 

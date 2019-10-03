@@ -11,13 +11,13 @@ namespace BB
     {
         public BuildingProtoConstruction() { }
 
-        public BuildingConstruction Create(IBuildable proto, MinionSkin.Dir dir)
+        public BuildingConstruction Create(IBuildable proto, Dir dir)
             => new BuildingConstruction(this, proto, dir);
 
         public class BuildingConstruction : BuildingBase<BuildingProtoConstruction>
         {
             public readonly IBuildable buildProto;
-            public readonly MinionSkin.Dir dir;
+            public readonly Dir dir;
 
             // All stuff used by JobBuild
             // TODO: this whole file should prob be moved to BuildSystem
@@ -64,8 +64,7 @@ namespace BB
             }
 
             public BuildingConstruction(BuildingProtoConstruction proto,
-                IBuildable buildProto,
-                MinionSkin.Dir dir)
+                IBuildable buildProto, Dir dir)
                 : base(proto)
             {
                 this.buildProto = buildProto;
@@ -95,7 +94,7 @@ namespace BB
             => throw new NotSupportedException("CreateBuilding called on BuildingProtoConstruction");
         public bool passable
             => throw new NotSupportedException("passable called on BuildingProtoConstruction");
-        public BuildingBounds Bounds(MinionSkin.Dir dir)
+        public BuildingBounds Bounds(Dir dir)
             => throw new NotSupportedException("bounds called on BuildingProtoConstruction");
         public RenderFlags renderFlags
             => throw new NotSupportedException("renderFlags called on BuildingProtoConstruction");

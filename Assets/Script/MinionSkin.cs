@@ -104,8 +104,6 @@ namespace BB
 
     public class MinionSkin : MonoBehaviour
     {
-        public enum Dir { Up, Left, Down, Right }
-
         private static MetaAtlas atlas;
         private Dictionary<string, SpriteRenderer> spriteLayers;
 
@@ -219,16 +217,16 @@ namespace BB
             if (Mathf.Abs(dir.x) > float.Epsilon)
             {
                 if (dir.x < 0)
-                    SetDir(MinionSkin.Dir.Left);
+                    SetDir(Dir.Left);
                 else
-                    SetDir(MinionSkin.Dir.Right);
+                    SetDir(Dir.Right);
             }
             else
             {
                 if (dir.y < 0)
-                    SetDir(MinionSkin.Dir.Down);
+                    SetDir(Dir.Down);
                 else
-                    SetDir(MinionSkin.Dir.Up);
+                    SetDir(Dir.Up);
             }
         }
 

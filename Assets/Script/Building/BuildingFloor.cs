@@ -11,9 +11,9 @@ namespace BB
         public BuildingProtoFloor(GameController _, BldgFloorDef def) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingFloor(this);
-        public IBuilding CreateBuilding(MinionSkin.Dir dir)
+        public IBuilding CreateBuilding(Dir dir)
         {
-            BB.Assert(dir == MinionSkin.Dir.Down);
+            BB.Assert(dir == Dir.Down);
             return CreateBuilding();
         }
 
@@ -33,9 +33,9 @@ namespace BB
             return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
         }
 
-        public IEnumerable<MinionSkin.Dir> AllowedOrientations()
+        public IEnumerable<Dir> AllowedOrientations()
         {
-            yield return MinionSkin.Dir.Down;
+            yield return Dir.Down;
         }
 
         public IEnumerable<ItemInfoRO> GetBuildMaterials()

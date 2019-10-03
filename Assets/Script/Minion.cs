@@ -33,7 +33,7 @@ namespace BB
         {
             BB.AssertNotNull(carriedItem);
             carriedItem.Configure(
-                skin.dir == MinionSkin.Dir.Up ?
+                skin.dir == Dir.Up ?
                     Item.Config.PlayerBelow :
                     Item.Config.PlayerAbove);
         }

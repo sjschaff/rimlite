@@ -129,7 +129,7 @@ namespace BB
         private const int numBuilds = 3;
         private int currentBuild = numBuilds - 1;
         private IBuildable curProto;
-        private readonly MinionSkin.Dir curDir = MinionSkin.Dir.Down;
+        private readonly Dir curDir = Dir.Down;
 
         public ToolBuild(GameController game) : base(game)
             => OnTab();
@@ -152,7 +152,7 @@ namespace BB
             if (game.CanPlaceBuilding(pos, curProto.Bounds(curDir)))
             {
                 BB.LogInfo("Build " + currentBuild);
-                SystemBuild.K_instance.CreateBuild(curProto, pos, MinionSkin.Dir.Down);
+                SystemBuild.K_instance.CreateBuild(curProto, pos, Dir.Down);
             }
         }
 

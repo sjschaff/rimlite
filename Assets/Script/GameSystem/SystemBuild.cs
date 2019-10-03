@@ -8,9 +8,9 @@ namespace BB
 {
     public interface IBuildable : IBuildingProto
     {
-        IEnumerable<MinionSkin.Dir> AllowedOrientations();
+        IEnumerable<Dir> AllowedOrientations();
         IEnumerable<ItemInfoRO> GetBuildMaterials();
-        IBuilding CreateBuilding(MinionSkin.Dir dir);
+        IBuilding CreateBuilding(Dir dir);
     }
 
     public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
@@ -27,7 +27,7 @@ namespace BB
 
         public override IOrdersGiver orders => null;
 
-        public void CreateBuild(IBuildable proto, Vec2I pos, MinionSkin.Dir dir)
+        public void CreateBuild(IBuildable proto, Vec2I pos, Dir dir)
             => AddJob(new JobBuild(this, pos, proto, dir));
 
         public override void WorkAbandoned(JobHandle job, Work work) { }
@@ -43,7 +43,7 @@ namespace BB
         {
             public readonly BuildingProtoConstruction.BuildingConstruction building;
 
-            public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto, MinionSkin.Dir dir)
+            public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto, Dir dir)
                 : base(build, pos)
             {
                 building = build.proto.Create(proto, dir);

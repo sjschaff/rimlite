@@ -9,7 +9,7 @@ namespace BB
         IBuilding CreateBuilding();
 
         bool passable { get; }
-        BuildingBounds Bounds(MinionSkin.Dir dir);
+        BuildingBounds Bounds(Dir dir);
         RenderFlags renderFlags { get; }
         TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
         TileSprite GetSpriteOver(Map map, Vec2I pos);

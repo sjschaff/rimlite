@@ -12,9 +12,9 @@ namespace BB
         public abstract bool passable { get; }
         public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
 
-        public BuildingBounds Bounds(MinionSkin.Dir dir)
+        public BuildingBounds Bounds(Dir dir)
         {
-            BB.Assert(dir == MinionSkin.Dir.Down);
+            BB.Assert(dir == Dir.Down);
             return BuildingBounds.Unit;
         }
 

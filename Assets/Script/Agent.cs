@@ -5,8 +5,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public enum Tool { None, Hammer, Pickaxe, Axe };
-
     public abstract partial class Agent
     {
 #if DEBUG
