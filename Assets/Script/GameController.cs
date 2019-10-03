@@ -36,31 +36,33 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public class Game : MonoBehaviour
+    public class Game
     {
-        public AssetSrc assets { get; private set; }
-        public Registry registry { get; private set; }
-        private Map map;
+        public readonly AssetSrc assets;
+        public readonly Registry registry;
+        private readonly Map map;
 
         public Defs defs => registry.defs;
 
+        // TODO: be more organized about where we 
+        // our game objects
+        public Transform transform;
 
         // TODO: move this stuff to some ui logic somewhere
         private Transform mouseHighlight;
         private LineRenderer dragOutline;
 
-        private LinkedList<UITool> tools;
+        private readonly LinkedList<UITool> tools;
         private LinkedListNode<UITool> currentTool;
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
-        private Minion D_minionNoTask;
+        private readonly Minion D_minionNoTask;
         private readonly LinkedList<Item> items = new LinkedList<Item>();
         private UITool tool => currentTool.Value;
 
-        // TODO: figure out what should be in awake and what should be in start
-        private void Awake() { }
-
-        void Start()
+        public Game(Transform transform)
         {
+            this.transform = transform;
+
             registry = new Registry(this);
             assets = new AssetSrc();
             registry.LoadTypes();
@@ -248,10 +250,10 @@ namespace BB
             });
         }
 
-        void Update()
+        public void Update(float dt)
         {
             foreach (var minion in minions)
-                minion.Update(Time.deltaTime);
+                minion.Update(dt);
 
             if (Input.GetKeyDown("tab"))
                 tool.OnTab();
@@ -277,7 +279,7 @@ namespace BB
                 clickStart = mousePos;
             }
             else if (Input.GetMouseButton(0))
-                time += Time.deltaTime;
+                time += dt;
 
             if (Input.GetMouseButtonUp(0))
             {

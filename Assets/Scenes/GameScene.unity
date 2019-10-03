@@ -228,7 +228,7 @@ GameObject:
   - component: {fileID: 969598987}
   - component: {fileID: 969598988}
   m_Layer: 0
-  m_Name: GameController
+  m_Name: Initializer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -257,12 +257,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 969598986}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5afcc370474448d4387c007183ae8d0c, type: 3}
+  m_Script: {fileID: 11500000, guid: 739d7d4ec54400e4da9b2799d9114aca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minionPrefab: {fileID: 8431450930989333087, guid: 173cefaf7576e2d47baaab78091d7741,
-    type: 3}
-  itemPrefab: {fileID: 964787130221967433, guid: 6daaa5761328ad14c9e5afa025f247cf,
-    type: 3}
-  jobOverlayPrefab: {fileID: 466269524586190023, guid: 0ffaab94124bc78478532e73b022524d,
-    type: 3}
