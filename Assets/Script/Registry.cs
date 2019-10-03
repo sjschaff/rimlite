@@ -13,6 +13,9 @@ namespace BB
         public readonly Dictionary<BldgDef, IBuildingProto> buildings;
         public readonly List<IGameSystem> systems = new List<IGameSystem>();
 
+        public IBuildingProto D_GetProto<TDef>(string name) where TDef : BldgDef
+            => buildings[defs.Get<TDef>(name)];
+
         public Registry(GameController game)
         {
             this.game = game;

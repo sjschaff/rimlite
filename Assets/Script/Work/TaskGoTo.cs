@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
@@ -86,10 +85,19 @@ namespace BB
                     pathVis.transform.gameObject.Destroy();
             }
 
-            // TODO: call this from somewhere useful
-            public override void Reroute(Vec2I updatedTile)
+            public override void Reroute(RectInt rect)
             {
-                if (path == null || !path.Contains(updatedTile))
+                if (path == null)
+                    return;
+
+                bool intersectsPath = false;
+                foreach (var pos in path)
+                {
+                    if (rect.Contains(pos))
+                        intersectsPath = true;
+                }
+
+                if (!intersectsPath)
                     return;
 
                 if (!GetPath())

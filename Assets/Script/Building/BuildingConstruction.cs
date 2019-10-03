@@ -11,12 +11,20 @@ namespace BB
     {
         public BuildingProtoConstruction() { }
 
-        public BuildingConstruction Create(IBuildable proto)
-            => new BuildingConstruction(this, proto);
+        public BuildingConstruction Create(IBuildable proto, MinionSkin.Dir dir)
+            => new BuildingConstruction(this, proto, dir);
 
         public class BuildingConstruction : BuildingBase<BuildingProtoConstruction>
         {
             public readonly IBuildable buildProto;
+            public readonly MinionSkin.Dir dir;
+
+            // All stuff used by JobBuild
+            // TODO: this whole file should prob be moved to BuildSystem
+            public readonly List<MaterialInfo> materials;
+            public bool constructionBegan;
+            public float constructionPercent; // or some such thing...
+            public bool hasBuilder;
 
             public class MaterialInfo
             {
@@ -36,12 +44,6 @@ namespace BB
                public int HaulAmount(Item item) => Math.Min(haulRemaining, item.amtAvailable);
             }
 
-            // All stuff used by JobBuild
-            // TODO: this whole file should prob be moved to BuildSystem
-            public readonly List<MaterialInfo> materials;
-            public bool constructionBegan;
-            public float constructionPercent; // or some such thing...
-            public bool hasBuilder;
 
             public bool HasAvailableHauls()
             {
@@ -61,10 +63,13 @@ namespace BB
                 return true;
             }
 
-            public BuildingConstruction(BuildingProtoConstruction proto, IBuildable buildProto)
+            public BuildingConstruction(BuildingProtoConstruction proto,
+                IBuildable buildProto,
+                MinionSkin.Dir dir)
                 : base(proto)
             {
                 this.buildProto = buildProto;
+                this.dir = dir;
                 constructionBegan = false;
                 constructionPercent = 0;
                 materials = new List<MaterialInfo>(
@@ -73,7 +78,7 @@ namespace BB
             }
 
             public override bool passable => constructionBegan ? buildProto.passable : true;
-            public override BuildingBounds bounds => buildProto.bounds;
+            public override BuildingBounds bounds => buildProto.Bounds(dir);
             public override RenderFlags renderFlags => buildProto.renderFlags;
 
             private TileSprite Virtualize(TileSprite sprite)
@@ -90,7 +95,7 @@ namespace BB
             => throw new NotSupportedException("CreateBuilding called on BuildingProtoConstruction");
         public bool passable
             => throw new NotSupportedException("passable called on BuildingProtoConstruction");
-        public BuildingBounds bounds
+        public BuildingBounds Bounds(MinionSkin.Dir dir)
             => throw new NotSupportedException("bounds called on BuildingProtoConstruction");
         public RenderFlags renderFlags
             => throw new NotSupportedException("renderFlags called on BuildingProtoConstruction");

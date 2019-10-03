@@ -8,9 +8,14 @@ namespace BB
     {
         public readonly BldgFloorDef def;
 
-        public BuildingProtoFloor(GameController game, BldgFloorDef def) => this.def = def;
+        public BuildingProtoFloor(GameController _, BldgFloorDef def) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingFloor(this);
+        public IBuilding CreateBuilding(MinionSkin.Dir dir)
+        {
+            BB.Assert(dir == MinionSkin.Dir.Down);
+            return CreateBuilding();
+        }
 
         public override bool passable => true;
 

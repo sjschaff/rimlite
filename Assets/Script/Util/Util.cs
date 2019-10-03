@@ -1,5 +1,6 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System;
 
 namespace BB
 {
@@ -41,6 +42,12 @@ namespace BB
             T[] Arr = (T[])Enum.GetValues(src.GetType());
             int j = Array.IndexOf<T>(Arr, src) + 1;
             return (Arr.Length == j) ? Arr[0] : Arr[j];
+        }
+
+        public static IEnumerable<TEnum> Enums<TEnum>() where TEnum : Enum
+        {
+            foreach (TEnum t in Enum.GetValues(typeof(TEnum)))
+                yield return t;
         }
 
         private static void Log(string msg, string level)

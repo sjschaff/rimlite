@@ -220,19 +220,20 @@ namespace BB
 
     public class BldgWorkbenchDef : BldgDefG<BldgWorkbenchDef>
     {
-        public readonly Vec2I size;
+        public readonly BuildingBounds bounds;
         public readonly Vec2I workSpot;
         public readonly SpriteDef sprite;
         public readonly ItemInfoRO[] materials;
         // TODO: recipes
 
         public BldgWorkbenchDef(
-            string defName, string name, Vec2I size,
-            Vec2I workSpot, SpriteDef sprite,
-            ItemInfoRO[] materials)
+            string defName, string name,
+            BuildingBounds bounds, Vec2I workSpot,
+            SpriteDef sprite, ItemInfoRO[] materials)
             : base("BB:Workbench", defName, name)
         {
-            this.size = size;
+            BB.Assert(bounds.IsAdjacent(workSpot));
+            this.bounds = bounds;
             this.workSpot = workSpot;
             this.sprite = sprite;
             this.materials = materials;
@@ -275,7 +276,7 @@ namespace BB
             Register(new SpriteDef("BB:Wood", sprites32, new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BldgRock", sprites32, new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
             Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(0, 4), new Vec2I(8, 14), new Vec2I(2, 0)));
-            Register(new SpriteDef("BB:WoodcuttingTable", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), Vec2I.one));
+            Register(new SpriteDef("BB:WoodcuttingTable", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), new Vec2I(4, 0)));
             Register(new SpriteDef("BB:MineOverlay", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
@@ -303,7 +304,8 @@ namespace BB
 
             Register(BldgProtoDef.Create<BuildingProtoWorkbench, BldgWorkbenchDef>());
             Register(new BldgWorkbenchDef("BB:Woodcutter", "Woodcutting Table",
-                new Vec2I(3, 1), new Vec2I(1, -1), Get<SpriteDef>("BB:WoodcuttingTable"),
+                new BuildingBounds(new Vec2I(3, 1), new Vec2I(1, 0)), new Vec2I(1, -1),
+                Get<SpriteDef>("BB:WoodcuttingTable"),
                 new[] { new ItemInfoRO(Get<ItemDef>("BB:Wood"), 10) }));
         }
 

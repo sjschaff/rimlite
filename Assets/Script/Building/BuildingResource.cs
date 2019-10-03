@@ -14,7 +14,11 @@ namespace BB
 
         public override bool passable => false;
 
-        public override BuildingBounds bounds => BuildingBounds.Unit;
+        public override BuildingBounds Bounds(MinionSkin.Dir dir)
+        {
+            BB.Assert(dir == MinionSkin.Dir.Down);
+            return BuildingBounds.Unit;
+        }
 
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
         {

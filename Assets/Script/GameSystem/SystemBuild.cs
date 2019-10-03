@@ -10,6 +10,7 @@ namespace BB
     {
         IEnumerable<MinionSkin.Dir> AllowedOrientations();
         IEnumerable<ItemInfoRO> GetBuildMaterials();
+        IBuilding CreateBuilding(MinionSkin.Dir dir);
     }
 
     public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
@@ -26,8 +27,8 @@ namespace BB
 
         public override IOrdersGiver orders => null;
 
-        public void CreateBuild(IBuildable proto, Vec2I pos)
-            => AddJob(new JobBuild(this, pos, proto));
+        public void CreateBuild(IBuildable proto, Vec2I pos, MinionSkin.Dir dir)
+            => AddJob(new JobBuild(this, pos, proto, dir));
 
         public override void WorkAbandoned(JobHandle job, Work work) { }
 
@@ -42,10 +43,10 @@ namespace BB
         {
             public readonly BuildingProtoConstruction.BuildingConstruction building;
 
-            public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto)
+            public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto, MinionSkin.Dir dir)
                 : base(build, pos)
             {
-                building = build.proto.Create(proto);
+                building = build.proto.Create(proto, dir);
                 building.jobHandles.Add(this);
                 game.AddBuilding(pos, building);
             }
@@ -153,7 +154,7 @@ namespace BB
                                 if (!game.IsTileOccupied(pos, work.agent))
                                 {
                                     building.constructionBegan = true;
-                                    game.RerouteMinions(pos, true);
+                                    game.RerouteMinions(building.bounds.AsRect(pos), true);
                                     return true;
                                 }
 
@@ -170,7 +171,7 @@ namespace BB
                             work.Unclaim(buildClaim);
                             BB.Assert(game.Tile(pos).building == building);
                             building.jobHandles.Remove(this);
-                            game.ReplaceBuilding(pos, building.buildProto.CreateBuilding());
+                            game.ReplaceBuilding(pos, building.buildProto.CreateBuilding(building.dir));
                             systemTyped.RemoveJob(this);
                         });
                 }

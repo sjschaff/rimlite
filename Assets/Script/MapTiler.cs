@@ -143,19 +143,19 @@ namespace BB
     public class VirtualTileBuilding : VirtualTileBase
     {
         protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-            => tile.hasBuilding && (tile.building.TiledRender() || subTile == Vec2I.zero);
+            => tile.bldgMain != null && (tile.bldgMain.TiledRender() || subTile == Vec2I.zero);
 
         protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-            => tile.building.GetSprite(map, pos, subTile);
+            => tile.bldgMain.GetSprite(map, pos, subTile);
     }
 
     public class VirtualTileBuildingOver : VirtualTileBase
     {
         protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-            => tile.hasBuilding && tile.building.Oversized() && subTile == Vec2I.zero;
+            => tile.bldgMain != null && tile.bldgMain.Oversized() && subTile == Vec2I.zero;
 
         protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
-            => tile.building.GetSpriteOver(map, pos);
+            => tile.bldgMain.GetSpriteOver(map, pos);
     }
 
     public class MapTiler

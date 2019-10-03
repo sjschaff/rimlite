@@ -1,7 +1,12 @@
-﻿using Vec2I = UnityEngine.Vector2Int;
+﻿using UnityEngine;
+
+using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    // TODO: rename BBTile -> MapTile (or maybe inner class),
+    // rename ITile-> Tile, make class, store pos, can be used as
+    // a handle for everyone
     public interface ITile
     {
         bool passable { get; }
@@ -12,8 +17,8 @@ namespace BB
     public class BBTile : ITile
     {
         public Terrain terrain;
-        private IBuilding bldgMain;
-        private BBTile bldgAdj;
+        public IBuilding bldgMain;
+        public BBTile bldgAdj;
 
         public BBTile(Terrain terrain)
         {
@@ -35,14 +40,6 @@ namespace BB
                 return bldgMain;
             }
         }
-
-        public void K_SetBuilding(IBuilding bldg)
-        {
-            this.bldgMain = bldg;
-        }
-
-        public TBldg GetBuilding<TBldg>() where TBldg : IBuilding
-            => (TBldg)building;
 
         public bool passable => terrain.passable && (hasBuilding ? building.passable : true);
         public bool hasBuilding => bldgMain != null || bldgAdj != null;
@@ -102,9 +99,9 @@ namespace BB
                 new int[] { 1, 1, 1 }
             };
 
-            var wallProto = game.registry.buildings[game.defs.Get<BldgWallDef>("BB:StoneBrick")];
-            var rockProto = game.registry.buildings[game.defs.Get<BldgMineableDef>("BB:Rock")];
-            var treeProto = game.registry.buildings[game.defs.Get<BldgMineableDef>("BB:Tree")];
+            var wallProto = game.registry.D_GetProto<BldgWallDef>("BB:StoneBrick");
+            var rockProto = game.registry.D_GetProto<BldgMineableDef>("BB:Rock");
+            var treeProto = game.registry.D_GetProto<BldgMineableDef>("BB:Tree");
 
             for (int t = 0; t < perm.Length; ++t)
             {
@@ -121,26 +118,54 @@ namespace BB
                             if (y == 0 && perm[b][x] == 0)
                                 continue;
 
-                            tiles[xofs + x, 2 + y].K_SetBuilding(wallProto.CreateBuilding());
+                            tiles[xofs + x, 2 + y].bldgMain = wallProto.CreateBuilding();
                         }
                     }
                 }
             }
 
-            tiles[5, 5].K_SetBuilding(rockProto.CreateBuilding());
-            tiles[6, 5].K_SetBuilding(treeProto.CreateBuilding());
+            tiles[5, 5].bldgMain = rockProto.CreateBuilding();
+            tiles[6, 5].bldgMain = treeProto.CreateBuilding();
 
             for (int i = 0; i < 16; ++i)
-                tiles[i + 2, 7].K_SetBuilding(rockProto.CreateBuilding());
+                tiles[i + 2, 7].bldgMain = rockProto.CreateBuilding();
 
             return tiles;
         }
 
+        public bool HasBuilding(RectInt area)
+        {
+            foreach (var t in area.AllTiles())
+            {
+                if (Tile(t).hasBuilding)
+                    return true;
+            }
+
+            return false;
+        }
+
         private void SetBuilding(Vec2I pos, IBuilding building)
         {
-            var tile = Tile(pos);
-            BB.Assert(building == null || building.bounds == BuildingBounds.Unit);
-            tile.K_SetBuilding(building);
+            var tileMain = Tile(pos);
+            if (building == null)
+            {
+                building = tileMain.bldgMain;
+                tileMain = null;
+            }
+
+            foreach (var t in building.bounds.AsRect(pos).AllTiles())
+            {
+                var tile = Tile(t);
+                tile.bldgMain = null;
+                tile.bldgAdj = tileMain;
+            }
+
+            if (tileMain != null)
+            {
+                tileMain.bldgMain = building;
+                tileMain.bldgAdj = null;
+            }
+
             tiler.UpdateBuilding(pos);
         }
 
@@ -153,12 +178,13 @@ namespace BB
         public void ReplaceBuilding(Vec2I pos, IBuilding building)
         {
             BB.Assert(Tile(pos).hasBuilding);
+            BB.Assert(Tile(pos).building.bounds == building.bounds);
             SetBuilding(pos, building);
         }
 
         public void AddBuilding(Vec2I pos, IBuilding building)
         {
-            BB.Assert(!Tile(pos).hasBuilding);
+            BB.Assert(!HasBuilding(building.bounds.AsRect(pos)));
             SetBuilding(pos, building);
         }
 
@@ -167,11 +193,6 @@ namespace BB
             var tile = Tile(pos);
             tile.terrain = terrain;
             tiler.UpdateTerrain(pos);
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
         }
 
         private void GetPath(Vec2I start, Vec2I end)

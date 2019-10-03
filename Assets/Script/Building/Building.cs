@@ -13,11 +13,44 @@ namespace BB
 
         public BuildingBounds(Vec2I size, Vec2I origin)
         {
+            BB.Assert(origin.x >= 0 && origin.y >= 0 && origin.x <= size.x && origin.y <= size.y);
             this.size = size;
             this.origin = origin;
         }
 
         public static readonly BuildingBounds Unit = new BuildingBounds(Vec2I.one, Vec2I.zero);
+
+        public RectInt AsRect(Vec2I pos) => new RectInt(pos - origin, size);
+
+        public bool IsAdjacent(Vec2I pos) => AsRect(Vec2I.zero).IsAdjacent(pos);
+
+        public BuildingBounds RotatedFromDown(MinionSkin.Dir dir)
+        {
+            if (dir == MinionSkin.Dir.Down)
+                return this;
+
+            switch (dir)
+            {
+                case MinionSkin.Dir.Down: return this;
+
+                case MinionSkin.Dir.Up:
+                    return new BuildingBounds(
+                        size,
+                        new Vec2I(size.x - 1 - origin.x, size.y - 1 - origin.y));
+
+                case MinionSkin.Dir.Left:
+                    return new BuildingBounds(
+                        new Vec2I(size.y, size.x),
+                        new Vec2I(origin.x, size.y - 1 - origin.x));
+
+                case MinionSkin.Dir.Right:
+                    return new BuildingBounds(
+                        new Vec2I(size.y, size.x),
+                        new Vec2I(size.y - 1 - origin.y, origin.x));
+            }
+
+            throw new ArgumentException();
+        }
 
         public static bool operator ==(BuildingBounds a, BuildingBounds b)
             => a.size == b.size && a.origin == b.origin;
@@ -86,7 +119,7 @@ namespace BB
         }
 
         public virtual bool passable => proto.passable;
-        public virtual BuildingBounds bounds => proto.bounds;
+        public virtual BuildingBounds bounds => proto.Bounds(MinionSkin.Dir.Down);
         public virtual RenderFlags renderFlags => proto.renderFlags;
         public virtual TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
             => proto.GetSprite(map, pos, subTile);

@@ -126,29 +126,33 @@ namespace BB
 
     public class ToolBuild : UITool
     {
-        private int currentBuild = 0;
+        private const int numBuilds = 3;
+        private int currentBuild = numBuilds - 1;
+        private IBuildable curProto;
+        private readonly MinionSkin.Dir curDir = MinionSkin.Dir.Down;
 
-        public ToolBuild(GameController game) : base(game) { }
+        public ToolBuild(GameController game) : base(game)
+            => OnTab();
 
         public override void OnTab()
         {
-            currentBuild = (currentBuild + 1) % 2;
-            BB.LogInfo("Build " + currentBuild);
+            currentBuild = (currentBuild + 1) % 3;
+            switch (currentBuild)
+            {
+                case 0: curProto = (IBuildable)game.registry.D_GetProto<BldgWorkbenchDef>("BB:Woodcutter"); break;
+                case 1: curProto = (IBuildable)game.registry.D_GetProto<BldgWallDef>("BB:StoneBrick"); break;
+                case 2: curProto = (IBuildable)game.registry.D_GetProto<BldgFloorDef>("BB:StoneBrick"); break;
+            }
+
         }
 
         public override void OnClick(Vec2I pos)
         {
             // TODO: only work an valid tiles
-            if (!game.Tile(pos).hasBuilding)
+            if (game.CanPlaceBuilding(pos, curProto.Bounds(curDir)))
             {
-                IBuildable proto = null;
-                switch (currentBuild)
-                {
-                    case 0: proto = (IBuildable)game.registry.buildings[game.defs.Get<BldgWallDef>("BB:StoneBrick")]; break;
-                    case 1: proto = (IBuildable)game.registry.buildings[game.defs.Get<BldgFloorDef>("BB:StoneBrick")]; break;
-                }
-
-                SystemBuild.K_instance.CreateBuild(proto, pos);
+                BB.LogInfo("Build " + currentBuild);
+                SystemBuild.K_instance.CreateBuild(curProto, pos, MinionSkin.Dir.Down);
             }
         }
 
