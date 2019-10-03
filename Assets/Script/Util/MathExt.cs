@@ -26,14 +26,6 @@ namespace BB
             return (Math.Abs(vB.y - vA.y) + Math.Abs(vB.x - vA.x)) == 1;
         }
 
-        // TODO: RectInt actually has an all tiles enumeration thing
-        public static IEnumerable<Vec2I> AllTiles(this RectInt rect)
-        {
-            for (int x = 0; x < rect.width; ++x)
-                for (int y = 0; y < rect.height; ++y)
-                    yield return new Vec2I(rect.x + x, rect.y + y);
-        }
-
         public static bool IsAdjacent(this RectInt rect, Vec2I pos)
         {
             bool inX = pos.x >= rect.xMin && pos.x < rect.xMax;

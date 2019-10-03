@@ -98,7 +98,7 @@ namespace BB
             foreach (var v in toRemove)
                 activeOverlays.Remove(v);
 
-            foreach (var v in rect.AllTiles())
+            foreach (var v in rect.allPositionsWithin)
             {
                 if (!activeOverlays.ContainsKey(v))
                 {
@@ -114,7 +114,7 @@ namespace BB
 
         protected override void OnDragEnd(RectInt rect)
         {
-            foreach (var v in rect.AllTiles())
+            foreach (var v in rect.allPositionsWithin)
                 OnClick(v);
 
             foreach (var kvp in activeOverlays)
@@ -158,7 +158,7 @@ namespace BB
 
         protected override void OnDragEnd(RectInt rect)
         {
-            foreach (var v in rect.AllTiles())
+            foreach (var v in rect.allPositionsWithin)
                 OnClick(v);
         }
     }

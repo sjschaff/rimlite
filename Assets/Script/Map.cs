@@ -135,7 +135,7 @@ namespace BB
 
         public bool HasBuilding(RectInt area)
         {
-            foreach (var t in area.AllTiles())
+            foreach (var t in area.allPositionsWithin)
             {
                 if (Tile(t).hasBuilding)
                     return true;
@@ -153,7 +153,7 @@ namespace BB
                 tileMain = null;
             }
 
-            foreach (var t in building.bounds.AsRect(pos).AllTiles())
+            foreach (var t in building.bounds.AsRect(pos).allPositionsWithin)
             {
                 var tile = Tile(t);
                 tile.bldgMain = null;

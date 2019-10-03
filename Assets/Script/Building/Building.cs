@@ -100,11 +100,8 @@ namespace BB
         public static bool Oversized(this IBuilding bldg)
             => bldg.renderFlags.HasFlag(RenderFlags.Oversized);
 
-        public static IEnumerable<Vec2I> AllTiles(this IBuilding bldg, Vec2I pos)
-        {
-            var bounds = bldg.bounds;
-            return new RectInt(pos - bounds.origin, bounds.size).AllTiles();
-        }
+        public static IEnumerator<Vec2I> AllTiles(this IBuilding bldg, Vec2I pos)
+            => bldg.bounds.AsRect(pos).allPositionsWithin;
     }
 
     public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingProto
