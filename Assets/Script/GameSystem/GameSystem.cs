@@ -47,9 +47,9 @@ namespace BB
 
     public interface IOrdersGiver
     {
-        bool HasOrder(Vec2I pos);
-        void AddOrder(Vec2I pos);
-        Transform CreateOverlay(Vec2I pos);
+        bool HasOrder(Tile tile);
+        void AddOrder(Tile tile);
+        Transform CreateOverlay(Tile tile);
 
         OrdersFlags flags { get; }
         bool ApplicableToItem(Item item);

@@ -20,6 +20,7 @@ namespace BB
 
         public static readonly BuildingBounds Unit = new BuildingBounds(Vec2I.one, Vec2I.zero);
 
+        public RectInt AsRect(Tile tile) => AsRect(tile.pos);
         public RectInt AsRect(Vec2I pos) => new RectInt(pos - origin, size);
 
         public bool IsAdjacent(Vec2I pos) => AsRect(Vec2I.zero).IsAdjacent(pos);
@@ -101,8 +102,8 @@ namespace BB
         public static bool Oversized(this IBuilding bldg)
             => bldg.renderFlags.HasFlag(RenderFlags.Oversized);
 
-        public static IEnumerator<Vec2I> AllTiles(this IBuilding bldg, Vec2I pos)
-            => bldg.bounds.AsRect(pos).allPositionsWithin;
+        public static RectInt Area(this IBuilding bldg, Vec2I pos) => bldg.bounds.AsRect(pos);
+        public static RectInt Area(this IBuilding bldg, Tile tile) => bldg.Area(tile.pos);
     }
 
     public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingProto

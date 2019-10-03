@@ -47,7 +47,7 @@ namespace BB
         public Nav(Map map)
         {
             searchCache = AStar.CreateSearchCache(map.size);
-            passFn = pt => map.Tile(pt).passable;
+            passFn = pt => map.GetTile(pt).passable;
         }
 
         public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
@@ -88,15 +88,17 @@ namespace BB
             // todo: cache for easy access for a given side
             public Edge[] edges = new Edge[4]; // down -> cw
 
-            public ATile(Map map, int xa, int ya)
+            public ATile(Func<Vec2I, bool> passFn, int xa, int ya)
             {
                 int x = xa * aDim;
                 int y = ya * aDim;
-                passFn = pt => map.Tile(x + pt.x, y + pt.y).passable;
+                this.passFn = pt => passFn(new Vec2I(x + pt.x, y + pt.y));
             }
         }
 
-        private readonly Map map;
+        private readonly Vec2I size;
+        private readonly Func<Vec2I, bool> passFn;
+
         private readonly Vec2I asize;
         //private
         public
@@ -173,18 +175,19 @@ namespace BB
                 }*/
 
 
-        public Nav__Unfinished(Map map)
+        public Nav__Unfinished(Vec2I size, Func<Vec2I, bool> passFn)
         {
-            BB.Assert(map != null);
-            BB.Assert(map.size.x % aDim == 0);
-            BB.Assert(map.size.y % aDim == 0);
+            BB.Assert(size.x % aDim == 0);
+            BB.Assert(size.y % aDim == 0);
 
-            this.map = map;
-            this.asize = new Vec2I(map.size.x / aDim, map.size.y / aDim);
+            this.size = size;
+            this.passFn = passFn;
+
+            this.asize = new Vec2I(size.x / aDim, size.y / aDim);
             this.atiles = new ATile[asize.x, asize.y];
             for (int x = 0; x < asize.x; ++x)
                 for (int y = 0; y < asize.y; ++y)
-                    atiles[x, y] = new ATile(map, x, y);
+                    atiles[x, y] = new ATile(passFn, x, y);
 
             this.cacheInternal = AStar.CreateSearchCache(new Vec2I(aDim, aDim));
             //this.cacheAbstract = AStar.CreateSearchCache(asize);
@@ -267,7 +270,7 @@ namespace BB
             int y = ya * aDim + (aDim - 1);
             int x = xa * aDim;
 
-            var pts = GenEdgePoints(i => map.Tile(x + i, y).passable && map.Tile(x + i, y + 1).passable);
+            var pts = GenEdgePoints(i => passFn(new Vec2I(x + i, y)) && passFn(new Vec2I(x + i, y + 1)));
             if (KD_log)
             {
                 string log = "pts = ";
@@ -283,7 +286,7 @@ namespace BB
             int y = ya * aDim;
             int x = xa * aDim + (aDim - 1);
 
-            var pts = GenEdgePoints(i => map.Tile(x, y + i).passable && map.Tile(x + 1, y + i).passable);
+            var pts = GenEdgePoints(i => passFn(new Vec2I(x, y + i)) && passFn(new Vec2I(x + 1, y + i)));
             return pts == null ? null : new Edge(pts.Select(i => new Vec2I(aDim - 1, i)).ToArray());
         }
 

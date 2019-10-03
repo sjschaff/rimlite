@@ -7,47 +7,59 @@ namespace BB
     // TODO: rename BBTile -> MapTile (or maybe inner class),
     // rename ITile-> Tile, make class, store pos, can be used as
     // a handle for everyone
-    public interface ITile
+    public class Tile
     {
-        bool passable { get; }
-        bool hasBuilding { get; }
-        IBuilding building { get; }
-    }
+        private readonly Map.BBTile tile;
+        public readonly Vec2I pos;
 
-    public class BBTile : ITile
-    {
-        public Terrain terrain;
-        public IBuilding bldgMain;
-        public BBTile bldgAdj;
-
-        public BBTile(Terrain terrain)
+        public Tile(Map.BBTile tile, Vec2I pos)
         {
-            this.terrain = terrain;
-            bldgMain = null;
-            bldgAdj = null;
+            BB.AssertNotNull(tile);
+            this.tile = tile;
+            this.pos = pos;
         }
+
+        public bool passable => terrain.passable && (hasBuilding ? building.passable : true);
+        public bool hasBuilding => tile.hasBuilding;
+        public Terrain terrain => tile.terrain;
 
         public IBuilding building
         {
             get
             {
-                if (bldgAdj != null)
+                if (tile.bldgAdj != null)
                 {
-                    BB.AssertNotNull(bldgAdj.bldgMain);
-                    return bldgAdj.bldgMain;
+                    BB.AssertNotNull(tile.bldgAdj.bldgMain);
+                    return tile.bldgAdj.bldgMain;
                 }
 
-                return bldgMain;
+                return tile.bldgMain;
             }
         }
-
-        public bool passable => terrain.passable && (hasBuilding ? building.passable : true);
-        public bool hasBuilding => bldgMain != null || bldgAdj != null;
-
     }
 
     public class Map
     {
+        public class BBTile
+        {
+            public readonly Tile handle;
+
+            public Terrain terrain;
+            public IBuilding bldgMain;
+            public BBTile bldgAdj;
+
+            public bool hasBuilding => bldgMain != null || bldgAdj != null;
+
+            public BBTile(Terrain terrain, Vec2I pos)
+            {
+                this.terrain = terrain;
+                bldgMain = null;
+                bldgAdj = null;
+
+                handle = new Tile(this, pos);
+            }
+        }
+
         private const int w = 128;
         private const int h = 128;
         public readonly Vec2I size = new Vec2I(w, h);
@@ -70,13 +82,13 @@ namespace BB
 
         public void AssertValidTile(Vec2I tile) => BB.Assert(ValidTile(tile));
 
-        public BBTile Tile(int x, int y)
+        public BBTile Tile(Vec2I pos)
         {
-            AssertValidTile(new Vec2I(x, y));
-            return tiles[x, y];
+            AssertValidTile(pos);
+            return tiles[pos.x, pos.y];
         }
 
-        public BBTile Tile(Vec2I tile) => Tile(tile.x, tile.y);
+        public Tile GetTile(Vec2I pos) => Tile(pos).handle;
 
         private BBTile[,] GenerateTerrain()
         {
@@ -84,7 +96,7 @@ namespace BB
             BBTile[,] tiles = new BBTile[w, h];
             for (int x = 0; x < w; ++x)
                 for (int y = 0; y < h; ++y)
-                    tiles[x, y] = new BBTile(grass);
+                    tiles[x, y] = new BBTile(grass, new Vec2I(x, y));
 
             var water = new Terrain(game, game.defs.Get<TerrainDef>("BB:Water"));
             for (int x = 2; x < 5; ++x)
@@ -153,7 +165,7 @@ namespace BB
                 tileMain = null;
             }
 
-            foreach (var t in building.bounds.AsRect(pos).allPositionsWithin)
+            foreach (var t in building.Area(pos).allPositionsWithin)
             {
                 var tile = Tile(t);
                 tile.bldgMain = null;
@@ -169,30 +181,29 @@ namespace BB
             tiler.UpdateBuilding(pos);
         }
 
-        public void RemoveBuilding(Vec2I pos)
+        public void RemoveBuilding(Tile tile)
         {
-            BB.Assert(Tile(pos).hasBuilding);
-            SetBuilding(pos, null);
+            BB.Assert(tile.hasBuilding);
+            SetBuilding(tile.pos, null);
         }
 
-        public void ReplaceBuilding(Vec2I pos, IBuilding building)
+        public void ReplaceBuilding(Tile tile, IBuilding building)
         {
-            BB.Assert(Tile(pos).hasBuilding);
-            BB.Assert(Tile(pos).building.bounds == building.bounds);
-            SetBuilding(pos, building);
+            BB.Assert(tile.hasBuilding);
+            BB.Assert(tile.building.bounds == building.bounds);
+            SetBuilding(tile.pos, building);
         }
 
-        public void AddBuilding(Vec2I pos, IBuilding building)
+        public void AddBuilding(Tile tile, IBuilding building)
         {
-            BB.Assert(!HasBuilding(building.bounds.AsRect(pos)));
-            SetBuilding(pos, building);
+            BB.Assert(!HasBuilding(building.Area(tile)));
+            SetBuilding(tile.pos, building);
         }
 
-        public void ModifyTerrain(Vec2I pos, Terrain terrain)
+        public void ModifyTerrain(Tile tile, Terrain terrain)
         {
-            var tile = Tile(pos);
-            tile.terrain = terrain;
-            tiler.UpdateTerrain(pos);
+            Tile(tile.pos).terrain = terrain;
+            tiler.UpdateTerrain(tile.pos);
         }
 
         private void GetPath(Vec2I start, Vec2I end)

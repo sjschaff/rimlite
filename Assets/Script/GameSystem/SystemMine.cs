@@ -23,19 +23,17 @@ namespace BB
         protected override SpriteDef sprite { get; }
         public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
 
-        protected override JobMine CreateJob(Vec2I pos)
-            => new JobMine(this, pos);
+        protected override JobMine CreateJob(Tile tile)
+            => new JobMine(this, tile);
 
         public class JobMine : JobHandleOrders
         {
             public readonly IMineable mineable;
 
-            public JobMine(SystemMine system, Vec2I pos) : base(system, pos)
+            public JobMine(SystemMine system, Tile tile) : base(system, tile)
             {
-                BB.Assert(system != null);
-                var building = system.game.Tile(pos).building;
-                BB.Assert(building != null);
-                mineable = (IMineable)system.game.Tile(pos).building;
+                BB.Assert(tile.hasBuilding);
+                mineable = (IMineable)tile.building;
                 BB.Assert(mineable != null);
 
                 // TODO: move this more general?
@@ -52,7 +50,7 @@ namespace BB
 
             public override IEnumerable<Task> GetTasks()
             {
-                yield return new TaskGoTo(game, PathCfg.Adjacent(pos));
+                yield return new TaskGoTo(game, PathCfg.Adjacent(tile.pos));
                 yield return new TaskMine(game, this);
             }
         }
@@ -63,7 +61,7 @@ namespace BB
 
             public TaskMine(GameController game, JobMine work)
                 : base(game, MinionAnim.Slash, work.mineable.tool, 
-                      work.mineable.mineAmt, FacePt(work.pos))
+                      work.mineable.mineAmt, FacePt(work.tile.pos))
                 => this.job = work;
 
             protected override void OnEndTask(bool canceled)
@@ -73,9 +71,9 @@ namespace BB
                 {
                     BB.Assert(job.mineable.mineAmt <= 0);
 
-                    game.RemoveBuilding(job.pos);
+                    game.RemoveBuilding(job.tile);
                     foreach (ItemInfo item in job.mineable.GetMinedMaterials())
-                        game.DropItem(job.pos, item);
+                        game.DropItem(job.tile.pos, item);
                 }
             }
 

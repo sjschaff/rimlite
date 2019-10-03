@@ -81,8 +81,8 @@ namespace BB
         {
             // TODO: handle items
             var tile = game.Tile(pos);
-            if (currentOrders.ApplicableToBuilding(tile.building) && !currentOrders.HasOrder(pos))
-                currentOrders.AddOrder(pos);
+            if (currentOrders.ApplicableToBuilding(tile.building) && !currentOrders.HasOrder(tile))
+                currentOrders.AddOrder(tile);
         }
 
         protected override void OnDragUpdate(RectInt rect)
@@ -105,9 +105,10 @@ namespace BB
                 if (!activeOverlays.ContainsKey(v))
                 {
                     // TODO: handle items
-                    if (currentOrders.ApplicableToBuilding(game.Tile(v).building) && !currentOrders.HasOrder(v))
+                    var tile = game.Tile(v);
+                    if (currentOrders.ApplicableToBuilding(tile.building) && !currentOrders.HasOrder(tile))
                     {
-                        var o = currentOrders.CreateOverlay(v);
+                        var o = currentOrders.CreateOverlay(tile);
                         activeOverlays.Add(v, o);
                     }
                 }
@@ -169,9 +170,10 @@ namespace BB
         public override void OnClick(Vec2I pos)
         {
             // TODO: only work an valid tiles
-            if (game.CanPlaceBuilding(pos, curProto.Bounds(curDir)))
+            var tile = game.Tile(pos);
+            if (game.CanPlaceBuilding(tile, curProto.Bounds(curDir)))
             {
-                SystemBuild.K_instance.CreateBuild(curProto, pos, curDir);
+                SystemBuild.K_instance.CreateBuild(curProto, tile, curDir);
                 //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
             }
         }

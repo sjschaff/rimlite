@@ -96,7 +96,7 @@ namespace BB
         public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
             => map.nav.GetPath(start, cfg);
 
-        public ITile Tile(Vec2I pos) => map.Tile(pos);
+        public Tile Tile(Vec2I pos) => map.GetTile(pos);
 
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(RectInt rect, bool required)
@@ -125,50 +125,46 @@ namespace BB
                     yield return item;
         }
 
-        public void RemoveBuilding(Vec2I pos)
+        public void RemoveBuilding(Tile tile)
         {
-            var tile = map.Tile(pos);
             BB.Assert(tile.hasBuilding);
 
             bool passable = tile.passable;
-            var bounds = tile.building.bounds;
-            map.RemoveBuilding(pos);
-            RerouteMinions(bounds.AsRect(pos), passable, tile.passable);
+            var bounds = tile.building.Area(tile);
+            map.RemoveBuilding(tile);
+            RerouteMinions(bounds, passable, tile.passable);
         }
 
-        public bool CanPlaceBuilding(Vec2I pos, BuildingBounds bounds)
-            => !map.HasBuilding(bounds.AsRect(pos));
+        public bool CanPlaceBuilding(Tile tile, BuildingBounds bounds)
+            => !map.HasBuilding(bounds.AsRect(tile));
 
-        public void AddBuilding(Vec2I pos, IBuilding building)
+        public void AddBuilding(Tile tile, IBuilding building)
         {
-            BB.Assert(CanPlaceBuilding(pos, building.bounds));
-            var tile = map.Tile(pos);
+            BB.Assert(CanPlaceBuilding(tile, building.bounds));
 
             bool passable = tile.passable;
-            map.AddBuilding(pos, building);
-            RerouteMinions(building.bounds.AsRect(pos), passable, tile.passable);
+            map.AddBuilding(tile, building);
+            RerouteMinions(building.Area(tile), passable, tile.passable);
         }
 
-        public void ReplaceBuilding(Vec2I pos, IBuilding building)
+        public void ReplaceBuilding(Tile tile, IBuilding building)
         {
-            var tile = map.Tile(pos);
             BB.Assert(tile.hasBuilding);
 
             bool passable = tile.passable;
-            map.ReplaceBuilding(pos, building);
-            RerouteMinions(building.bounds.AsRect(pos), passable, tile.passable);
+            map.ReplaceBuilding(tile, building);
+            RerouteMinions(building.Area(tile), passable, tile.passable);
         }
 
-        public void ModifyTerrain(Vec2I pos, Terrain terrain)
+        public void ModifyTerrain(Tile tile, Terrain terrain)
         {
-            var tile = map.Tile(pos);
             bool wasPassable = tile.terrain.passable;
             bool nowPassable = terrain.passable;
 
-            map.ModifyTerrain(pos, terrain);
+            map.ModifyTerrain(tile, terrain);
 
             if (wasPassable != nowPassable)
-                RerouteMinions(new RectInt(pos, Vec2I.one), wasPassable);
+                RerouteMinions(new RectInt(tile.pos, Vec2I.one), wasPassable);
         }
 
         // TODO: make this DropItems so we can do fast flood fill in O(n)

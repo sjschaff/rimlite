@@ -54,8 +54,8 @@ namespace BB
 
     public abstract class VirtualTileBase : TM.Tile
     {
-        protected abstract bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile);
-        protected abstract TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile);
+        protected abstract bool HasSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile);
+        protected abstract TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile);
 
         public static bool disableRefresh = false;
 
@@ -69,7 +69,7 @@ namespace BB
             return vtile;
         }
 
-        protected BBTile GetTile(Vec2I v) => map.Tile(v);
+        protected Map.BBTile GetTile(Vec2I v) => map.Tile(v);
         protected Vec2I GridToTile(Vec3I v) => new Vec2I(v.x >> 1, v.y >> 1);
         protected Vec2I GridToSubTile(Vec3I v) => new Vec2I(v.x % 2, v.y % 2);
 
@@ -77,7 +77,7 @@ namespace BB
         {
             Vec2I pos = GridToTile(gridPos);
             Vec2I subTile = GridToSubTile(gridPos);
-            BBTile tile = GetTile(pos);
+            Map.BBTile tile = GetTile(pos);
 
             TileSprite sprite = HasSprite(tile, pos, subTile) ? GetSprite(tile, pos, subTile) : null;
 
@@ -100,7 +100,7 @@ namespace BB
         {
             Vec2I pos = GridToTile(gridPos);
             Vec2I subTile = GridToSubTile(gridPos);
-            BBTile tile = GetTile(pos);
+            Map.BBTile tile = GetTile(pos);
 
             if (!disableRefresh || HasSprite(tile, pos, subTile))
                 tilemap.RefreshTile(gridPos);
@@ -129,9 +129,9 @@ namespace BB
     {
         private static Sprite grassSprite;
 
-        protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile) => true;
+        protected override bool HasSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile) => true;
 
-        protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
         {
             if (grassSprite == null)
             {
@@ -147,10 +147,10 @@ namespace BB
     public class VirtualTileTerrainOver : VirtualTileBase
     {
         // TODO:Kludge
-        protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override bool HasSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
             => tile.terrain.def != Terrain.K_grassDef;
 
-        protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
             => tile.terrain.GetSprite(map, pos, subTile);
 
         public override bool GetTileAnimationData(Vec3I gridPos, TM.ITilemap tilemap, ref TM.TileAnimationData tileAnimationData)
@@ -170,19 +170,19 @@ namespace BB
 
     public class VirtualTileBuilding : VirtualTileBase
     {
-        protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override bool HasSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
             => tile.bldgMain != null && (tile.bldgMain.TiledRender() || subTile == Vec2I.zero);
 
-        protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
             => tile.bldgMain.GetSprite(map, pos, subTile);
     }
 
     public class VirtualTileBuildingOver : VirtualTileBase
     {
-        protected override bool HasSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override bool HasSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
             => tile.bldgMain != null && tile.bldgMain.Oversized() && subTile == Vec2I.zero;
 
-        protected override TileSprite GetSprite(BBTile tile, Vec2I pos, Vec2I subTile)
+        protected override TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
             => tile.bldgMain.GetSpriteOver(map, pos);
     }
 

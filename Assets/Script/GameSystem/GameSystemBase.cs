@@ -14,22 +14,24 @@ namespace BB
         public abstract class JobStandard : JobHandle
         {
             public readonly TThis systemTyped;
-            public readonly Vec2I pos;
+            public readonly Tile tile;
             public GameController game => systemTyped.game;
 
-            public JobStandard(TThis system, Vec2I pos)
+            public JobStandard(TThis system, Tile tile)
                 : base(system)
             {
-                this.pos = pos;
+                BB.AssertNotNull(system);
+                BB.AssertNotNull(tile);
                 this.systemTyped = system;
+                this.tile = tile;
             }
 
             public virtual void Destroy() { }
         }
 
         public readonly GameController game;
-        private readonly Dictionary<Vec2I, TJob> jobs
-            = new Dictionary<Vec2I, TJob>();
+        private readonly Dictionary<Tile, TJob> jobs
+            = new Dictionary<Tile, TJob>();
 
         protected GameSystemStandard(GameController game) => this.game = game;
 
@@ -40,21 +42,21 @@ namespace BB
         public IEnumerable<Work> QueryWork()
             => jobs.Values.SelectMany(job => QueryWorkForJob(job));
 
-        protected bool HasJob(Vec2I pos) => jobs.ContainsKey(pos);
+        protected bool HasJob(Tile tile) => jobs.ContainsKey(tile);
 
         protected void AddJob(TJob job)
         {
-            BB.Assert(!HasJob(job.pos));
-            jobs.Add(job.pos, job);
+            BB.Assert(!HasJob(job.tile));
+            jobs.Add(job.tile, job);
         }
 
         protected void RemoveJob(TJob job)
         {
             BB.Assert(job.system == this);
-            BB.Assert(jobs.TryGetValue(job.pos, out var workContained) && workContained == job);
+            BB.Assert(jobs.TryGetValue(job.tile, out var workContained) && workContained == job);
 
             job.Destroy();
-            jobs.Remove(job.pos);
+            jobs.Remove(job.tile);
         }
 
         public void CancelJob(JobHandle handle)
@@ -73,7 +75,7 @@ namespace BB
         {
             public Work activeWork;
 
-            public JobBasic(TThis system, Vec2I pos) : base(system, pos) { }
+            public JobBasic(TThis system, Tile tile) : base(system, tile) { }
 
             public abstract IEnumerable<Task> GetTasks();
 
@@ -128,8 +130,8 @@ namespace BB
         {
             public readonly Transform overlay;
 
-            public JobHandleOrders(TThis orders, Vec2I pos)
-                : base(orders, pos) => overlay = orders.CreateOverlay(pos);
+            public JobHandleOrders(TThis orders, Tile tile)
+                : base(orders, tile) => overlay = orders.CreateOverlay(tile);
 
             public override void Destroy()
             {
@@ -141,7 +143,7 @@ namespace BB
         protected GameSystemAsOrders(GameController game) : base(game) { }
 
         protected abstract SpriteDef sprite { get; }
-        protected abstract TJob CreateJob(Vec2I pos);
+        protected abstract TJob CreateJob(Tile tile);
         public abstract OrdersFlags flags { get; }
 
 
@@ -162,10 +164,10 @@ namespace BB
             => ApplicableErrorCheck(OrdersFlags.AppliesItem);
 
 
-        public bool HasOrder(Vec2I pos) => HasJob(pos);
-        public void AddOrder(Vec2I pos) => AddJob(CreateJob(pos));
+        public bool HasOrder(Tile tile) => HasJob(tile);
+        public void AddOrder(Tile tile) => AddJob(CreateJob(tile));
 
-        public Transform CreateOverlay(Vec2I pos)
-            => game.assets.CreateJobOverlay(game.transform, pos, sprite).transform;
+        public Transform CreateOverlay(Tile tile)
+            => game.assets.CreateJobOverlay(game.transform, tile.pos, sprite).transform;
     }
 }

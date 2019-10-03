@@ -27,8 +27,8 @@ namespace BB
 
         public override IOrdersGiver orders => null;
 
-        public void CreateBuild(IBuildable proto, Vec2I pos, Dir dir)
-            => AddJob(new JobBuild(this, pos, proto, dir));
+        public void CreateBuild(IBuildable proto, Tile tile, Dir dir)
+            => AddJob(new JobBuild(this, tile, proto, dir));
 
         public override void WorkAbandoned(JobHandle job, Work work) { }
 
@@ -42,14 +42,16 @@ namespace BB
         public class JobBuild : JobStandard
         {
             public readonly BuildingConstruction building;
-            public RectInt area => building.bounds.AsRect(pos);
+            public readonly RectInt area;
 
-            public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto, Dir dir)
-                : base(build, pos)
+            public JobBuild(SystemBuild build, Tile tile, IBuildable proto, Dir dir)
+                : base(build, tile)
             {
                 building = new BuildingConstruction(proto, dir);
+                area = building.Area(tile);
+
                 building.jobHandles.Add(this);
-                game.AddBuilding(pos, building);
+                game.AddBuilding(tile, building);
             }
 
             private class ItemPriority : FastPriorityQueueNode
@@ -78,7 +80,7 @@ namespace BB
                                 if (item.amtAvailable > 0)
                                     queue.Enqueue(
                                         new ItemPriority(item),
-                                        Vec2.Distance(item.pos, pos) / (float)mat.HaulAmount(item));
+                                        Vec2.Distance(item.pos, tile.pos) / (float)mat.HaulAmount(item));
                             }
 
                             if (queue.Count == 0)
@@ -149,8 +151,8 @@ namespace BB
                         yield return new TaskLambda(game,
                             (work) =>
                             {
-                                game.VacateTile(pos);
-                                if (!game.IsTileOccupied(pos, work.agent))
+                                game.VacateTile(tile.pos);
+                                if (!game.IsTileOccupied(tile.pos, work.agent))
                                 {
                                     building.constructionBegan = true;
                                     game.RerouteMinions(area, true);
@@ -170,9 +172,9 @@ namespace BB
                         (work) =>
                         {
                             work.Unclaim(buildClaim);
-                            BB.Assert(game.Tile(pos).building == building);
+                            BB.Assert(tile.building == building);
                             building.jobHandles.Remove(this);
-                            game.ReplaceBuilding(pos, building.buildProto.CreateBuilding(building.dir));
+                            game.ReplaceBuilding(tile, building.buildProto.CreateBuilding(building.dir));
                             systemTyped.RemoveJob(this);
                         });
                 }
@@ -180,8 +182,8 @@ namespace BB
 
             public override void Destroy()
             {
-                if (game.Tile(pos).building == building)
-                    game.RemoveBuilding(pos);
+                if (tile.building == building)
+                    game.RemoveBuilding(tile);
 
                 base.Destroy();
             }
