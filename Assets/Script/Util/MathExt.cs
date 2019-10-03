@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
 using UnityEngine;
 
 using Vec3 = UnityEngine.Vector3;
@@ -37,6 +36,23 @@ namespace BB
                 return (pos.x == rect.xMin - 1) || (pos.x == rect.xMax);
             else
                 return false;
+        }
+
+        public static Vec2I ClosestPt(this RectInt rect, Vec2I pt)
+        {
+            Vec2I minPt = pt;
+            float minDist = float.MaxValue;
+            foreach (var tile in rect.allPositionsWithin)
+            {
+                float dist = Vec2I.Distance(pt, tile);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    minPt = tile;
+                }
+            }
+
+            return minPt;
         }
 
         public static bool InGrid(Vec2I gridSize, Vec2I pt) =>

@@ -8,18 +8,23 @@ namespace BB
     public abstract class TaskTimed : Task
     {
         private float workAmt;
-        private readonly Vec2I workTarget;
+        private readonly Func<Vec2I, Vec2I> faceFn;
         private readonly MinionAnim anim;
         private readonly Tool tool;
 
         protected abstract float WorkSpeed();
         protected virtual void OnWorkUpdated(float workAmt) { }
 
-        public TaskTimed(GameController game, Vec2I workTarget,
-            MinionAnim anim, Tool tool, float workAmt)
+        public static Func<Vec2I, Vec2I> FaceSame() => (pt => pt);
+        public static Func<Vec2I, Vec2I> FacePt(Vec2I ptTarget) => (pt => ptTarget);
+        public static Func<Vec2I, Vec2I> FaceArea(RectInt rect) => (pt => rect.ClosestPt(pt));
+
+        public TaskTimed(GameController game,
+            MinionAnim anim, Tool tool,
+            float workAmt, Func<Vec2I, Vec2I> faceFn)
             : base(game)
         {
-            this.workTarget = workTarget;
+            this.faceFn = faceFn;
             this.anim = anim;
             this.tool = tool;
             this.workAmt = workAmt;
@@ -30,6 +35,7 @@ namespace BB
             // TODO: make loading bar
             agent.SetTool(tool);
             agent.SetAnim(anim);
+            Vec2I workTarget = faceFn(agent.pos);
             if (agent.pos != workTarget)
                 agent.SetFacing(workTarget - agent.pos);
 
@@ -55,12 +61,13 @@ namespace BB
         private readonly Action<Work> completeFn;
 
         public TaskTimedLambda(
-            GameController game, Vec2I workTarget,
+            GameController game,
             MinionAnim anim, Tool tool, float workAmt,
+            Func<Vec2I, Vec2I> faceFn,
             Func<Work, float> workSpeedFn,
             Action<Work, float> workFn,
             Action<Work> completeFn)
-            : base(game, workTarget, anim, tool, workAmt)
+            : base(game, anim, tool, workAmt, faceFn)
         {
             BB.AssertNotNull(workSpeedFn);
             this.workSpeedFn = workSpeedFn;

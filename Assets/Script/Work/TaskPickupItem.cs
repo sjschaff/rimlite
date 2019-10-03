@@ -5,7 +5,7 @@
         private readonly TaskClaimItem claim;
 
         public TaskPickupItem(TaskClaimItem claim)
-            : base(claim.game, claim.item.pos, MinionAnim.Magic, Tool.None, .425f)
+            : base(claim.game, MinionAnim.Magic, Tool.None, .425f, FaceSame())
         {
             BB.AssertNotNull(claim);
             this.claim = claim;

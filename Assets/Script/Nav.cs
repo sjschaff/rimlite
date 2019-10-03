@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System;
+using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -27,6 +29,14 @@ namespace BB
         // TODO: this hueristic is probably wrong
         public static PathCfg Adjacent(Vec2I pos)
             => new PathCfg(pt => pt.Adjacent(pos), pt => Vec2I.Distance(pt, pos));
+
+        // TODO: this hueristic is probably wrong
+        public static PathCfg Adjacent(RectInt area)
+            => new PathCfg(pt => area.IsAdjacent(pt), pt => Vec2.Distance(pt, area.center));
+
+        // TODO: this hueristic is probably wrong
+        public static PathCfg Area(RectInt area)
+            => new PathCfg(pt => area.Contains(pt), pt => Vec2.Distance(pt, area.center));
     }
 
     public class Nav

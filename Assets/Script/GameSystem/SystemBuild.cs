@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 using Priority_Queue;
 
 using Vec2 = UnityEngine.Vector2;
@@ -42,6 +43,8 @@ namespace BB
         public class JobBuild : JobStandard
         {
             public readonly BuildingProtoConstruction.BuildingConstruction building;
+
+            public RectInt area => building.bounds.AsRect(pos);
 
             public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto, Dir dir)
                 : base(build, pos)
@@ -99,7 +102,7 @@ namespace BB
                             yield return Capture(new TaskClaimItem(game, itemHaul, haulAmt), out var claimItem);
                             yield return new TaskGoTo(game, PathCfg.Point(itemHaul.pos));
                             yield return new TaskPickupItem(claimItem);
-                            yield return new TaskGoTo(game, PathCfg.Point(pos)); // TODO: this could be anywhere in the building
+                            yield return new TaskGoTo(game, PathCfg.Area(area));
                             yield return new TaskLambda(game,
                                 (work) =>
                                 {
@@ -132,10 +135,8 @@ namespace BB
                 }
 
                 // TODO: move items out of build area
-
                 if (building.HasAllMaterials())
                 {
-                    // TODO: should this go before or after the vacate task?
                     yield return Capture(new TaskClaim(game,
                         (work) =>
                         {
@@ -154,16 +155,18 @@ namespace BB
                                 if (!game.IsTileOccupied(pos, work.agent))
                                 {
                                     building.constructionBegan = true;
-                                    game.RerouteMinions(building.bounds.AsRect(pos), true);
+                                    game.RerouteMinions(area, true);
                                     return true;
                                 }
 
                                 return false;
                             });
 
-                    yield return new TaskGoTo(game, PathCfg.Adjacent(pos));
+                    yield return new TaskGoTo(game, PathCfg.Adjacent(area));
                     yield return new TaskTimedLambda(
-                        game, pos, MinionAnim.Slash, Tool.Hammer, 2, _ => 1,
+                        game, MinionAnim.Slash, Tool.Hammer, 2,
+                        TaskTimed.FaceArea(area),
+                        _ => 1,
                         // TODO: track work amount on building
                         null, //(work, workAmt) => /**/, 9
                         (work) =>

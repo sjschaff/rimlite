@@ -62,7 +62,8 @@ namespace BB
             private readonly JobMine job;
 
             public TaskMine(GameController game, JobMine work)
-                : base(game, work.pos, MinionAnim.Slash, work.mineable.tool, work.mineable.mineAmt)
+                : base(game, MinionAnim.Slash, work.mineable.tool, 
+                      work.mineable.mineAmt, FacePt(work.pos))
                 => this.job = work;
 
             protected override void OnEndTask(bool canceled)
