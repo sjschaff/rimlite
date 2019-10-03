@@ -37,6 +37,7 @@ namespace BB
 
         // TODO: make this more general
         public virtual void OnTab() { }
+        public virtual void OnKeyP() { }
 
         public virtual void OnClick(Vec2I pos) { }
         public virtual void OnDragStart(Vec2 start, Vec2 end)
@@ -126,13 +127,19 @@ namespace BB
 
     public class ToolBuild : UITool
     {
+        public ToolBuild K_instance;
+
         private const int numBuilds = 3;
         private int currentBuild = numBuilds - 1;
         private IBuildable curProto;
-        private readonly Dir curDir = Dir.Down;
+        private Dir curDir;
 
         public ToolBuild(GameController game) : base(game)
-            => OnTab();
+        //  => OnTab();
+        {
+            OnTab();
+            K_instance = this;
+        }
 
         public override void OnTab()
         {
@@ -144,6 +151,30 @@ namespace BB
                 case 2: curProto = (IBuildable)game.registry.D_GetProto<BldgFloorDef>("BB:StoneBrick"); break;
             }
 
+            var et = curProto.AllowedOrientations().GetEnumerator();
+            et.MoveNext();
+            curDir = et.Current;
+            BB.LogInfo($"Active Build: {curProto.GetType().Name}:{curDir}");
+        }
+
+        public override void OnKeyP()
+        {
+            // TODO: ugh this should be easier
+            var et = curProto.AllowedOrientations().GetEnumerator();
+            while (et.MoveNext())
+            {
+                if (et.Current == curDir)
+                {
+                    if (!et.MoveNext())
+                    {
+                        et = curProto.AllowedOrientations().GetEnumerator();
+                        et.MoveNext();
+                    }
+
+                    curDir = et.Current;
+                }
+            }
+            BB.LogInfo($"Active Build: {curProto.GetType().Name}:{curDir}");
         }
 
         public override void OnClick(Vec2I pos)
@@ -152,7 +183,8 @@ namespace BB
             if (game.CanPlaceBuilding(pos, curProto.Bounds(curDir)))
             {
                 BB.LogInfo("Build " + currentBuild);
-                SystemBuild.K_instance.CreateBuild(curProto, pos, Dir.Down);
+                SystemBuild.K_instance.CreateBuild(curProto, pos, curDir);
+                //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
             }
         }
 
@@ -170,8 +202,8 @@ namespace BB
         public override void OnClick(Vec2I pos)
         {
             //game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
-           // game.AddBuilding(pos, game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"))
-           //     .CreateBuilding());
+            // game.AddBuilding(pos, game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"))
+            //     .CreateBuilding());
         }
     }
 }

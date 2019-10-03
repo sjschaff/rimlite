@@ -24,11 +24,6 @@ namespace BB
         // TODO: so ghetto
         private Vec2I SpriteOffset(bool[,] adj, Tiling.TileType ttype, Vec2I subTile)
         {
-            // TODO: broken in case: (if a and/or b are set
-            //      a x b
-            //      x x x
-            //      - x -
-
             if (!adj[1, 0])
             {
                 if (subTile.y == 0)
@@ -79,8 +74,9 @@ namespace BB
             return Tiling.SpriteOffset(ttype) + new Vec2I(0, 1);
         }
 
-        public override TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
+        public override TileSprite GetSprite(Map map, Dir dir, Vec2I pos, Vec2I subTile)
         {
+            BB.Assert(dir == Dir.Down);
             bool[,] adj = Tiling.GenAdjData(pos, p => IsSame(map, p));
             Tiling.TileType ttype = Tiling.GetTileType(adj, subTile);
             Vec2I spritePos = def.spriteOrigin + SpriteOffset(adj, ttype, subTile);
@@ -98,6 +94,7 @@ namespace BB
         private class BuildingWall : BuildingBase<BuildingProtoWall>
         {
             public BuildingWall(BuildingProtoWall proto) : base(proto) { }
+            public override Dir dir => Dir.Down;
         }
     }
 }

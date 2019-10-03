@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using System;
 using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
-using System.Collections;
 
 namespace BB
 {
@@ -65,6 +66,8 @@ namespace BB
     {
         public readonly AtlasDef atlas;
         public readonly Atlas.Rect rect;
+
+        public Vec2 size => (Vec2)rect.size / (float)atlas.tilesPerUnit;
 
         public SpriteDef(string defName, AtlasDef atlas, Atlas.Rect rect)
             : base("BB:Sprite", defName)
@@ -222,20 +225,23 @@ namespace BB
     {
         public readonly BuildingBounds bounds;
         public readonly Vec2I workSpot;
-        public readonly SpriteDef sprite;
+        public readonly SpriteDef spriteDown;
+        public readonly SpriteDef spriteRight;
         public readonly ItemInfoRO[] materials;
         // TODO: recipes
 
         public BldgWorkbenchDef(
             string defName, string name,
             BuildingBounds bounds, Vec2I workSpot,
-            SpriteDef sprite, ItemInfoRO[] materials)
+            SpriteDef spriteDown, SpriteDef spriteRight,
+            ItemInfoRO[] materials)
             : base("BB:Workbench", defName, name)
         {
             BB.Assert(bounds.IsAdjacent(workSpot));
             this.bounds = bounds;
             this.workSpot = workSpot;
-            this.sprite = sprite;
+            this.spriteDown = spriteDown;
+            this.spriteRight = spriteRight;
             this.materials = materials;
         }
     }
@@ -276,7 +282,8 @@ namespace BB
             Register(new SpriteDef("BB:Wood", sprites32, new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BldgRock", sprites32, new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
             Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(0, 4), new Vec2I(8, 14), new Vec2I(2, 0)));
-            Register(new SpriteDef("BB:WoodcuttingTable", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), new Vec2I(4, 0)));
+            Register(new SpriteDef("BB:WoodcuttingTableD", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), new Vec2I(4, 0)));
+            Register(new SpriteDef("BB:WoodcuttingTableR", sprites32, new Vec2I(3, 26), new Vec2I(6, 12), new Vec2I(1, 4)));
             Register(new SpriteDef("BB:MineOverlay", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
@@ -305,7 +312,8 @@ namespace BB
             Register(BldgProtoDef.Create<BuildingProtoWorkbench, BldgWorkbenchDef>());
             Register(new BldgWorkbenchDef("BB:Woodcutter", "Woodcutting Table",
                 new BuildingBounds(new Vec2I(3, 1), new Vec2I(1, 0)), new Vec2I(1, -1),
-                Get<SpriteDef>("BB:WoodcuttingTable"),
+                Get<SpriteDef>("BB:WoodcuttingTableD"),
+                Get<SpriteDef>("BB:WoodcuttingTableR"),
                 new[] { new ItemInfoRO(Get<ItemDef>("BB:Wood"), 10) }));
         }
 

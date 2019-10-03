@@ -7,18 +7,12 @@ namespace BB
         private readonly BldgMineableDef def;
 
         public BuildingProtoResource(GameController game, BldgMineableDef def)
-            : base(game, def.sprite, 1)
+            : base(game, BuildingBounds.Unit, def.sprite, null)
             => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingResource(this);
 
         public override bool passable => false;
-
-        public override BuildingBounds Bounds(Dir dir)
-        {
-            BB.Assert(dir == Dir.Down);
-            return BuildingBounds.Unit;
-        }
 
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable
         {
@@ -27,6 +21,8 @@ namespace BB
 
             public BuildingResource(BuildingProtoResource proto) : base(proto)
                 => mineAmt = mineTotal = 2;
+
+            public override Dir dir => Dir.Down;
 
             public Tool tool => proto.def.tool;
 

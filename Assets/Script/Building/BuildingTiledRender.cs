@@ -10,7 +10,7 @@ namespace BB
 
         public abstract IBuilding CreateBuilding();
         public abstract bool passable { get; }
-        public abstract TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
+        public abstract TileSprite GetSprite(Map map, Dir dir, Vec2I pos, Vec2I subTile);
 
         public BuildingBounds Bounds(Dir dir)
         {
@@ -18,9 +18,13 @@ namespace BB
             return BuildingBounds.Unit;
         }
 
-        public RenderFlags renderFlags => RenderFlags.Tiled;
+        public RenderFlags GetFlags(Dir dir)
+        {
+            BB.Assert(dir == Dir.Down);
+            return RenderFlags.Tiled;
+        }
 
-        public TileSprite GetSpriteOver(Map map, Vec2I pos)
+        public TileSprite GetSpriteOver(Map map, Dir dir, Vec2I pos)
             => throw new NotSupportedException("GetSpriteOver called on BuildingProtoTiledRender.");
 
         // TODO: this is a terrible name

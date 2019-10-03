@@ -2,9 +2,10 @@
 using UnityEngine;
 
 using TM = UnityEngine.Tilemaps;
-using Vec3I = UnityEngine.Vector3Int;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
+using Vec3 = UnityEngine.Vector3;
+using Vec3I = UnityEngine.Vector3Int;
 
 namespace BB
 {
@@ -12,11 +13,38 @@ namespace BB
     {
         public readonly Sprite sprite;
         public readonly Color color;
+        public readonly Matrix4x4 xform;
 
-        public TileSprite(Sprite sprite, Color color)
+        public TileSprite(Sprite sprite, Color color, Matrix4x4 xform)
         {
             this.sprite = sprite;
             this.color = color;
+            this.xform = xform;
+        }
+
+        public TileSprite(Sprite sprite, Color color)
+            : this(sprite, color, Matrix4x4.identity) { }
+
+        public static TileSprite FlippedX(Sprite sprite, Color color)
+            => FlippedXY(sprite, color, true, false);
+        public static TileSprite FlippedY(Sprite sprite, Color color)
+            => FlippedXY(sprite, color, false, true);
+        public static TileSprite FlippedXY(Sprite sprite, Color color)
+            => FlippedXY(sprite, color, true, true);
+
+        private static float Offset(float size, float pivot, float ppu) => (size - 2 * pivot) / ppu;
+        private static float Scale(bool flip) => flip ? -1 : 1;
+
+        public static TileSprite FlippedXY(Sprite sprite, Color color, bool flipX, bool flipY)
+        {
+            float offsetX = flipX ? Offset(sprite.rect.width, sprite.pivot.x, sprite.pixelsPerUnit) : 0;
+            float offsetY = flipY ? Offset(sprite.rect.height, sprite.pivot.y, sprite.pixelsPerUnit) : 0;
+            Matrix4x4 xform = Matrix4x4.TRS(
+                new Vec3(offsetX, offsetY),
+                Quaternion.identity,
+                new Vec3(Scale(flipX), Scale(flipY), 1));
+
+            return new TileSprite(sprite, color, xform);
         }
 
         public TileSprite(Sprite sprite) : this(sprite, Color.white) { }
@@ -57,10 +85,10 @@ namespace BB
             {
                 sprite = sprite.sprite,
                 color = sprite.color,
-                transform = Matrix4x4.identity,
+                transform = sprite.xform,
                 gameObject = null,
                 flags = TM.TileFlags.None,
-                colliderType = TM.Tile.ColliderType.None
+                colliderType = ColliderType.None
             };
 
             // Unity so broken (requires tileData.color to be set also *shrug*)
@@ -382,6 +410,7 @@ namespace BB
             throw new Exception("unkown ttype: " + ttype);
         }
 
+        // TODO: this needs to handle sprite anchor
         // TODO: this is kinda jank
         // shouldnt be new'ing defs, and we'll end up with duplicate sprites
         public static bool SplitSprite(SpriteDef sprite, int height, out SpriteDef lower, out SpriteDef upper)

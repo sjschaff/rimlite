@@ -10,8 +10,8 @@ namespace BB
 
         bool passable { get; }
         BuildingBounds Bounds(Dir dir);
-        RenderFlags renderFlags { get; }
-        TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
-        TileSprite GetSpriteOver(Map map, Vec2I pos);
+        RenderFlags GetFlags(Dir dir);
+        TileSprite GetSprite(Map map, Dir dir, Vec2I pos, Vec2I subTile);
+        TileSprite GetSpriteOver(Map map, Dir dir, Vec2I pos);
     }
 }

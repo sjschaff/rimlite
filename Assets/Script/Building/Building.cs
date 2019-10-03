@@ -41,7 +41,7 @@ namespace BB
                 case Dir.Left:
                     return new BuildingBounds(
                         new Vec2I(size.y, size.x),
-                        new Vec2I(origin.x, size.y - 1 - origin.x));
+                        new Vec2I(origin.y, size.x - 1 - origin.x));
 
                 case Dir.Right:
                     return new BuildingBounds(
@@ -115,12 +115,14 @@ namespace BB
             this.jobHandles = new HashSet<JobHandle>();
         }
 
+        public abstract Dir dir { get; }
+
         public virtual bool passable => proto.passable;
         public virtual BuildingBounds bounds => proto.Bounds(Dir.Down);
-        public virtual RenderFlags renderFlags => proto.renderFlags;
+        public virtual RenderFlags renderFlags => proto.GetFlags(Dir.Down);
         public virtual TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-            => proto.GetSprite(map, pos, subTile);
+            => proto.GetSprite(map, dir, pos, subTile);
         public virtual TileSprite GetSpriteOver(Map map, Vec2I pos)
-            => proto.GetSpriteOver(map, pos);
+            => proto.GetSpriteOver(map, dir, pos);
     }
 }

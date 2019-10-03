@@ -18,8 +18,8 @@ namespace BB
         {
             if (!a)
             {
-                UnityEngine.Debug.LogAssertion("Assert Failed: " + msg);
-                Log(msg, "Assert");
+                UnityEngine.Debug.LogAssertion(msg);
+                Log(msg, $"Assert Failed: {msg}");
                 // Note if a debugger is not attacked this will prompt
                 // to attach a debugger, might be handy
                 if (Debugger.IsAttached)

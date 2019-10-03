@@ -257,6 +257,8 @@ namespace BB
 
             if (Input.GetKeyDown("tab"))
                 tool.OnTab();
+            if (Input.GetKeyDown("p"))
+                tool.OnKeyP();
 
             var mousePos = UnityEngine.Camera.main.ScreenToWorldPoint(Input.mousePosition).xy();
             mouseHighlight.localPosition = (Vec2)mousePos.Floor();
