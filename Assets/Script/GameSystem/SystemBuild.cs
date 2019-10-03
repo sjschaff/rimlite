@@ -19,7 +19,7 @@ namespace BB
         // TODO: kludge
         public static SystemBuild K_instance;
 
-        public SystemBuild(GameController game) : base(game)
+        public SystemBuild(Game game) : base(game)
         {
             BB.AssertNull(K_instance);
             K_instance = this;

@@ -15,7 +15,7 @@ namespace BB
         {
             public readonly TThis systemTyped;
             public readonly Tile tile;
-            public GameController game => systemTyped.game;
+            public Game game => systemTyped.game;
 
             public JobStandard(TThis system, Tile tile)
                 : base(system)
@@ -29,11 +29,11 @@ namespace BB
             public virtual void Destroy() { }
         }
 
-        public readonly GameController game;
+        public readonly Game game;
         private readonly Dictionary<Tile, TJob> jobs
             = new Dictionary<Tile, TJob>();
 
-        protected GameSystemStandard(GameController game) => this.game = game;
+        protected GameSystemStandard(Game game) => this.game = game;
 
         public abstract IOrdersGiver orders { get; }
         public abstract void WorkAbandoned(JobHandle job, Work work);
@@ -88,7 +88,7 @@ namespace BB
             }
         }
 
-        protected GameSystemBasic(GameController game) : base(game) { }
+        protected GameSystemBasic(Game game) : base(game) { }
 
         protected override IEnumerable<Work> QueryWorkForJob(TJob job)
         {
@@ -140,7 +140,7 @@ namespace BB
             }
         }
 
-        protected GameSystemAsOrders(GameController game) : base(game) { }
+        protected GameSystemAsOrders(Game game) : base(game) { }
 
         protected abstract SpriteDef sprite { get; }
         protected abstract TJob CreateJob(Tile tile);

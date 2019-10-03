@@ -7,7 +7,7 @@ namespace BB
         public Work.IClaim claim { get; private set; }
         private readonly Func<Work, Work.IClaim> claimFn;
 
-        public TaskClaim(GameController game, Func<Work, Work.IClaim> claimFn)
+        public TaskClaim(Game game, Func<Work, Work.IClaim> claimFn)
             : base(game) => this.claimFn = claimFn;
 
         protected override Status OnBeginTask()
@@ -28,7 +28,7 @@ namespace BB
         public readonly Item item;
         public readonly int amt;
 
-        public TaskClaimItem(GameController game, Item item, int amt)
+        public TaskClaimItem(Game game, Item item, int amt)
             : base(game, (work) =>
             {
                 if (item.amtAvailable < amt)

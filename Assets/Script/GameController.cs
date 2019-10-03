@@ -36,7 +36,7 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public class GameController : MonoBehaviour
+    public class Game : MonoBehaviour
     {
         public AssetSrc assets { get; private set; }
         public Registry registry { get; private set; }
@@ -66,6 +66,7 @@ namespace BB
             registry.LoadTypes();
 
             map = new Map(this);
+            map.InitDebug(new Vec2I(128, 128));
 
             mouseHighlight = assets.CreateLine(
                 transform, Vec2.zero, "Mouse Highlight",

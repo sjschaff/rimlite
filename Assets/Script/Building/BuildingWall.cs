@@ -8,7 +8,7 @@ namespace BB
     {
         public readonly BldgWallDef def;
 
-        public BuildingProtoWall(GameController game, BldgWallDef def)
+        public BuildingProtoWall(Game game, BldgWallDef def)
             : base(game) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingWall(this);

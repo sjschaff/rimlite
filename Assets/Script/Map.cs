@@ -48,32 +48,41 @@ namespace BB
             public IBuilding bldgMain;
             public BBTile bldgAdj;
 
+            public BBTile(Vec2I pos) => handle = new Tile(this, pos);
+
             public bool hasBuilding => bldgMain != null || bldgAdj != null;
-
-            public BBTile(Terrain terrain, Vec2I pos)
-            {
-                this.terrain = terrain;
-                bldgMain = null;
-                bldgAdj = null;
-
-                handle = new Tile(this, pos);
-            }
         }
 
-        private const int w = 128;
-        private const int h = 128;
-        public readonly Vec2I size = new Vec2I(w, h);
 
-        public readonly GameController game;
-        public readonly Nav nav;
+        public readonly Game game;
+        public Vec2I size { get; private set; }
+        public Nav nav { get; private set; }
+        private MapTiler tiler;
+        private BBTile[,] tiles;
 
-        private readonly MapTiler tiler;
-        private readonly BBTile[,] tiles;
-
-        public Map(GameController game)
+        public Map(Game game)
         {
             this.game = game;
-            tiles = GenerateTerrain();
+            this.size = size;
+        }
+
+        private void InitTiles(Vec2I size)
+        {
+            BB.AssertNull(tiles);
+
+            this.size = size;
+            tiles = new BBTile[size.x, size.y];
+            for (int x = 0; x < size.x; ++x)
+                for (int y = 0; y < size.y; ++y)
+                    tiles[x, y] = new BBTile(new Vec2I(x, y));
+        }
+
+        private void Init()
+        {
+            BB.AssertNotNull(tiles);
+            BB.AssertNull(tiler);
+            BB.AssertNull(nav);
+
             tiler = new MapTiler(this);
             nav = new Nav(this);
         }
@@ -89,61 +98,6 @@ namespace BB
         }
 
         public Tile GetTile(Vec2I pos) => Tile(pos).handle;
-
-        private BBTile[,] GenerateTerrain()
-        {
-            var grass = new Terrain(game, game.defs.Get<TerrainDef>("BB:Grass"));
-            BBTile[,] tiles = new BBTile[w, h];
-            for (int x = 0; x < w; ++x)
-                for (int y = 0; y < h; ++y)
-                    tiles[x, y] = new BBTile(grass, new Vec2I(x, y));
-
-            var water = new Terrain(game, game.defs.Get<TerrainDef>("BB:Water"));
-            for (int x = 2; x < 5; ++x)
-                for (int y = 2; y < 5; ++y)
-                    tiles[x, y].terrain = water;
-
-            int[][] perm =
-            {
-                new int[] { 0, 1, 0 },
-                new int[] { 1, 1, 0 },
-                new int[] { 0, 1, 1 },
-                new int[] { 1, 1, 1 }
-            };
-
-            var wallProto = game.registry.D_GetProto<BldgWallDef>("BB:StoneBrick");
-            var rockProto = game.registry.D_GetProto<BldgMineableDef>("BB:Rock");
-            var treeProto = game.registry.D_GetProto<BldgMineableDef>("BB:Tree");
-
-            for (int t = 0; t < perm.Length; ++t)
-            {
-                for (int b = 0; b < perm.Length; ++b)
-                {
-                    int xofs = (b* perm.Length + t) * 4 + 12;
-
-                    for (int x = 0; x < 3; ++x)
-                    {
-                        for (int y = 0; y < 3; ++y)
-                        {
-                            if (y == 2 && perm[t][x] == 0)
-                                continue;
-                            if (y == 0 && perm[b][x] == 0)
-                                continue;
-
-                            tiles[xofs + x, 2 + y].bldgMain = wallProto.CreateBuilding();
-                        }
-                    }
-                }
-            }
-
-            tiles[5, 5].bldgMain = rockProto.CreateBuilding();
-            tiles[6, 5].bldgMain = treeProto.CreateBuilding();
-
-            for (int i = 0; i < 16; ++i)
-                tiles[i + 2, 7].bldgMain = rockProto.CreateBuilding();
-
-            return tiles;
-        }
 
         public bool HasBuilding(RectInt area)
         {
@@ -210,6 +164,70 @@ namespace BB
         {
             AssertValidTile(start);
             AssertValidTile(end);
+        }
+
+        // TODO:
+        /*public void Init(MapData or File or something)
+        {
+            InitTiles();
+            // load data
+            Init();
+        }*/
+
+        public void InitDebug(Vec2I size)
+        {
+            InitTiles(size);
+
+            var grass = new Terrain(game, game.defs.Get<TerrainDef>("BB:Grass"));
+            for (int x = 0; x < size.x; ++x)
+                for (int y = 0; y < size.y; ++y)
+                    tiles[x, y].terrain = grass;
+
+            var water = new Terrain(game, game.defs.Get<TerrainDef>("BB:Water"));
+            for (int x = 2; x < 5; ++x)
+                for (int y = 2; y < 5; ++y)
+                    tiles[x, y].terrain = water;
+
+            int[][] perm =
+            {
+                new int[] { 0, 1, 0 },
+                new int[] { 1, 1, 0 },
+                new int[] { 0, 1, 1 },
+                new int[] { 1, 1, 1 }
+            };
+
+            var wallProto = game.registry.D_GetProto<BldgWallDef>("BB:StoneBrick");
+            var rockProto = game.registry.D_GetProto<BldgMineableDef>("BB:Rock");
+            var treeProto = game.registry.D_GetProto<BldgMineableDef>("BB:Tree");
+
+            for (int t = 0; t < perm.Length; ++t)
+            {
+                for (int b = 0; b < perm.Length; ++b)
+                {
+                    int xofs = (b * perm.Length + t) * 4 + 12;
+
+                    for (int x = 0; x < 3; ++x)
+                    {
+                        for (int y = 0; y < 3; ++y)
+                        {
+                            if (y == 2 && perm[t][x] == 0)
+                                continue;
+                            if (y == 0 && perm[b][x] == 0)
+                                continue;
+
+                            tiles[xofs + x, 2 + y].bldgMain = wallProto.CreateBuilding();
+                        }
+                    }
+                }
+            }
+
+            tiles[5, 5].bldgMain = rockProto.CreateBuilding();
+            tiles[6, 5].bldgMain = treeProto.CreateBuilding();
+
+            for (int i = 0; i < 16; ++i)
+                tiles[i + 2, 7].bldgMain = rockProto.CreateBuilding();
+
+            Init();
         }
     }
 }

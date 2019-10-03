@@ -8,7 +8,7 @@ namespace BB
     {
         public readonly BldgFloorDef def;
 
-        public BuildingProtoFloor(GameController game, BldgFloorDef def)
+        public BuildingProtoFloor(Game game, BldgFloorDef def)
             : base(game) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingFloor(this);

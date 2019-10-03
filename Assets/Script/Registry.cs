@@ -6,7 +6,7 @@ namespace BB
 {
     public class Registry
     {
-        public readonly GameController game;
+        public readonly Game game;
         public readonly Defs defs;
 
         // TODO: make these readonly, or at the very list private
@@ -16,7 +16,7 @@ namespace BB
         public IBuildingProto D_GetProto<TDef>(string name) where TDef : BldgDef
             => buildings[defs.Get<TDef>(name)];
 
-        public Registry(GameController game)
+        public Registry(Game game)
         {
             this.game = game;
             defs = new Defs();

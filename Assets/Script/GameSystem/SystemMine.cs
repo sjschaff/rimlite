@@ -16,7 +16,7 @@ namespace BB
 
     public class SystemMine : GameSystemAsOrders<SystemMine, SystemMine.JobMine>
     {
-        public SystemMine(GameController game) : base(game)
+        public SystemMine(Game game) : base(game)
             => sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
 
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
@@ -59,7 +59,7 @@ namespace BB
         {
             private readonly JobMine job;
 
-            public TaskMine(GameController game, JobMine work)
+            public TaskMine(Game game, JobMine work)
                 : base(game, MinionAnim.Slash, work.mineable.tool, 
                       work.mineable.mineAmt, FacePt(work.tile.pos))
                 => this.job = work;

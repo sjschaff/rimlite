@@ -7,11 +7,11 @@ namespace BB
         public enum Status { Continue, Complete, Fail }
 
 
-        public readonly GameController game;
+        public readonly Game game;
         public Work work { get; private set; }
         public Agent agent => work.agent;
 
-        public Task(GameController game) => this.game = game;
+        public Task(Game game) => this.game = game;
 
         public Status BeginTask(Work work)
         {

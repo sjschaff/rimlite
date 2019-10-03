@@ -6,7 +6,7 @@ namespace BB
     {
         private readonly BldgMineableDef def;
 
-        public BuildingProtoResource(GameController game, BldgMineableDef def)
+        public BuildingProtoResource(Game game, BldgMineableDef def)
             : base(game, BuildingBounds.Unit, def.sprite, null)
             => this.def = def;
 

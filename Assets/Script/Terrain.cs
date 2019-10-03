@@ -16,7 +16,7 @@ namespace BB
 
         private readonly Atlas atlas;
 
-        public Terrain(GameController game, TerrainDef def)
+        public Terrain(Game game, TerrainDef def)
         {
             if (K_grassDef == null)
             {

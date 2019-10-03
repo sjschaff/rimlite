@@ -6,9 +6,9 @@ namespace BB
 {
     public abstract class BuildingProtoTiledRender : IBuildingProto
     {
-        public readonly GameController game;
+        public readonly Game game;
 
-        protected BuildingProtoTiledRender(GameController game)
+        protected BuildingProtoTiledRender(Game game)
             => this.game = game;
 
         public abstract IBuilding CreateBuilding();

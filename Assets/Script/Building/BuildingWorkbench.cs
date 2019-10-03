@@ -7,7 +7,7 @@ namespace BB
     {
         private readonly BldgWorkbenchDef def;
 
-        public BuildingProtoWorkbench(GameController game, BldgWorkbenchDef def)
+        public BuildingProtoWorkbench(Game game, BldgWorkbenchDef def)
             : base(game, def.bounds, def.spriteDown, def.spriteRight)
             => this.def = def;
 

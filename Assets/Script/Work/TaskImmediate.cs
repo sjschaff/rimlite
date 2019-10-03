@@ -4,7 +4,7 @@ namespace BB
 {
     public abstract class TaskImmediate : Task
     {
-        public TaskImmediate(GameController game) : base(game) { }
+        public TaskImmediate(Game game) : base(game) { }
         public override Status PerformTask(float deltaTime)
             => throw new NotSupportedException("Called PerformTask on TaskImmediate");
         protected override void OnEndTask(bool canceled) { }
@@ -14,7 +14,7 @@ namespace BB
     {
         private readonly Func<Work, bool> fn;
 
-        public TaskLambda(GameController game, Func<Work, bool> fn)
+        public TaskLambda(Game game, Func<Work, bool> fn)
             : base(game)
         {
             BB.AssertNotNull(fn);

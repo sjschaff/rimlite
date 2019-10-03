@@ -19,7 +19,7 @@ namespace BB
         public static Func<Vec2I, Vec2I> FacePt(Vec2I ptTarget) => (pt => ptTarget);
         public static Func<Vec2I, Vec2I> FaceArea(RectInt rect) => (pt => rect.ClosestPt(pt));
 
-        public TaskTimed(GameController game,
+        public TaskTimed(Game game,
             MinionAnim anim, Tool tool,
             float workAmt, Func<Vec2I, Vec2I> faceFn)
             : base(game)
@@ -61,8 +61,8 @@ namespace BB
         private readonly Action<Work> completeFn;
 
         public TaskTimedLambda(
-            GameController game,
-            MinionAnim anim, Tool tool, float workAmt,
+            Game game, MinionAnim anim,
+            Tool tool, float workAmt,
             Func<Vec2I, Vec2I> faceFn,
             Func<Work, float> workSpeedFn,
             Action<Work, float> workFn,

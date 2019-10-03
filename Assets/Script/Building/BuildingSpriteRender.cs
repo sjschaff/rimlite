@@ -11,7 +11,7 @@ namespace BB
         private readonly Sprite spriteRightOver;
 
         protected BuildingProtoSpriteRender(
-            GameController game,
+            Game game,
             BuildingBounds rect,
             SpriteDef spriteDefDown,
             SpriteDef spriteDefRight)

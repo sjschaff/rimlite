@@ -9,7 +9,7 @@ namespace BB
     {
         public MinionSkin skin { get; }
 
-        public Minion(GameController game, Vec2I pos)
+        public Minion(Game game, Vec2I pos)
             : base(game, pos, "Minion")
         {
             skin = transform.gameObject.AddComponent<MinionSkin>();

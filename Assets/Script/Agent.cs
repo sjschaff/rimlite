@@ -12,7 +12,7 @@ namespace BB
         public readonly int D_uniqueID;
 #endif
 
-        public readonly GameController game;
+        public readonly Game game;
         protected readonly Transform transform;
 
         public Work currentWork { get; private set; }
@@ -28,7 +28,7 @@ namespace BB
         protected abstract void ReconfigureItem(); // Jank AF
 
 
-        public Agent(GameController game, Vec2I pos, string nodeName)
+        public Agent(Game game, Vec2I pos, string nodeName)
         {
 #if DEBUG
             D_uniqueID = D_nextID;

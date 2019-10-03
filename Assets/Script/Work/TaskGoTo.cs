@@ -10,7 +10,7 @@ namespace BB
     // Wrapper for aesthetics
     public class TaskGoTo : Agent.InternalTaskGoTo 
     {
-        public TaskGoTo(GameController game, PathCfg cfg)
+        public TaskGoTo(Game game, PathCfg cfg)
             : base(game, cfg) { }
     }
 
@@ -24,7 +24,7 @@ namespace BB
             private LinkedList<Vec2I> path;
             private LineRenderer pathVis;
 
-            protected InternalTaskGoTo(GameController game, PathCfg cfg)
+            protected InternalTaskGoTo(Game game, PathCfg cfg)
                 : base(game)
             {
                 this.cfg = cfg;

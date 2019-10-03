@@ -9,7 +9,7 @@ namespace BB
 {
     public abstract class UITool
     {
-        public static LinkedList<UITool> RegisterTools(GameController game)
+        public static LinkedList<UITool> RegisterTools(Game game)
         {
             LinkedList<UITool> tools = new LinkedList<UITool>();
 
@@ -21,9 +21,9 @@ namespace BB
             return tools;
         }
 
-        protected readonly GameController game;
+        protected readonly Game game;
 
-        protected UITool(GameController game) => this.game = game;
+        protected UITool(Game game) => this.game = game;
 
         public static RectInt RectInclusive(Vec2 start, Vec2 end)
         {
@@ -57,7 +57,7 @@ namespace BB
 
     public class ToolControlMinion : UITool
     {
-        public ToolControlMinion(GameController game) : base(game) { }
+        public ToolControlMinion(Game game) : base(game) { }
 
         public override void OnClick(Vec2I pos)
         {
@@ -72,7 +72,7 @@ namespace BB
         private Dictionary<Vec2I, Transform> activeOverlays
             = new Dictionary<Vec2I, Transform>();
 
-        public ToolOrders(GameController game) : base(game) {
+        public ToolOrders(Game game) : base(game) {
             // TODO: janky af
             currentOrders = game.registry.systems[1].orders;
         }
@@ -135,7 +135,7 @@ namespace BB
 
         private IBuildable curProto => builds[currentBuild];
 
-        public ToolBuild(GameController game) : base(game)
+        public ToolBuild(Game game) : base(game)
         {
             builds = new IBuildable[] {
                 D_Proto<BldgWorkbenchDef>("BB:Woodcutter"),
@@ -187,7 +187,7 @@ namespace BB
 
     public class ToolPlace : UITool
     {
-        public ToolPlace(GameController game) : base(game) { }
+        public ToolPlace(Game game) : base(game) { }
 
         public override void OnClick(Vec2I pos)
         {

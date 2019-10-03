@@ -24,7 +24,7 @@ namespace BB
 
     public class Item
     {
-        public readonly GameController game;
+        public readonly Game game;
         private readonly GameObject gameObject;
         private readonly SpriteRenderer spriteRenderer;
         private readonly Text text;
@@ -36,7 +36,7 @@ namespace BB
         public int amt => info.amt;
         public ItemDef def => info.def;
 
-        public Item(GameController game, Vec2I pos, ItemInfo info)
+        public Item(Game game, Vec2I pos, ItemInfo info)
         {
             BB.Assert(info.amt > 0);
             this.game = game;
