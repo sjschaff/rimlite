@@ -75,10 +75,10 @@ namespace BB
         private TileSprite Virtualize(TileSprite sprite)
             => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .5f));
 
-        public override TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-            => Virtualize(buildProto.GetSprite(map, dir, pos, subTile));
+        public override TileSprite GetSprite(Vec2I pos, Vec2I subTile)
+            => Virtualize(buildProto.GetSprite(dir, pos, subTile));
 
-        public override TileSprite GetSpriteOver(Map map, Vec2I pos)
-            => Virtualize(buildProto.GetSpriteOver(map, dir, pos));
+        public override TileSprite GetSpriteOver(Vec2I pos)
+            => Virtualize(buildProto.GetSpriteOver(dir, pos));
     }
 }

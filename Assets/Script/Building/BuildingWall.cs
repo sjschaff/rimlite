@@ -8,7 +8,8 @@ namespace BB
     {
         public readonly BldgWallDef def;
 
-        public BuildingProtoWall(GameController _, BldgWallDef def) => this.def = def;
+        public BuildingProtoWall(GameController game, BldgWallDef def)
+            : base(game) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingWall(this);
         public IBuilding CreateBuilding(Dir dir)
@@ -19,7 +20,7 @@ namespace BB
 
         public override bool passable => false;
 
-        private bool IsSame(Map map, Vec2I pos) => GetSame<BuildingProtoWall>(map, pos, out _);
+        private bool IsSame(Vec2I pos) => GetSame<BuildingProtoWall>(pos, out _);
 
         // TODO: so ghetto
         private Vec2I SpriteOffset(bool[,] adj, Tiling.TileType ttype, Vec2I subTile)
@@ -74,13 +75,13 @@ namespace BB
             return Tiling.SpriteOffset(ttype) + new Vec2I(0, 1);
         }
 
-        public override TileSprite GetSprite(Map map, Dir dir, Vec2I pos, Vec2I subTile)
+        public override TileSprite GetSprite(Dir dir, Vec2I pos, Vec2I subTile)
         {
             BB.Assert(dir == Dir.Down);
-            bool[,] adj = Tiling.GenAdjData(pos, p => IsSame(map, p));
+            bool[,] adj = Tiling.GenAdjData(pos, p => IsSame(p));
             Tiling.TileType ttype = Tiling.GetTileType(adj, subTile);
             Vec2I spritePos = def.spriteOrigin + SpriteOffset(adj, ttype, subTile);
-            return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
+            return game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
         }
 
         public IEnumerable<Dir> AllowedOrientations()

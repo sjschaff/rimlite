@@ -67,14 +67,14 @@ namespace BB
         private TileSprite Flip(Sprite sprite)
             => sprite == null ? sprite : TileSprite.FlippedX(sprite, Color.white);
 
-        public TileSprite GetSprite(Map map, Dir dir, Vector2Int pos, Vector2Int subTile)
+        public TileSprite GetSprite(Dir dir, Vector2Int pos, Vector2Int subTile)
             => Switch(dir,
                 spriteDown,
                 Flip(spriteDown),
                 spriteRight,
                 Flip(spriteRight));
 
-        public TileSprite GetSpriteOver(Map map, Dir dir, Vector2Int pos)
+        public TileSprite GetSpriteOver(Dir dir, Vector2Int pos)
             => Switch(dir,
                 spriteDownOver,
                 Flip(spriteDownOver),

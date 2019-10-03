@@ -174,7 +174,7 @@ namespace BB
             => tile.bldgMain != null && (tile.bldgMain.TiledRender() || subTile == Vec2I.zero);
 
         protected override TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
-            => tile.bldgMain.GetSprite(map, pos, subTile);
+            => tile.bldgMain.GetSprite(pos, subTile);
     }
 
     public class VirtualTileBuildingOver : VirtualTileBase
@@ -183,7 +183,7 @@ namespace BB
             => tile.bldgMain != null && tile.bldgMain.Oversized() && subTile == Vec2I.zero;
 
         protected override TileSprite GetSprite(Map.BBTile tile, Vec2I pos, Vec2I subTile)
-            => tile.bldgMain.GetSpriteOver(map, pos);
+            => tile.bldgMain.GetSpriteOver(pos);
     }
 
     public class MapTiler

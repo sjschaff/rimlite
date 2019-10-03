@@ -8,7 +8,8 @@ namespace BB
     {
         public readonly BldgFloorDef def;
 
-        public BuildingProtoFloor(GameController _, BldgFloorDef def) => this.def = def;
+        public BuildingProtoFloor(GameController game, BldgFloorDef def)
+            : base(game) => this.def = def;
 
         public override IBuilding CreateBuilding() => new BuildingFloor(this);
         public IBuilding CreateBuilding(Dir dir)
@@ -19,19 +20,19 @@ namespace BB
 
         public override bool passable => true;
 
-        private bool IsSame(Map map, Vec2I pos)
+        private bool IsSame(Vec2I pos)
         {
-            if (GetSame<BuildingProtoFloor>(map, pos, out var protoOther))
+            if (GetSame<BuildingProtoFloor>(pos, out var protoOther))
                 return protoOther == this;
             return false;
         }
 
-        public override TileSprite GetSprite(Map map, Dir dir, Vec2I pos, Vec2I subTile)
+        public override TileSprite GetSprite(Dir dir, Vec2I pos, Vec2I subTile)
         {
             BB.Assert(dir == Dir.Down);
-            var ttype = Tiling.GetTileType(pos, subTile, p => IsSame(map, p));
+            var ttype = Tiling.GetTileType(pos, subTile, p => IsSame(p));
             Vec2I spritePos = def.spriteOrigin + Tiling.SpriteOffset(ttype);
-            return map.game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
+            return game.assets.atlases.Get(def.atlas).GetSprite(spritePos, Vec2I.one);
         }
 
         public IEnumerable<Dir> AllowedOrientations()

@@ -91,8 +91,8 @@ namespace BB
         // bounds when facing down
         BuildingBounds bounds { get; }
         RenderFlags renderFlags { get; }
-        TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile);
-        TileSprite GetSpriteOver(Map map, Vec2I pos);
+        TileSprite GetSprite(Vec2I pos, Vec2I subTile);
+        TileSprite GetSpriteOver(Vec2I pos);
     }
 
     public static class BuildingExt
@@ -122,9 +122,9 @@ namespace BB
         public virtual bool passable => proto.passable;
         public virtual BuildingBounds bounds => proto.Bounds(Dir.Down);
         public virtual RenderFlags renderFlags => proto.GetFlags(Dir.Down);
-        public virtual TileSprite GetSprite(Map map, Vec2I pos, Vec2I subTile)
-            => proto.GetSprite(map, dir, pos, subTile);
-        public virtual TileSprite GetSpriteOver(Map map, Vec2I pos)
-            => proto.GetSpriteOver(map, dir, pos);
+        public virtual TileSprite GetSprite(Vec2I pos, Vec2I subTile)
+            => proto.GetSprite(dir, pos, subTile);
+        public virtual TileSprite GetSpriteOver(Vec2I pos)
+            => proto.GetSpriteOver(dir, pos);
     }
 }

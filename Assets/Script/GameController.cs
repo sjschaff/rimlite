@@ -93,11 +93,12 @@ namespace BB
             currentTool = tools.First;
         }
 
-        public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
-            => map.nav.GetPath(start, cfg);
-
+        public bool ValidTile(Vec2I pos) => map.ValidTile(pos);
         public Tile Tile(Vec2I pos) => map.GetTile(pos);
 
+        public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
+            => map.nav.GetPath(start, cfg);
+         
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(RectInt rect, bool required)
         {

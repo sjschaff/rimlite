@@ -6,11 +6,14 @@ namespace BB
 {
     public abstract class BuildingProtoTiledRender : IBuildingProto
     {
-        protected BuildingProtoTiledRender() { }
+        public readonly GameController game;
+
+        protected BuildingProtoTiledRender(GameController game)
+            => this.game = game;
 
         public abstract IBuilding CreateBuilding();
         public abstract bool passable { get; }
-        public abstract TileSprite GetSprite(Map map, Dir dir, Vec2I pos, Vec2I subTile);
+        public abstract TileSprite GetSprite(Dir dir, Vec2I pos, Vec2I subTile);
 
         public BuildingBounds Bounds(Dir dir)
         {
@@ -24,17 +27,17 @@ namespace BB
             return RenderFlags.Tiled;
         }
 
-        public TileSprite GetSpriteOver(Map map, Dir dir, Vec2I pos)
+        public TileSprite GetSpriteOver(Dir dir, Vec2I pos)
             => throw new NotSupportedException("GetSpriteOver called on BuildingProtoTiledRender.");
 
         // TODO: this is a terrible name
-        protected bool GetSame<TThis>(Map map, Vec2I pos, out TThis proto) where TThis : BuildingProtoTiledRender
+        protected bool GetSame<TThis>(Vec2I pos, out TThis proto) where TThis : BuildingProtoTiledRender
         {
             proto = null;
-            if (!map.ValidTile(pos))
+            if (!game.ValidTile(pos))
                 return false;
 
-            var bldgOther = map.GetTile(pos).building;
+            var bldgOther = game.Tile(pos).building;
             if (bldgOther is BuildingConstruction bldgConstruction)
                 proto = bldgConstruction.buildProto as TThis;
             else
