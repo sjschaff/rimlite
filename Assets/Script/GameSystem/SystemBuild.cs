@@ -16,9 +16,8 @@ namespace BB
 
     public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
     {
+        // TODO: kludge
         public static SystemBuild K_instance;
-
-        private readonly BuildingProtoConstruction proto = new BuildingProtoConstruction();
 
         public SystemBuild(GameController game) : base(game)
         {
@@ -42,14 +41,13 @@ namespace BB
 
         public class JobBuild : JobStandard
         {
-            public readonly BuildingProtoConstruction.BuildingConstruction building;
-
+            public readonly BuildingConstruction building;
             public RectInt area => building.bounds.AsRect(pos);
 
             public JobBuild(SystemBuild build, Vec2I pos, IBuildable proto, Dir dir)
                 : base(build, pos)
             {
-                building = build.proto.Create(proto, dir);
+                building = new BuildingConstruction(proto, dir);
                 building.jobHandles.Add(this);
                 game.AddBuilding(pos, building);
             }

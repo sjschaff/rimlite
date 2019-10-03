@@ -35,7 +35,7 @@ namespace BB
                 return false;
 
             var bldgOther = map.Tile(pos).building;
-            if (bldgOther is BuildingProtoConstruction.BuildingConstruction bldgConstruction)
+            if (bldgOther is BuildingConstruction bldgConstruction)
                 proto = bldgConstruction.buildProto as TThis;
             else
                 proto = bldgOther?.prototype as TThis;
