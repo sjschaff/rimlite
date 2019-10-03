@@ -11,8 +11,7 @@ public class DebuggerHook
 
     static bool checkedFile = false;
     static bool startedFromDebugger = false;
-    static bool startedDuringPlay = EditorApplication.isPlaying;
-    static bool dontPlay = startedDuringPlay && Debugger.IsAttached;
+    static bool dontPlay = EditorApplication.isPlaying && Debugger.IsAttached;
 
     static void Update()
     {
