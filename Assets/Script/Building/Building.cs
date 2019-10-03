@@ -47,9 +47,10 @@ namespace BB
                     return new BuildingBounds(
                         new Vec2I(size.y, size.x),
                         new Vec2I(size.y - 1 - origin.y, origin.x));
-            }
 
-            throw new ArgumentException();
+                default:
+                    throw new ArgumentException();
+            }
         }
 
         public static bool operator ==(BuildingBounds a, BuildingBounds b)

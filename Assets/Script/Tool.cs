@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
@@ -127,53 +128,41 @@ namespace BB
 
     public class ToolBuild : UITool
     {
-        public ToolBuild K_instance;
-
-        private const int numBuilds = 3;
-        private int currentBuild = numBuilds - 1;
-        private IBuildable curProto;
+        private readonly IBuildable[] builds;
+        private int currentBuild;
         private Dir curDir;
 
+        private IBuildable curProto => builds[currentBuild];
+
         public ToolBuild(GameController game) : base(game)
-        //  => OnTab();
         {
+            builds = new IBuildable[] {
+                D_Proto<BldgWorkbenchDef>("BB:Woodcutter"),
+                D_Proto<BldgWallDef>("BB:StoneBrick"),
+                D_Proto<BldgFloorDef>("BB:StoneBrick")
+            };
+
+            currentBuild = builds.Length - 1;
             OnTab();
-            K_instance = this;
         }
+
+        private IBuildable D_Proto<T>(string name) where T : BldgDef
+            => (IBuildable)game.registry.D_GetProto<T>(name);
 
         public override void OnTab()
         {
-            currentBuild = (currentBuild + 1) % 3;
-            switch (currentBuild)
-            {
-                case 0: curProto = (IBuildable)game.registry.D_GetProto<BldgWorkbenchDef>("BB:Woodcutter"); break;
-                case 1: curProto = (IBuildable)game.registry.D_GetProto<BldgWallDef>("BB:StoneBrick"); break;
-                case 2: curProto = (IBuildable)game.registry.D_GetProto<BldgFloorDef>("BB:StoneBrick"); break;
-            }
+            currentBuild = (currentBuild + 1) % builds.Length;
+            curDir = curProto.AllowedOrientations().First();
 
-            var et = curProto.AllowedOrientations().GetEnumerator();
-            et.MoveNext();
-            curDir = et.Current;
             BB.LogInfo($"Active Build: {curProto.GetType().Name}:{curDir}");
         }
 
         public override void OnKeyP()
         {
-            // TODO: ugh this should be easier
-            var et = curProto.AllowedOrientations().GetEnumerator();
-            while (et.MoveNext())
-            {
-                if (et.Current == curDir)
-                {
-                    if (!et.MoveNext())
-                    {
-                        et = curProto.AllowedOrientations().GetEnumerator();
-                        et.MoveNext();
-                    }
+             do {
+                 curDir = curDir.NextCW();
+             } while (!curProto.AllowedOrientations().Contains(curDir));
 
-                    curDir = et.Current;
-                }
-            }
             BB.LogInfo($"Active Build: {curProto.GetType().Name}:{curDir}");
         }
 
@@ -182,7 +171,6 @@ namespace BB
             // TODO: only work an valid tiles
             if (game.CanPlaceBuilding(pos, curProto.Bounds(curDir)))
             {
-                BB.LogInfo("Build " + currentBuild);
                 SystemBuild.K_instance.CreateBuild(curProto, pos, curDir);
                 //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
             }
