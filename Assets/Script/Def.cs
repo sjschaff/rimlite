@@ -166,12 +166,12 @@ namespace BB
     public class BldgMineableDef : BldgDefG<BldgMineableDef>
     {
         public readonly Tool tool;
-        public readonly ItemInfoRO[] resources;
+        public readonly ItemInfo[] resources;
         public readonly SpriteDef sprite;
 
         public BldgMineableDef(
             string defName, string name,
-            Tool tool, ItemInfoRO[] resources,
+            Tool tool, ItemInfo[] resources,
             SpriteDef sprite)
             : base("BB:BldgResource", defName, name)
         {
@@ -182,19 +182,19 @@ namespace BB
 
         public BldgMineableDef(
             string defName, string name,
-            Tool tool, ItemInfoRO resource,
+            Tool tool, ItemInfo resource,
             SpriteDef sprite)
-            : this(defName, name, tool, new ItemInfoRO[] { resource }, sprite) { }
+            : this(defName, name, tool, new ItemInfo[] { resource }, sprite) { }
     }
 
     public class BldgFloorDef : BldgDefG<BldgFloorDef>
     {
-        public readonly ItemInfoRO[] materials;
+        public readonly ItemInfo[] materials;
         public readonly AtlasDef atlas;
         public readonly Vec2I spriteOrigin;
 
         public BldgFloorDef(
-            string defName, string name, ItemInfoRO[] materials,
+            string defName, string name, ItemInfo[] materials,
             AtlasDef atlas, Vec2I spriteOrigin)
             : base("BB:Floor", defName, name)
         {
@@ -206,12 +206,12 @@ namespace BB
 
     public class BldgWallDef : BldgDefG<BldgWallDef>
     {
-        public readonly ItemInfoRO[] materials;
+        public readonly ItemInfo[] materials;
         public readonly AtlasDef atlas;
         public readonly Vec2I spriteOrigin;
 
         public BldgWallDef(
-            string defName, string name, ItemInfoRO[] materials,
+            string defName, string name, ItemInfo[] materials,
             AtlasDef atlas, Vec2I spriteOrigin)
             : base("BB:Wall", defName, name)
         {
@@ -227,14 +227,14 @@ namespace BB
         public readonly Vec2I workSpot;
         public readonly SpriteDef spriteDown;
         public readonly SpriteDef spriteRight;
-        public readonly ItemInfoRO[] materials;
+        public readonly ItemInfo[] materials;
         // TODO: recipes
 
         public BldgWorkbenchDef(
             string defName, string name,
             BuildingBounds bounds, Vec2I workSpot,
             SpriteDef spriteDown, SpriteDef spriteRight,
-            ItemInfoRO[] materials)
+            ItemInfo[] materials)
             : base("BB:Workbench", defName, name)
         {
             BB.Assert(bounds.IsAdjacent(workSpot));
@@ -292,21 +292,21 @@ namespace BB
 
             Register(BldgProtoDef.Create<BuildingProtoResource, BldgMineableDef>());
             Register(new BldgMineableDef("BB:Rock", "Rock", Tool.Pickaxe,
-                new ItemInfoRO(Get<ItemDef>("BB:Stone"), 36),
+                new ItemInfo(Get<ItemDef>("BB:Stone"), 36),
                 Get<SpriteDef>("BB:BldgRock")));
 
             Register(new BldgMineableDef("BB:Tree", "Tree", Tool.Axe,
-                new ItemInfoRO(Get<ItemDef>("BB:Wood"), 25),
+                new ItemInfo(Get<ItemDef>("BB:Wood"), 25),
                 Get<SpriteDef>("BB:BldgTree")));
 
             Register(BldgProtoDef.Create<BuildingProtoFloor, BldgFloorDef>());
             Register(new BldgFloorDef("BB:StoneBrick", "Stone Brick Floor",
-                 new[] { new ItemInfoRO(Get<ItemDef>("BB:Stone"), 5) },
+                 new[] { new ItemInfo(Get<ItemDef>("BB:Stone"), 5) },
                tileset64, new Vec2I(0, 9)));
 
             Register(BldgProtoDef.Create<BuildingProtoWall, BldgWallDef>());
             Register(new BldgWallDef("BB:StoneBrick", "Stone Brick Wall",
-                new[] { new ItemInfoRO(Get<ItemDef>("BB:Stone"), 10) },
+                new[] { new ItemInfo(Get<ItemDef>("BB:Stone"), 10) },
                 tileset64, new Vec2I(0, 12)));
 
             Register(BldgProtoDef.Create<BuildingProtoWorkbench, BldgWorkbenchDef>());
@@ -314,7 +314,7 @@ namespace BB
                 new BuildingBounds(new Vec2I(3, 1), new Vec2I(1, 0)), new Vec2I(1, -1),
                 Get<SpriteDef>("BB:WoodcuttingTableD"),
                 Get<SpriteDef>("BB:WoodcuttingTableR"),
-                new[] { new ItemInfoRO(Get<ItemDef>("BB:Wood"), 10) }));
+                new[] { new ItemInfo(Get<ItemDef>("BB:Wood"), 10) }));
         }
 
         private interface IDefList : IEnumerable<Def>

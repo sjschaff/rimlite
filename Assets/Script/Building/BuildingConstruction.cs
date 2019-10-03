@@ -29,14 +29,14 @@ namespace BB
 
             public class MaterialInfo
             {
-                public readonly ItemInfoRO info;
+                public readonly ItemInfo info;
                 public int amtStored;
                 public int amtClaimed;
 
                 public int amtRemaining => info.amt - amtStored;
                 public int haulRemaining => amtRemaining - amtClaimed;
 
-                public MaterialInfo(ItemInfoRO info)
+                public MaterialInfo(ItemInfo info)
                 {
                     this.info = info;
                     this.amtStored = this.amtClaimed = 0;

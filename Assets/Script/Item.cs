@@ -7,27 +7,10 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    // TODO: can we merge these? (i.e. does ItemInfo need to be mutable?)
-    public struct ItemInfoRO
-    {
-        public readonly ItemDef def;
-        public readonly int amt;
-
-        public ItemInfoRO(ItemDef def, int amt)
-        {
-            BB.Assert(amt > 0);
-            this.def = def;
-            this.amt = amt;
-        }
-
-        public static implicit operator ItemInfo(ItemInfoRO item)
-            => new ItemInfo(item.def, item.amt);
-    }
-
     public struct ItemInfo
     {
         public readonly ItemDef def;
-        public int amt;
+        public readonly int amt;
 
         public ItemInfo(ItemDef def, int amt)
         {

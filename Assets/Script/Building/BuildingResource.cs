@@ -27,11 +27,7 @@ namespace BB
             public Tool tool => proto.def.tool;
 
             public IEnumerable<ItemInfo> GetMinedMaterials()
-            {
-                foreach (var item in proto.def.resources)
-                    yield return item;
-            }
-
+                => proto.def.resources;
         }
     }
 }

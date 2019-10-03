@@ -22,7 +22,7 @@ namespace BB
         public IEnumerable<Dir> AllowedOrientations()
             => BB.Enums<Dir>();
 
-        public IEnumerable<ItemInfoRO> GetBuildMaterials()
+        public IEnumerable<ItemInfo> GetBuildMaterials()
             => def.materials;
 
         private class BuildingWorkbench : BuildingBase<BuildingProtoWorkbench>

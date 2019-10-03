@@ -10,7 +10,7 @@ namespace BB
     public interface IBuildable : IBuildingProto
     {
         IEnumerable<Dir> AllowedOrientations();
-        IEnumerable<ItemInfoRO> GetBuildMaterials();
+        IEnumerable<ItemInfo> GetBuildMaterials();
         IBuilding CreateBuilding(Dir dir);
     }
 

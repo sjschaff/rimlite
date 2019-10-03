@@ -39,7 +39,7 @@ namespace BB
             yield return Dir.Down;
         }
 
-        public IEnumerable<ItemInfoRO> GetBuildMaterials()
+        public IEnumerable<ItemInfo> GetBuildMaterials()
             => def.materials;
 
         private class BuildingFloor : BuildingBase<BuildingProtoFloor>
