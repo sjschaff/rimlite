@@ -7,13 +7,17 @@ namespace BB
 {
     public class Minion : Agent
     {
+        // TODO: something more robust
+        private static int nextRenderLayer = 0;
+
         public MinionSkin skin { get; }
 
         public Minion(Game game, Vec2I pos)
             : base(game, pos, "Minion")
         {
             skin = transform.gameObject.AddComponent<MinionSkin>();
-            skin.Init(game.assets);
+            skin.Init(game.assets, nextRenderLayer);
+            ++nextRenderLayer;
         }
 
         public override void SetTool(Tool tool)

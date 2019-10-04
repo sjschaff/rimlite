@@ -117,7 +117,7 @@ namespace BB
 
         private void DirtySprite() => lastSprite = null;
 
-        public void Init(AssetSrc assets)
+        public void Init(AssetSrc assets, int renderLayer)
         {
             if (atlas == null)
                 atlas = new MetaAtlas();
@@ -131,14 +131,14 @@ namespace BB
 
 
             spriteLayers = new Dictionary<string, SpriteRenderer>();
-            int renderLayer = 0;
+            int subLayer = 0;
             foreach (string layer in layers)
             {
                 spriteLayers.Add(layer, assets.CreateSpriteObject(
                     animDummy.transform, Vec2.zero,
                     name, null, Color.white,
-                    RenderLayer.Minion.Layer(renderLayer)));
-                ++renderLayer;
+                    RenderLayer.Minion.Layer(renderLayer*layers.Length + subLayer)));
+                ++subLayer;
             }
 
             K_SetOutfit(0);
