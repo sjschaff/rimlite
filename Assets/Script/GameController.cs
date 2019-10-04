@@ -44,22 +44,6 @@ namespace BB
             Vec2 mouse = MousePos();
             gui.mouseHighlight.position = mouse.Floor();
 
-            // Zooming
-            // TODO: use scroll events
-            float scroll = Input.mouseScrollDelta.y;
-            cam.orthographicSize -= zoomZpeed * scroll;
-            cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minZoom, maxZoom);
-
-            if (lockToMap)
-            {
-                Vec2 halfSize = new Vec2(cam.orthographicSize * cam.aspect, cam.orthographicSize);
-
-                Vec2 pos = cam.transform.localPosition.xy();
-                pos = Vec2.Max(pos, halfSize);
-                pos = Vec2.Min(pos, new Vec2(64, 64) - halfSize); // TODO: use real map size
-                cam.transform.localPosition = new Vec3(pos.x, pos.y, -11);
-            }
-
             // Panning
             Vec2 panDir = new Vec2(0, 0);
             if (Input.GetKey("w")) panDir += new Vec2(0, 1);
@@ -153,6 +137,23 @@ namespace BB
             {
                 tool.OnDragEnd(dragStart, pos);
                 gui.dragOutline.enabled = false;
+            }
+        }
+
+        public void OnScroll(Vec2 delta)
+        {
+            float scroll = delta.y;
+            cam.orthographicSize -= zoomZpeed * scroll;
+            cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minZoom, maxZoom);
+
+            if (lockToMap)
+            {
+                Vec2 halfSize = new Vec2(cam.orthographicSize * cam.aspect, cam.orthographicSize);
+
+                Vec2 pos = cam.transform.localPosition.xy();
+                pos = Vec2.Max(pos, halfSize);
+                pos = Vec2.Min(pos, game.size - halfSize);
+                cam.transform.localPosition = new Vec3(pos.x, pos.y, -11);
             }
         }
 

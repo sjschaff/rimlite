@@ -42,6 +42,7 @@ namespace BB
         private readonly Map map;
 
         public Defs defs => registry.defs;
+        public Vec2I size => map.size;
 
         // TODO: be more organized about where we 
         // our game objects

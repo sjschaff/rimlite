@@ -115,7 +115,8 @@ namespace BB
         IPointerClickHandler,
         IBeginDragHandler,
         IDragHandler,
-        IEndDragHandler
+        IEndDragHandler,
+        IScrollHandler
     {
         private GameController ctrl;
         private Camera cam;
@@ -161,5 +162,10 @@ namespace BB
 
         public override bool Raycast(Vec2 sp, Camera eventCamera) => true;
         protected override void OnPopulateMesh(VertexHelper vh) => vh.Clear();
+
+        public void OnScroll(PointerEventData eventData)
+        {
+            ctrl.OnScroll(eventData.scrollDelta);
+        }
     }
 }
