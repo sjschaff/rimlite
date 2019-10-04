@@ -151,8 +151,8 @@ namespace BB
                         yield return new TaskLambda(game,
                             (work) =>
                             {
-                                game.VacateTile(tile.pos);
-                                if (!game.IsTileOccupied(tile.pos, work.agent))
+                                game.VacateArea(area);
+                                if (!game.IsAreaOccupied(area, work.agent))
                                 {
                                     building.constructionBegan = true;
                                     game.RerouteMinions(area, true);

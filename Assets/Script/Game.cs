@@ -177,24 +177,24 @@ namespace BB
             => D_minionNoTask.AssignWork(SystemWalkDummy.Create(
                 new TaskGoTo(this, PathCfg.Point(pos))));
 
-        public bool IsTileOccupied(Vec2I pos, Agent agentIgnore)
+        public bool IsAreaOccupied(RectInt area, Agent agentIgnore)
         {
             foreach (Minion minion in minions)
             {
-                if (minion != agentIgnore && minion.InTile(pos))
+                if (minion != agentIgnore && minion.InArea(area))
                     return true;
             }
 
             return false;
         }
 
-        public void VacateTile(Vec2I pos)
+        public void VacateArea(RectInt area)
         {
             foreach (Minion minion in minions)
             {
-                if (!minion.hasWork && minion.pos == pos)
+                if (!minion.hasWork && area.Contains(minion.pos))
                     minion.AssignWork(SystemWalkDummy.Create(
-                        new TaskGoTo(this, PathCfg.Vacate(pos))));
+                        new TaskGoTo(this, PathCfg.Vacate(area))));
             }
         }
 

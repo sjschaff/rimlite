@@ -17,14 +17,13 @@ namespace BB
 #pragma warning restore IDE1006 // Naming Styles
         public static Vec3I Vec3(this Vec2I v) => new Vec3I(v.x, v.y, 0);
         public static Vec3 Vec3(this Vec2 v) => new Vec3(v.x, v.y, 0);
-
         public static Vec3 Scaled(this Vec3 v, Vec3 mult)
         {
             Vec3 ret = v;
             ret.Scale(mult);
             return ret;
         }
-
+        public static Vec2 Abs(this Vec2 v) => new Vec2(Mathf.Abs(v.x), Mathf.Abs(v.y));
         public static Vec2I Floor(this Vec2 v) => new Vec2I(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
         public static Vec2I Ceil(this Vec2 v) => new Vec2I(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
         public static bool Adjacent(this Vec2I vA, Vec2I vB)

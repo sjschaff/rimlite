@@ -20,15 +20,19 @@ namespace BB
         }
 
         public static PathCfg Point(Vec2I pos)
-            => new PathCfg(pt => pt == pos, pt => Vec2I.Distance(pt, pos));
+            => new PathCfg(pt => pt == pos, pt => Vec2.Distance(pt, pos));
 
         // TODO: this hueristic is probably wrong
         public static PathCfg Vacate(Vec2I pos)
-            => new PathCfg(pt => pt != pos, pt => Vec2I.Distance(pt, pos));
+            => new PathCfg(pt => pt != pos, pt => Vec2.Distance(pt, pos));
+
+        // TODO: this hueristic is probably wrong
+        public static PathCfg Vacate(RectInt area)
+            => new PathCfg(pt => !area.Contains(pt), pt => Vec2.Distance(pt, area.center));
 
         // TODO: this hueristic is probably wrong
         public static PathCfg Adjacent(Vec2I pos)
-            => new PathCfg(pt => pt.Adjacent(pos), pt => Vec2I.Distance(pt, pos));
+            => new PathCfg(pt => pt.Adjacent(pos), pt => Vec2.Distance(pt, pos));
 
         // TODO: this hueristic is probably wrong
         public static PathCfg Adjacent(RectInt area)
