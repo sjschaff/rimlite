@@ -22,7 +22,7 @@ namespace BB
 
             private bool onFallbackPath;
             private LinkedList<Vec2I> path;
-            private LineRenderer pathVis;
+            private Line pathVis;
 
             protected InternalTaskGoTo(Game game, PathCfg cfg)
                 : base(game)
@@ -50,14 +50,16 @@ namespace BB
                 BB.AssertNotNull(pathVis);
 
                 Vec2 ofs = new Vec2(.5f, .5f);
-                pathVis.positionCount = path.Count + 1;
-                pathVis.SetPosition(0, agent.realPos + ofs);
+                Vec2[] pts = new Vec2[path.Count + 1];
+                pts[0] = agent.realPos + ofs;
                 var n = path.First;
-                for (int i = 1; i < pathVis.positionCount; ++i)
+                for (int i = 1; i < pts.Length; ++i)
                 {
-                    pathVis.SetPosition(i, n.Value + ofs);
+                    pts[i] = n.Value + ofs;
                     n = n.Next;
                 }
+
+                pathVis.SetPts(pts);
             }
 
             protected override Status OnBeginTask()
@@ -80,10 +82,7 @@ namespace BB
             }
 
             protected override void OnEndTask(bool canceled)
-            {
-                if (pathVis != null)
-                    pathVis.transform.gameObject.Destroy();
-            }
+                => pathVis?.Destroy();
 
             public override void Reroute(RectInt rect)
             {

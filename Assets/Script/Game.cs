@@ -2,7 +2,6 @@
 using System.Linq;
 using UnityEngine;
 
-using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 /* Ideas/concepts *
@@ -48,16 +47,9 @@ namespace BB
         // our game objects
         public Transform transform;
 
-        // TODO: move this stuff to some ui logic somewhere
-        private Transform mouseHighlight;
-        private LineRenderer dragOutline;
-
-        private readonly LinkedList<UITool> tools;
-        private LinkedListNode<UITool> currentTool;
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
         private readonly Minion D_minionNoTask;
         private readonly LinkedList<Item> items = new LinkedList<Item>();
-        private UITool tool => currentTool.Value;
 
         public Game(Transform transform)
         {
@@ -70,30 +62,10 @@ namespace BB
             map = new Map(this);
             map.InitDebug(new Vec2I(128, 128));
 
-            mouseHighlight = assets.CreateLine(
-                transform, Vec2.zero, "Mouse Highlight",
-                RenderLayer.Highlight, new Color(.2f, .2f, .2f, .5f),
-                1 / 32f, true, false, new Vec2[] {
-                    new Vec2(0, 0),
-                    new Vec2(1, 0),
-                    new Vec2(1, 1),
-                    new Vec2(0, 1)
-                }).transform;
-
-            dragOutline = assets.CreateLine(
-                transform, Vec2.zero, "DragOutline",
-                RenderLayer.Highlight.Layer(1), Color.white,
-                1, true, true, null);
-            dragOutline.enabled = false;
 
             for (int i = 0; i < 10; ++i)
-            {
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
-            }
             D_minionNoTask = minions.First.Value;
-
-            tools = UITool.RegisterTools(this);
-            currentTool = tools.First;
         }
 
         public bool ValidTile(Vec2I pos) => map.ValidTile(pos);
@@ -225,89 +197,8 @@ namespace BB
             }
         }
 
-        // TODO: move to ui code somewhere
-        float time = 0;
-        bool isDraging = false;
-        Vec2 clickStart;
-
-        private const float dragTime = .16f;
-
-        private void UpdateDragOutline(Vec2 end)
-        {
-            float units = UnityEngine.Camera.main.orthographicSize * 2;
-            float pixels = Screen.height;
-
-            float unitsPerPixel = units / pixels;
-            dragOutline.widthMultiplier = 2 * unitsPerPixel;
-
-            var a = clickStart;
-            var b = end;
-            dragOutline.SetPts(new Vec2[] {
-                new Vec2(a.x, a.y),
-                new Vec2(b.x, a.y),
-                new Vec2(b.x, b.y),
-                new Vec2(a.x, b.y)
-            });
-        }
-
         public void Update(float dt)
         {
-            foreach (var minion in minions)
-                minion.Update(dt);
-
-            if (Input.GetKeyDown("tab"))
-                tool.OnTab();
-            if (Input.GetKeyDown("p"))
-                tool.OnKeyP();
-
-            var mousePos = UnityEngine.Camera.main.ScreenToWorldPoint(Input.mousePosition).xy();
-            mouseHighlight.localPosition = (Vec2)mousePos.Floor();
-            UpdateDragOutline(mousePos);
-
-            if (Input.GetKeyDown("l"))
-            {
-                currentTool = currentTool.Next;
-                if (currentTool == null)
-                    currentTool = tools.First;
-
-                BB.LogInfo("Current Tool: " + tool);
-            }
-
-            if (Input.GetMouseButtonDown(0))
-            {
-                time = 0;
-                clickStart = mousePos;
-            }
-            else if (Input.GetMouseButton(0))
-                time += dt;
-
-            if (Input.GetMouseButtonUp(0))
-            {
-                if (!isDraging)
-                {
-                    if (map.ValidTile(clickStart.Floor()))
-                        tool.OnClick(clickStart.Floor());
-                }
-                else
-                {
-                    tool.OnDragEnd(clickStart, mousePos);
-                    dragOutline.enabled = false;
-                }
-
-                time = 0;
-                isDraging = false;
-            }
-
-            if (isDraging)
-                tool.OnDragUpdate(clickStart, mousePos);
-
-            if (time > dragTime && !isDraging)
-            {
-                isDraging = true;
-                tool.OnDragStart(clickStart, mousePos);
-                dragOutline.enabled = true;
-            }
-
             foreach (Minion minion in minions)
             {
                 if (minion == D_minionNoTask)
@@ -322,6 +213,9 @@ namespace BB
                     }
                 }
             }
+
+            foreach (var minion in minions)
+                minion.Update(dt);
         }
     }
 }

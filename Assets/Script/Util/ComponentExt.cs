@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 
@@ -45,17 +44,11 @@ namespace BB
             renderer.sortingOrder = layer.order;
         }
 
-        public static void SetLayer(this Canvas canvas, RenderLayer layer)
+        public static void SetLayer(this UnityEngine.Canvas canvas, RenderLayer layer)
         {
             canvas.sortingLayerName = layer.layerName;
             canvas.sortingLayerID = layer.layerID;
             canvas.sortingOrder = layer.order;
-        }
-
-        public static void SetPts(this LineRenderer line, Vec2[] pts)
-        {
-            line.positionCount = pts.Length;
-            line.SetPositions(pts.Select(v => v.Vec3()).ToArray());
         }
     }
 }

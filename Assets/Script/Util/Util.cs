@@ -50,6 +50,12 @@ namespace BB
                 yield return t;
         }
 
+        public static TV GetOrDefault<TK,TV>(
+            this Dictionary<TK,TV> dict, TK key, TV defaultVal)
+        {
+            return dict.TryGetValue(key, out TV val) ? val : defaultVal;
+        }
+
         private static void Log(string msg, string level)
         {
             // Something (probably unity) is injecting an extra

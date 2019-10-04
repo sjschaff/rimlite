@@ -79,7 +79,7 @@ namespace BB
                 new Color(.6f, .6f, 1, .5f),
                 RenderLayer.Highlight);
 
-        public LineRenderer CreateLine(
+        public Line CreateLine(
             Transform parent, Vec2 pos, string name,
             RenderLayer layer, Color color, float width,
             bool loop, bool useWorldspace, Vec2[] pts)
@@ -92,10 +92,11 @@ namespace BB
             line.receiveShadows = false;
             line.useWorldSpace = useWorldspace;
             line.widthMultiplier = width;
+            var ret = new Line(line);
             if (pts != null)
-                line.SetPts(pts);
+                ret.SetPts(pts);
 
-            return line;
+            return ret;
         }
     }
 }

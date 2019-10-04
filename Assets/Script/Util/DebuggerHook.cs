@@ -7,6 +7,8 @@ using System.IO;
 [InitializeOnLoad]
 public class DebuggerHook
 {
+    const bool disable = false;
+
     static DebuggerHook() => EditorApplication.update += Update;
 
     static bool checkedFile = false;
@@ -15,6 +17,9 @@ public class DebuggerHook
 
     static void Update()
     {
+        if (disable)
+            return;
+
         if (Debugger.IsAttached)
         {
             if (EditorApplication.isPlaying)

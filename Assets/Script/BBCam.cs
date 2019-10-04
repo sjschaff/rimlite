@@ -7,7 +7,7 @@ namespace BB
 {
     public static class VecExt
     {
-        public static Vec3 OrthoScale(this UnityEngine.Camera c)
+        public static Vec3 OrthoScale(this Camera c)
         {
             float h = c.orthographicSize * 2;
             float w = h * c.aspect;
@@ -15,9 +15,9 @@ namespace BB
         }
     }
 
-    public class Camera : MonoBehaviour
+    public class BBCam : MonoBehaviour
     {
-        UnityEngine.Camera cam;
+        Camera cam;
 
         private const float panSpeed = 2.5f;
         private const float zoomZpeed = .5f;
@@ -30,7 +30,7 @@ namespace BB
 
         public void Start()
         {
-            cam = GetComponent<UnityEngine.Camera>();
+            cam = GetComponent<Camera>();
         }
 
         public void Update()

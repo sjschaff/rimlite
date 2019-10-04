@@ -30,7 +30,7 @@ namespace BB
         private readonly Text text;
 
         public Vec2I pos { get; private set; }
-        private ItemInfo info { get; set; } // TODO: make this normal? figure out publicicty
+        public ItemInfo info { get; private set; }
         private int amtClaimed;
         public int amtAvailable => info.amt - amtClaimed;
         public int amt => info.amt;
@@ -64,7 +64,7 @@ namespace BB
             canvasTrans.anchorMax = Vec2.zero;
             canvasTrans.localPosition = new Vec2(.5f, .228f); // has to be last for some reason
 
-            var canvas = canvasObj.AddComponent<Canvas>();
+            var canvas = canvasObj.AddComponent<UnityEngine.Canvas>();
             canvas.SetLayer(RenderLayer.Default.Layer(101));
 
             var scaler = canvasObj.AddComponent<CanvasScaler>();
