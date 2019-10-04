@@ -5,7 +5,7 @@ namespace BB
     public class Initializer : MonoBehaviour
     {
         private GameController root;
-        void Start() => root = new GameController(transform);
+        void Start() => root = new GameController();
         void Update() => root.Update(Time.deltaTime);
     }
 }

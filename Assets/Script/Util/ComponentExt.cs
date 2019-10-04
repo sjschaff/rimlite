@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
+using Vec3 = UnityEngine.Vector3;
 
 namespace BB
 {
@@ -36,6 +37,13 @@ namespace BB
         public static void Destroy<T>(this T c) where T : Component => c.gameObject.Destroy();
         public static Transform Instantiate(this Transform prefab, Vec2 pos, Transform parent) =>
             Object.Instantiate(prefab, pos, Quaternion.identity, parent);
+
+        public static Vec2 OrthoSize(this Camera c)
+        {
+            float h = c.orthographicSize * 2;
+            float w = h * c.aspect;
+            return new Vec2(w, h);
+        }
 
         public static void SetLayer(this Renderer renderer, RenderLayer layer)
         {

@@ -7,19 +7,25 @@ using System.IO;
 [InitializeOnLoad]
 public class DebuggerHook
 {
-    const bool disable = false;
-
-    static DebuggerHook() => EditorApplication.update += Update;
+    static DebuggerHook()
+    {
+        EditorApplication.update += Update;
+        EditorApplication.playModeStateChanged += StateChanged;
+    }
 
     static bool checkedFile = false;
     static bool startedFromDebugger = false;
     static bool dontPlay = EditorApplication.isPlaying && Debugger.IsAttached;
 
+    static void StateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingPlayMode)
+        {
+        }
+    }
+
     static void Update()
     {
-        if (disable)
-            return;
-
         if (Debugger.IsAttached)
         {
             if (EditorApplication.isPlaying)

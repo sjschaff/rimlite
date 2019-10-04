@@ -51,9 +51,9 @@ namespace BB
         private readonly Minion D_minionNoTask;
         private readonly LinkedList<Item> items = new LinkedList<Item>();
 
-        public Game(Transform transform)
+        public Game()
         {
-            this.transform = transform;
+            transform = new GameObject("Game").transform;
 
             registry = new Registry(this);
             assets = new AssetSrc();

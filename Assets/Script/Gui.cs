@@ -128,8 +128,6 @@ namespace BB
             this.cam = cam;
         }
 
-        private Vec2 ToWorld(Vec2 pt)
-            => cam.ScreenToWorldPoint(pt).xy();
 
         public void OnPointerEnter(PointerEventData eventData)
             => ctrl.OnMouseEnter();
@@ -140,25 +138,25 @@ namespace BB
         public void OnPointerClick(PointerEventData evt)
         {
             if (!isDragging.GetOrDefault(evt.button, false))
-                ctrl.OnClick(ToWorld(evt.position), evt.button);
+                ctrl.OnClick(evt.position, evt.button);
         }
 
         public void OnBeginDrag(PointerEventData evt)
         {
             isDragging[evt.button] = true;
             ctrl.OnDragStart(
-                ToWorld(evt.pressPosition),
-                ToWorld(evt.position),
+                evt.pressPosition,
+                evt.position,
                 evt.button);
         }
 
         public void OnDrag(PointerEventData evt)
-            => ctrl.OnDrag(ToWorld(evt.position), evt.button);
+            => ctrl.OnDrag(evt.position, evt.button);
 
         public void OnEndDrag(PointerEventData evt)
         {
             isDragging[evt.button] = false;
-            ctrl.OnDragEnd(ToWorld(evt.position), evt.button);
+            ctrl.OnDragEnd(evt.position, evt.button);
         }
 
         public override bool Raycast(Vec2 sp, Camera eventCamera) => true;
