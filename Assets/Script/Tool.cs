@@ -103,9 +103,6 @@ namespace BB
 
             public override void OnClick(Vec2I pos)
             {
-                if (!ctrl.game.ValidTile(pos))
-                    return;
-
                 var tile = ctrl.game.Tile(pos);
                 if (ctrl.game.CanPlaceBuilding(tile, buildable.Bounds(curDir)))
                 {

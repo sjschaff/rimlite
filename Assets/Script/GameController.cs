@@ -112,14 +112,11 @@ namespace BB
 
         public void OnClick(Vec2 scPos, InputButton button)
         {
-            BB.LogInfo("on click");
             Vec2I pos = ScreenToWorld(scPos).Floor();
             if (button == InputButton.Left)
             {
-                BB.LogInfo("on left");
                 if (activeTool != null && activeTool.IsClickable())
                 {
-                    BB.LogInfo("has tool");
                     if (game.ValidTile(pos))
                         activeTool.OnClick(pos);
                 }
@@ -145,8 +142,7 @@ namespace BB
         private RectInt DragRect(Vec2 pos)
         {
             RectInt rect = MathExt.RectInclusive(dragStart, pos);
-            // TODO: clamp to map
-            return rect;
+            return rect.Clamp(new RectInt(Vec2I.zero, game.size));
         }
 
         public void OnDragStart(Vec2 scStart, Vec2 scPos, InputButton button)

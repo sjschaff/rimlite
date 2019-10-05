@@ -113,7 +113,14 @@ namespace BB
         }
 
         public bool CanPlaceBuilding(Tile tile, BuildingBounds bounds)
-            => !map.HasBuilding(bounds.AsRect(tile));
+        {
+            RectInt area = bounds.AsRect(tile);
+            foreach (var pos in area.allPositionsWithin)
+                if (!ValidTile(pos))
+                    return false;
+
+            return !map.HasBuilding(area);
+        }
 
         public void AddBuilding(Tile tile, IBuilding building)
         {

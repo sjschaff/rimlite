@@ -74,5 +74,20 @@ namespace BB
 
             return new RectInt(tileStart, tileEnd - tileStart);
         }
+
+        public static RectInt Clamp(this RectInt rect, RectInt clamp)
+        {
+            RectInt rectClamped = rect;
+            if (rect.xMin < clamp.xMin)
+                rectClamped.xMin = clamp.xMin;
+            if (rect.xMax > clamp.xMax)
+                rectClamped.xMax = clamp.xMax;
+            if (rect.yMin < clamp.yMin)
+                rectClamped.yMin = clamp.yMin;
+            if (rect.yMax > clamp.yMax)
+                rectClamped.yMax = clamp.yMax;
+
+            return rectClamped;
+        }
     }
 }
