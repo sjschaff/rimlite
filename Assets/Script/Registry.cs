@@ -6,25 +6,20 @@ namespace BB
 {
     public class Registry
     {
-        public readonly Game game;
         public readonly Defs defs;
 
         // TODO: make these readonly, or at the very list private
-        public readonly Dictionary<BldgDef, IBuildingProto> buildings;
-        public readonly List<IGameSystem> systems = new List<IGameSystem>();
+        public readonly Dictionary<BldgDef, IBuildingProto> buildings
+             = new Dictionary<BldgDef, IBuildingProto>();
+        public readonly List<IGameSystem> systems
+            = new List<IGameSystem>();
 
         public IBuildingProto D_GetProto<TDef>(string name) where TDef : BldgDef
             => buildings[defs.Get<TDef>(name)];
 
-        public Registry(Game game)
-        {
-            this.game = game;
-            defs = new Defs();
+        public Registry() => defs = new Defs();
 
-            buildings = new Dictionary<BldgDef, IBuildingProto>();
-        }
-
-        public void LoadTypes()
+        public void LoadTypes(Game game)
         {
             foreach (var workSystem in GetTypesForInterface<IGameSystem>())
             {

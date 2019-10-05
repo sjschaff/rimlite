@@ -27,7 +27,7 @@ namespace BB
             renderer.SetPositions(pts.Select(v => v.Vec3()).ToArray());
         }
 
-        public void SetSquare(Vec2 a, Vec2 b)
+        public void SetRect(Vec2 a, Vec2 b)
         {
             SetPts(new Vec2[] {
                 new Vec2(a.x, a.y),
@@ -36,6 +36,8 @@ namespace BB
                 new Vec2(a.x, b.y)
             });
         }
+
+        public void SetRect(RectInt rect) => SetRect(rect.min, rect.max);
 
         public void Destroy()
             => transform.gameObject.Destroy();

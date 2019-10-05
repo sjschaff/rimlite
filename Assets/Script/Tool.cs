@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -13,17 +14,19 @@ namespace BB
 
         public virtual void OnActivate() { }
         public virtual void OnDeactivate() { }
-        // TODO: better name
         public virtual void OnSuspend() { }
         public virtual void OnUnsuspend() { }
 
         public virtual bool IsClickable() => false;
         public virtual bool IsDragable() => false;
 
+        public virtual void OnUpdate(Vec2I mouse) { }
         public virtual void OnClick(Vec2I pos) { }
         public virtual void OnDragStart(RectInt rect) { }
         public virtual void OnDrag(RectInt rect) { }
         public virtual void OnDragEnd(RectInt rect) { }
+        public virtual void OnMouseEnter() { }
+        public virtual void OnMouseExit() { }
 
         public virtual void OnButton(int button) { }
         public virtual void K_OnTab() { }
@@ -40,7 +43,7 @@ namespace BB
             : base(ctrl)
         {
             builder = new ToolBuild(ctrl, this);
-            foreach (var proto in ctrl.game.registry.buildings.Values)
+            foreach (var proto in ctrl.registry.buildings.Values)
             {
                 if (proto is IBuildable buildable)
                     buildables.Add(buildable);
@@ -79,14 +82,57 @@ namespace BB
 
         public class ToolBuild : UITool2
         {
-            public readonly ToolBuildSelect selector;
+            private static readonly Color colorAllowed = new Color(.2f, .6f, .2f);
+            private static readonly Color colorDisallowed = new Color(.6f, .2f, .2f);
+
+            private readonly ToolBuildSelect selector;
+            private readonly Line outlineAllow;
+            private readonly Line outlineDisallow;
 
             private ToolbarButton button;
             private IBuildable buildable;
             private Dir curDir;
 
             public ToolBuild(GameController ctrl, ToolBuildSelect selector)
-                : base(ctrl) => this.selector = selector;
+                : base(ctrl)
+            {
+                this.selector = selector;
+
+                outlineAllow = ctrl.assets.CreateLine(
+                    ctrl.gui.root, "Build Outline",
+                    RenderLayer.Highlight,
+                    colorAllowed,
+                    1 / 32f, true, false);
+                outlineAllow.enabled = false;
+
+                outlineDisallow = ctrl.assets.CreateLine(
+                    ctrl.gui.root, "Build Outline",
+                    RenderLayer.Highlight,
+                    colorDisallowed,
+                    1 / 32f, true, false);
+                outlineDisallow.enabled = false;
+            }
+
+            public override void OnUpdate(Vec2I mouse)
+            {
+                var bounds = buildable.Bounds(curDir);
+                bool valid =
+                    ctrl.game.ValidTile(mouse) && 
+                    ctrl.game.CanPlaceBuilding(ctrl.game.Tile(mouse), bounds);
+                var area = bounds.AsRect(mouse);
+
+                outlineAllow.SetRect(area);
+                outlineAllow.enabled = valid;
+
+                outlineDisallow.SetRect(area);
+                outlineDisallow.enabled = !valid;
+            }
+
+            public override void OnMouseExit()
+            {
+                outlineAllow.enabled = false;
+                outlineDisallow.enabled = false;
+            }
 
             public override void OnButton(int button)
                 => selector.OnButton(button);
@@ -130,6 +176,8 @@ namespace BB
             public override void OnDeactivate()
             {
                 button.SetSelected(false);
+                outlineAllow.enabled = false;
+                outlineDisallow.enabled = false;
             }
 
             public override bool IsClickable() => true;

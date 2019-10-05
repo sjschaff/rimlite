@@ -52,17 +52,17 @@ namespace BB
         private readonly Minion D_minionNoTask;
         private readonly LinkedList<Item> items = new LinkedList<Item>();
 
-        public Game()
+        public Game(Registry registry, AssetSrc assets)
         {
-            transform = new GameObject("Game").transform;
+            this.registry = registry;
+            this.assets = assets;
+            // TODO: initialization order is getting wonky
+            registry.LoadTypes(this);
 
-            registry = new Registry(this);
-            assets = new AssetSrc();
-            registry.LoadTypes();
+            transform = new GameObject("Game").transform;
 
             map = new Map(this);
             map.InitDebug(new Vec2I(128, 128));
-
 
             for (int i = 0; i < 10; ++i)
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));

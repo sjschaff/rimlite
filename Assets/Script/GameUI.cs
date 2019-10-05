@@ -40,35 +40,27 @@ namespace BB
     public class GameUI
     {
         public readonly GameController ctrl;
-        private readonly AssetSrc assets;
+
+        public readonly Transform root;
         private readonly Transform canvas;
 
         public Text selectionText;
 
-        public readonly Line mouseHighlight;
         //Transform selectionHighlight;
         public readonly Line dragOutline;
 
         public readonly List<ToolbarButton> buttons
             = new List<ToolbarButton>();
 
-        public GameUI(GameController ctrl, AssetSrc assets)
+        public GameUI(GameController ctrl)
         {
             this.ctrl = ctrl;
-            this.assets = assets;
 
-            var root = new GameObject("GUI");
+            root = new GameObject("GUI").transform;
             canvas = CreateCanvas(root.transform, new Vec2I(4096, 2160));
             CreateInputSink();
 
-            mouseHighlight = assets.CreateLine(
-                root.transform, "Mouse Highlight",
-                RenderLayer.Highlight,
-                new Color(.2f, .2f, .2f, .5f),
-                1 / 32f, true, false);
-            mouseHighlight.SetSquare(Vec2.zero, Vec2.one);
-
-            dragOutline = assets.CreateLine(
+            dragOutline = ctrl.assets.CreateLine(
                 root.transform, "Drag Outline",
                 RenderLayer.Highlight.Layer(1),
                 Color.white, 1, true, true);
@@ -78,37 +70,38 @@ namespace BB
 
             var buttonPane1 = Gui.CreatePane(canvas, "Build Button", color,
                 new Vec2(180, 180), Anchor.BottomLeft, new Vec2(840, 0));
-            var spriteBuild = assets.sprites.Get(ctrl.game.defs.Get<SpriteDef>("BB:BuildIcon"));
+            var spriteBuild = ctrl.assets.sprites.Get(ctrl.registry.defs.Get<SpriteDef>("BB:BuildIcon"));
             Gui.CreateButton(buttonPane1.rectTransform, spriteBuild, () => ctrl.OnBuildMenu());
 
             var buttonPane2 = Gui.CreatePane(canvas, "Order Button", color,
                 new Vec2(180, 180), Anchor.BottomLeft, new Vec2(840, 220));
-            var spriteOrder = assets.sprites.Get(ctrl.game.defs.Get<SpriteDef>("BB:MineOverlay"));
-            Gui.CreateButton(buttonPane2.rectTransform, spriteOrder, () => ctrl.OnOrdersMenu());
+            var spriteOrder = ctrl.assets.sprites.Get(ctrl.registry.defs.Get<SpriteDef>("BB:MineOverlay"));
+            var b = Gui.CreateButton(buttonPane2.rectTransform, spriteOrder, () => ctrl.OnOrdersMenu());
+            b.GetComponent<Image>().enabled = false;
 
-           /* TextCfg cfg = new TextCfg
-            {
-                font = assets.fonts.Get("Arial.ttf"),
-                fontSize = 40,
-                style = FontStyle.Normal,
-                anchor = TextAnchor.UpperCenter,
-                horiWrap = HorizontalWrapMode.Wrap,
-                vertWrap = VerticalWrapMode.Truncate
-            };
+            /* TextCfg cfg = new TextCfg
+             {
+                 font = assets.fonts.Get("Arial.ttf"),
+                 fontSize = 40,
+                 style = FontStyle.Normal,
+                 anchor = TextAnchor.UpperCenter,
+                 horiWrap = HorizontalWrapMode.Wrap,
+                 vertWrap = VerticalWrapMode.Truncate
+             };
 
-            buildBtns = new Dictionary<IBuildable, Btn>();
-            for (int i = 0; i < buildables.Count; ++i)
-            {
-                int xofs = 840 + 180 + 40;
-                xofs += i * (180 + 40);
-                IBuildable buildable = buildables[i];
+             buildBtns = new Dictionary<IBuildable, Btn>();
+             for (int i = 0; i < buildables.Count; ++i)
+             {
+                 int xofs = 840 + 180 + 40;
+                 xofs += i * (180 + 40);
+                 IBuildable buildable = buildables[i];
 
-                var buttonPane = CreatePane(canvas, $"Buildable {i}", color,
-                    new Vec2(180, 180), Anchor.BottomLeft, new Vec2(xofs, 0));
-                cfg.text = buildable.name;
-                CreateButton(buttonPane.rectTransform, cfg, () => ctrl.SetBuildable(buildable));
-                buildBtns[buildable] = new Btn(buttonPane);
-            }*/
+                 var buttonPane = CreatePane(canvas, $"Buildable {i}", color,
+                     new Vec2(180, 180), Anchor.BottomLeft, new Vec2(xofs, 0));
+                 cfg.text = buildable.name;
+                 CreateButton(buttonPane.rectTransform, cfg, () => ctrl.SetBuildable(buildable));
+                 buildBtns[buildable] = new Btn(buttonPane);
+             }*/
 
             var imageTest = Gui.CreateObject(canvas, "image");
             imageTest.SetSizePivotAnchor(new Vec2(800, 400), Vec2.zero, Vec2.zero);
@@ -156,7 +149,7 @@ namespace BB
         {
             TextCfg cfg = new TextCfg
             {
-                font = assets.fonts.Get("Arial.ttf"),
+                font = ctrl.assets.fonts.Get("Arial.ttf"),
                 fontSize = 40,
                 style = FontStyle.Normal,
                 anchor = TextAnchor.UpperCenter,
@@ -188,7 +181,7 @@ namespace BB
             }
 
             var text = nodeText.gameObject.AddComponent<Text>();
-            text.font = assets.fonts.Get("Arial.ttf");
+            text.font = ctrl.assets.fonts.Get("Arial.ttf");
             text.fontSize = 60;
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.UpperCenter;

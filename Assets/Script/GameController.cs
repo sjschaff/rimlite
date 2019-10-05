@@ -17,6 +17,9 @@ namespace BB
         private const float minZoom = 2;
         private const float maxZoom = 20;
 
+        public readonly Registry registry;
+        public readonly AssetSrc assets;
+
         private readonly Camera cam;
         public readonly Game game;
         public readonly GameUI gui;
@@ -25,16 +28,20 @@ namespace BB
         private readonly Stack<UITool2> activeTools = new Stack<UITool2>();
         private UITool2 activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
+        private bool mouseOver;
         private Vec2 dragStart;
         private Vec2 dragStartCam;
         private Vec3 camPosInitial;
 
         public GameController()
         {
+            registry = new Registry();
+            assets = new AssetSrc();
             cam = Camera.main;
-            game = new Game();
+            game = new Game(registry, assets);
+            gui = new GameUI(this);
+
             builds = new ToolBuildSelect(this);
-            gui = new GameUI(this, game.assets);
         }
 
         public void PushTool(UITool2 tool)
@@ -62,7 +69,13 @@ namespace BB
         public void Update(float dt)
         {
             Vec2 mouse = MousePos();
-            gui.mouseHighlight.position = mouse.Floor();
+
+            // Tool
+            if (mouseOver)
+                activeTool?.OnUpdate(mouse.Floor());
+
+            if (Input.GetKeyDown("tab"))
+                activeTool?.K_OnTab();
 
             // Panning
             Vec2 panDir = new Vec2(0, 0);
@@ -86,6 +99,7 @@ namespace BB
         public void OnOrdersMenu()
         {
             // TODO:
+            BB.LogInfo("orders");
         }
 
         public void OnToolbar(int button)
@@ -100,7 +114,7 @@ namespace BB
 
             float unitsPerPixel = units / pixels;
 
-            gui.dragOutline.SetSquare(dragStart, end);
+            gui.dragOutline.SetRect(dragStart, end);
             gui.dragOutline.width = 2 * unitsPerPixel;
         }
 
@@ -232,12 +246,14 @@ namespace BB
 
         public void OnMouseEnter()
         {
-            gui.mouseHighlight.enabled = true;
+            mouseOver = true;
+            activeTool?.OnMouseEnter();
         }
 
         public void OnMouseExit()
         {
-            gui.mouseHighlight.enabled = false;
+            mouseOver = false;
+            activeTool?.OnMouseExit();
         }
     }
 }
