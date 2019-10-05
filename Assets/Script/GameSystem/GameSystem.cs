@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
 using System;
-using UnityEngine;
-
-using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
@@ -29,7 +26,7 @@ namespace BB
 
     public interface IGameSystem
     {
-        /*IGameSystem(GameController game);*/
+        /*IGameSystem(Game game);*/
         IOrdersGiver orders { get; }
         IEnumerable<Work> QueryWork();
         void CancelJob(JobHandle job);

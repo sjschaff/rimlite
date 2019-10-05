@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Priority_Queue;
 
 using Vec2 = UnityEngine.Vector2;
-using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
@@ -30,7 +30,11 @@ namespace BB
         public void CreateBuild(IBuildable proto, Tile tile, Dir dir)
             => AddJob(new JobBuild(this, tile, proto, dir));
 
-        public override void WorkAbandoned(JobHandle job, Work work) { }
+        public override void WorkAbandoned(JobHandle handle, Work work)
+        {
+            var job = (JobBuild)handle;
+            job.activeWorks.Remove(work);
+        }
 
         protected override IEnumerable<Work> QueryWorkForJob(JobBuild job)
         {
@@ -41,6 +45,7 @@ namespace BB
 
         public class JobBuild : JobStandard
         {
+            public readonly HashSet<Work> activeWorks = new HashSet<Work>();
             public readonly BuildingConstruction building;
             public readonly RectInt area;
 
@@ -62,6 +67,13 @@ namespace BB
 
             public IEnumerable<Task> GetTasks()
             {
+                yield return new TaskLambda(game,
+                    (work) =>
+                    {
+                        activeWorks.Add(work);
+                        return true;
+                    });
+
                 while (building.HasAvailableHauls())
                 {
                     bool foundNothing = true;
@@ -178,12 +190,32 @@ namespace BB
                             systemTyped.RemoveJob(this);
                         });
                 }
+
+                yield return new TaskLambda(game,
+                    (work) =>
+                    {
+                        activeWorks.Remove(work);
+                        return true;
+                    });
             }
 
             public override void Destroy()
             {
+                var works = activeWorks.ToList();
+                foreach (var work in works)
+                    work.Cancel();
+
                 if (tile.building == building)
+                {
                     game.RemoveBuilding(tile);
+                    foreach (var mat in building.materials)
+                    {
+                        if (mat.amtStored > 0)
+                            game.DropItem(
+                                tile.pos,
+                                new ItemInfo(mat.info.def, mat.amtStored));
+                    }
+                }
 
                 base.Destroy();
             }

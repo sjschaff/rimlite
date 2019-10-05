@@ -52,6 +52,12 @@ namespace BB
             else
                 return Status.Continue;
         }
+
+        protected override void OnEndTask(bool canceled)
+        {
+            agent.SetTool(Tool.None);
+            agent.SetAnim(MinionAnim.None);
+        }
     }
 
     public class TaskTimedLambda : TaskTimed
@@ -81,6 +87,8 @@ namespace BB
 
         protected override void OnEndTask(bool canceled)
         {
+            base.OnEndTask(canceled);
+
             if (!canceled)
                 completeFn?.Invoke(work);
         }

@@ -3,8 +3,6 @@ using System.Linq;
 using System;
 using UnityEngine;
 
-using Vec2I = UnityEngine.Vector2Int;
-
 namespace BB
 {
     public abstract class GameSystemStandard<TThis, TJob> : IGameSystem
@@ -81,9 +79,7 @@ namespace BB
 
             public override void Destroy()
             {
-                if (activeWork != null)
-                    activeWork.Cancel();
-
+                activeWork?.Cancel();
                 base.Destroy();
             }
         }

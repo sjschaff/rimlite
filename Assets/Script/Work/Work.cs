@@ -133,9 +133,6 @@ namespace BB
             if (status == Task.Status.Continue)
                 return;
 
-            agent.SetTool(Tool.None);
-            agent.SetAnim(MinionAnim.None);
-
             if (status == Task.Status.Complete)
             {
                 activeTask.EndTask(false);

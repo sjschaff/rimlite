@@ -122,7 +122,7 @@ namespace BB
                 () => ctrl.OnOrdersMenu());
             orderButton.Configure(
                 ctrl.assets.sprites.Get(
-                    ctrl.registry.defs.Get<SpriteDef>("BB:MineOverlay")));
+                    ctrl.registry.defs.Get<SpriteDef>("BB:MineIcon")));
 
 
             var imageTest = Gui.CreateObject(canvas, "image");

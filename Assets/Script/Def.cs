@@ -284,8 +284,9 @@ namespace BB
             Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(0, 4), new Vec2I(8, 14), new Vec2I(2, 0)));
             Register(new SpriteDef("BB:WoodcuttingTableD", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), new Vec2I(4, 0)));
             Register(new SpriteDef("BB:WoodcuttingTableR", sprites32, new Vec2I(3, 26), new Vec2I(6, 12), new Vec2I(1, 4)));
-            Register(new SpriteDef("BB:MineOverlay", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:MineIcon", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BuildIcon", sprites64, new Vec2I(0, 30), new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:CancelIcon", sprites64, new Vec2I(2, 30), new Vec2I(2, 2), Vec2I.one));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
             Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood")));

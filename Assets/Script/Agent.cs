@@ -113,8 +113,11 @@ namespace BB
             if (!GridAligned())
             {
                 Debug.LogWarning("minion work removed while not grid aligned.");
-                realPos = pos;
+                realPos = realPos.Floor();
             }
+
+            if (carryingItem)
+                DropItem();
         }
 
         public void AbandonWork()

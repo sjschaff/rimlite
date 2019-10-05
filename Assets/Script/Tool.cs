@@ -254,7 +254,9 @@ namespace BB
             {
                 // TODO: handle items
                 var tile = ctrl.game.Tile(pos);
-                if (selection.ApplicableToBuilding(tile.building) && !selection.HasOrder(tile))
+                if (tile.hasBuilding &&
+                    selection.ApplicableToBuilding(tile.building) &&
+                    !selection.HasOrder(tile))
                     selection.AddOrder(tile);
             }
 
@@ -281,8 +283,10 @@ namespace BB
                     if (!dragOverlays.ContainsKey(v))
                     {
                         // TODO: handle items
+                        // TODO: overlays will be a bit wierd for large buildings
+                        // but it should work out
                         var tile = ctrl.game.Tile(v);
-                        if (selection.ApplicableToBuilding(tile.building) &&
+                        if (tile.hasBuilding && selection.ApplicableToBuilding(tile.building) &&
                             !selection.HasOrder(tile))
                         {
                             var overlay = ctrl.assets.CreateJobOverlay(

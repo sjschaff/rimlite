@@ -4,7 +4,7 @@ namespace BB
 {
     public interface IBuildingProto
     {
-        /*IBuildingProto(GameController game, TBldgDef def);*/
+        /*IBuildingProto(Game game, TBldgDef def);*/
 
         IBuilding CreateBuilding();
 

@@ -82,7 +82,10 @@ namespace BB
             }
 
             protected override void OnEndTask(bool canceled)
-                => pathVis?.Destroy();
+            {
+                agent.SetAnim(MinionAnim.None);
+                pathVis?.Destroy();
+            }
 
             public override void Reroute(RectInt rect)
             {
