@@ -49,8 +49,7 @@ namespace BB
     {
         bool HasOrder(Tile tile);
         void AddOrder(Tile tile);
-        Transform CreateOverlay(Tile tile);
-
+        SpriteDef Sprite();
         OrdersFlags flags { get; }
         bool ApplicableToItem(Item item);
         bool ApplicableToBuilding(IBuilding building);

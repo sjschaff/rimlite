@@ -25,6 +25,7 @@ namespace BB
         public readonly GameUI gui;
 
         private readonly ToolBuildSelect builds;
+        private readonly ToolOrdersSelect orders;
         private readonly Stack<UITool> activeTools = new Stack<UITool>();
         private UITool activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
@@ -42,6 +43,7 @@ namespace BB
             gui = new GameUI(this);
 
             builds = new ToolBuildSelect(this);
+            orders = new ToolOrdersSelect(this);
         }
 
         public void PushTool(UITool tool)
@@ -58,6 +60,7 @@ namespace BB
             BB.Assert(activeTools.Count > 0);
             activeTool.OnDeactivate();
             activeTools.Pop();
+            activeTool?.OnUnsuspend();
         }
 
         public void PopAll()
@@ -101,8 +104,8 @@ namespace BB
 
         public void OnOrdersMenu()
         {
-            // TODO:
-            BB.LogInfo("orders");
+            PopAll();
+            PushTool(orders);
         }
 
         public void OnToolbar(int button)

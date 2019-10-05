@@ -2,7 +2,6 @@
 using System.Linq;
 using UnityEngine;
 
-using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -32,71 +31,115 @@ namespace BB
         public virtual void K_OnTab() { }
     }
 
-    public class ToolBuildSelect : UITool
+    public abstract class ToolSelector<TSelectable, TManip> : UITool
+        where TManip : ToolSelector<TSelectable, TManip>.Manipulator
     {
-        public readonly List<IBuildable> buildables
-            = new List<IBuildable>();
-        private readonly ToolBuild builder;
-        private int selectedBuild = -1;
+        public abstract class Manipulator : UITool
+        {
+            private ToolSelector<TSelectable, TManip> selector;
+            protected TSelectable selection;
 
-        public ToolBuildSelect(GameController ctrl)
+            protected Manipulator(GameController ctrl) : base(ctrl) { }
+
+            public void Init(ToolSelector<TSelectable, TManip> selector)
+                => this.selector = selector;
+
+            public void Configure(TSelectable selection)
+                => this.selection = selection;
+
+            public override void OnButton(int button)
+                => selector.OnManipButton(button);
+        }
+
+        protected readonly List<TSelectable> selectables;
+        private readonly TManip manipulator;
+        private int selection = -1;
+
+        protected ToolSelector(GameController ctrl, TManip manipulator)
             : base(ctrl)
         {
-            builder = new ToolBuild(ctrl, this);
-            foreach (var proto in ctrl.registry.buildings.Values)
-            {
-                if (proto is IBuildable buildable)
-                    buildables.Add(buildable);
-            }
+            this.selectables = new List<TSelectable>();
+            this.manipulator = manipulator;
+            manipulator.Init(this);
+        }
+
+        private void OnManipButton(int button)
+        {
+            ctrl.gui.buttons[selection].SetSelected(false);
+            OnButton(button);
         }
 
         public override void OnButton(int button)
         {
-            if (selectedBuild >= 0)
+            if (selection >= 0)
                 ctrl.PopTool();
 
-            if (button != selectedBuild)
+            if (button != selection)
             {
-                selectedBuild = button;
-                ctrl.PushTool(builder);
+                selection = button;
+                ctrl.gui.buttons[selection].SetSelected(true);
+                manipulator.Configure(selectables[selection]);
+                ctrl.PushTool(manipulator);
             }
             else
-                selectedBuild = -1;
+                selection = -1;
         }
 
         public override void OnActivate()
         {
-            ctrl.gui.buildButton.SetSelected(true);
-            ctrl.gui.ShowBuildButtons(buildables.Count);
-            for (int i = 0; i < buildables.Count; ++i)
-                ctrl.gui.buttons[i].Configure(buildables[i].name);
+            ctrl.gui.ShowBuildButtons(selectables.Count);
+            for (int i = 0; i < selectables.Count; ++i)
+                ConfigureButton(ctrl.gui.buttons[i], selectables[i]);
         }
 
         public override void OnDeactivate()
         {
-            selectedBuild = -1;
+            selection = -1;
             ctrl.gui.HideBuildButtons();
-            ctrl.gui.buildButton.SetSelected(false);
         }
 
-        public class ToolBuild : UITool
+        public abstract void ConfigureButton(ToolbarButton button, TSelectable selectable);
+    }
+
+    public class ToolBuildSelect : ToolSelector<IBuildable, ToolBuildSelect.ToolBuild>
+    {
+        public ToolBuildSelect(GameController ctrl)
+            : base(ctrl, new ToolBuild(ctrl))
+        {
+            foreach (var proto in ctrl.registry.buildings.Values)
+            {
+                if (proto is IBuildable buildable)
+                    selectables.Add(buildable);
+            }
+        }
+
+        public override void ConfigureButton(ToolbarButton button, IBuildable buildable)
+            => button.Configure(buildable.name);
+
+        public override void OnActivate()
+        {
+            ctrl.gui.buildButton.SetSelected(true);
+            base.OnActivate();
+        }
+
+        public override void OnDeactivate()
+        {
+            ctrl.gui.buildButton.SetSelected(false);
+            base.OnDeactivate();
+        }
+
+        public class ToolBuild : Manipulator
         {
             private static readonly Color colorAllowed = new Color(.2f, .6f, .2f);
             private static readonly Color colorDisallowed = new Color(.6f, .2f, .2f);
 
-            private readonly ToolBuildSelect selector;
             private readonly Line outlineAllow;
             private readonly Line outlineDisallow;
 
-            private ToolbarButton button;
-            private IBuildable buildable;
             private Dir curDir;
 
-            public ToolBuild(GameController ctrl, ToolBuildSelect selector)
-                : base(ctrl)
+            public ToolBuild(GameController ctrl) : base(ctrl)
             {
-                this.selector = selector;
-
                 outlineAllow = ctrl.assets.CreateLine(
                     ctrl.gui.root, "Build Outline",
                     RenderLayer.Highlight,
@@ -114,7 +157,7 @@ namespace BB
 
             public override void OnUpdate(Vec2I mouse)
             {
-                var bounds = buildable.Bounds(curDir);
+                var bounds = selection.Bounds(curDir);
                 bool valid =
                     ctrl.game.ValidTile(mouse) && 
                     ctrl.game.CanPlaceBuilding(ctrl.game.Tile(mouse), bounds);
@@ -133,25 +176,19 @@ namespace BB
                 outlineDisallow.enabled = false;
             }
 
-            public override void OnButton(int button)
-                => selector.OnButton(button);
-
             public override void K_OnTab()
             {
-                do
-                {
+                do {
                     curDir = curDir.NextCW();
-                } while (!buildable.AllowedOrientations().Contains(curDir));
-
-                BB.LogInfo($"Active Build: {buildable.GetType().Name}:{curDir}");
+                } while (!selection.AllowedOrientations().Contains(curDir));
             }
 
             public override void OnClick(Vec2I pos)
             {
                 var tile = ctrl.game.Tile(pos);
-                if (ctrl.game.CanPlaceBuilding(tile, buildable.Bounds(curDir)))
+                if (ctrl.game.CanPlaceBuilding(tile, selection.Bounds(curDir)))
                 {
-                    SystemBuild.K_instance.CreateBuild(buildable, tile, curDir);
+                    SystemBuild.K_instance.CreateBuild(selection, tile, curDir);
                     //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
                 }
             }
@@ -164,19 +201,112 @@ namespace BB
 
             public override void OnActivate()
             {
-                button = ctrl.gui.buttons[selector.selectedBuild];
-                buildable = selector.buildables[selector.selectedBuild];
-                curDir = buildable.AllowedOrientations().First();
-
-                button.SetSelected(true);
-                BB.LogInfo($"Active Build: {buildable.GetType().Name}:{curDir}");
+                curDir = selection.AllowedOrientations().First();
+                BB.LogInfo($"Active Build: {selection.GetType().Name}:{curDir}");
             }
 
             public override void OnDeactivate()
             {
-                button.SetSelected(false);
                 outlineAllow.enabled = false;
                 outlineDisallow.enabled = false;
+            }
+
+            public override bool IsClickable() => true;
+            public override bool IsDragable() => true;
+        }
+    }
+
+    public class ToolOrdersSelect : ToolSelector<IOrdersGiver, ToolOrdersSelect.ToolOrders>
+    {
+        public ToolOrdersSelect(GameController ctrl)
+            : base(ctrl, new ToolOrders(ctrl))
+        {
+            foreach (var system in ctrl.registry.systems)
+            {
+                if (system.orders != null)
+                    selectables.Add(system.orders);
+            }
+        }
+
+        public override void ConfigureButton(ToolbarButton button, IOrdersGiver orders)
+            => button.Configure(ctrl.assets.sprites.Get(orders.Sprite()));
+
+        public override void OnActivate()
+        {
+            ctrl.gui.orderButton.SetSelected(true);
+            base.OnActivate();
+        }
+
+        public override void OnDeactivate()
+        {
+            ctrl.gui.orderButton.SetSelected(false);
+            base.OnDeactivate();
+        }
+
+        public class ToolOrders : Manipulator
+        {
+            private Dictionary<Vec2I, Transform> dragOverlays
+                = new Dictionary<Vec2I, Transform>();
+
+            public ToolOrders(GameController ctrl) : base(ctrl) {}
+
+            public override void OnClick(Vec2I pos)
+            {
+                // TODO: handle items
+                var tile = ctrl.game.Tile(pos);
+                if (selection.ApplicableToBuilding(tile.building) && !selection.HasOrder(tile))
+                    selection.AddOrder(tile);
+            }
+
+            public override void OnDragStart(RectInt rect)
+                => OnDrag(rect);
+
+            public override void OnDrag(RectInt rect)
+            {
+                List<Vec2I> toRemove = new List<Vec2I>();
+                foreach (var kvp in dragOverlays)
+                {
+                    if (!rect.Contains(kvp.Key))
+                    {
+                        kvp.Value.Destroy();
+                        toRemove.Add(kvp.Key);
+                    }
+                }
+
+                foreach (var v in toRemove)
+                    dragOverlays.Remove(v);
+
+                foreach (var v in rect.allPositionsWithin)
+                {
+                    if (!dragOverlays.ContainsKey(v))
+                    {
+                        // TODO: handle items
+                        var tile = ctrl.game.Tile(v);
+                        if (selection.ApplicableToBuilding(tile.building) &&
+                            !selection.HasOrder(tile))
+                        {
+                            var overlay = ctrl.assets.CreateJobOverlay(
+                                ctrl.game.transform, v, selection.Sprite());
+                            dragOverlays.Add(v, overlay.transform);
+                        }
+                    }
+                }
+            }
+
+            public override void OnDragEnd(RectInt rect)
+            {
+                foreach (var v in rect.allPositionsWithin)
+                    OnClick(v);
+
+                DestroyDragOverlays();
+            }
+
+            private void DestroyDragOverlays()
+            {
+                foreach (var kvp in dragOverlays)
+                    kvp.Value.Destroy();
+
+                dragOverlays = new Dictionary<Vec2I, Transform>();
             }
 
             public override bool IsClickable() => true;
@@ -202,67 +332,6 @@ namespace BB
         {
             if (game.Tile(pos).passable)
                 game.K_MoveMinion(pos);
-        }
-    }
-
-    public class ToolOrders : UIToolOLD
-    {
-        private IOrdersGiver currentOrders;
-        private Dictionary<Vec2I, Transform> activeOverlays
-            = new Dictionary<Vec2I, Transform>();
-
-        public ToolOrders(Game game) : base(game) {
-            // TODO: janky af
-            currentOrders = game.registry.systems[1].orders;
-        }
-
-        public override void OnClick(Vec2I pos)
-        {
-            // TODO: handle items
-            var tile = game.Tile(pos);
-            if (currentOrders.ApplicableToBuilding(tile.building) && !currentOrders.HasOrder(tile))
-                currentOrders.AddOrder(tile);
-        }
-
-        protected override void OnDragUpdate(RectInt rect)
-        {
-            List<Vec2I> toRemove = new List<Vec2I>();
-            foreach (var kvp in activeOverlays)
-            {
-                if (!rect.Contains(kvp.Key))
-                {
-                    kvp.Value.Destroy();
-                    toRemove.Add(kvp.Key);
-                }
-            }
-
-            foreach (var v in toRemove)
-                activeOverlays.Remove(v);
-
-            foreach (var v in rect.allPositionsWithin)
-            {
-                if (!activeOverlays.ContainsKey(v))
-                {
-                    // TODO: handle items
-                    var tile = game.Tile(v);
-                    if (currentOrders.ApplicableToBuilding(tile.building) && !currentOrders.HasOrder(tile))
-                    {
-                        var o = currentOrders.CreateOverlay(tile);
-                        activeOverlays.Add(v, o);
-                    }
-                }
-            }
-        }
-
-        protected override void OnDragEnd(RectInt rect)
-        {
-            foreach (var v in rect.allPositionsWithin)
-                OnClick(v);
-
-            foreach (var kvp in activeOverlays)
-                kvp.Value.Destroy();
-
-            activeOverlays = new Dictionary<Vec2I, Transform>();
         }
     }
 

@@ -16,11 +16,10 @@ namespace BB
 
     public class SystemMine : GameSystemAsOrders<SystemMine, SystemMine.JobMine>
     {
-        public SystemMine(Game game) : base(game)
-            => sprite = game.defs.Get<SpriteDef>("BB:MineOverlay");
+        public SystemMine(Game game) : base(game, game.defs.Get<SpriteDef>("BB:MineOverlay")) { }
 
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
-        protected override SpriteDef sprite { get; }
+
         public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
 
         protected override JobMine CreateJob(Tile tile)
