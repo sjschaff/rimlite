@@ -40,31 +40,7 @@ namespace BB
 
     public static class Gui
     {
-        public static Button CreateButton(
-            Transform parent, TextCfg cfg, UnityAction fn)
-        {
-            var text = CreateText(parent, "<button>", cfg);
-            text.rectTransform.SetFill();
-            return SetupButton(parent.gameObject, fn);
-        }
-
-        public static Button CreateButton(
-            Transform parent, Color color, UnityAction fn)
-        {
-            var image = CreateColor(parent, "<button>", color);
-            image.rectTransform.SetFill();
-            return SetupButton(image.gameObject, fn);
-        }
-
-        public static Button CreateButton(
-            Transform parent, Sprite sprite, UnityAction fn)
-        {
-            var image = CreateImage(parent, "<button>", sprite);
-            image.rectTransform.SetFill();
-            return SetupButton(image.gameObject, fn);
-        }
-
-        private static Button SetupButton(GameObject obj, UnityAction fn)
+        public static Button AddButton(GameObject obj, UnityAction fn)
         {
             var button = obj.AddComponent<Button>();
             button.onClick.AddListener(fn);

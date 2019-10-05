@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using UnityEngine;
 
@@ -12,29 +13,68 @@ namespace BB
     // TODO: make better
     public class ToolbarButton
     {
-        public static Color onColor = new Color(.4f, .4f, .4f);
-        public static Color offColor = new Color(.19f, .19f, .19f);
+        private static readonly Color onColor = new Color(.4f, .4f, .4f);
+        private static readonly Color offColor = new Color(.19f, .19f, .19f);
 
         private readonly Image pane;
-        private readonly Button button;
-        //private readonly Image img;
+        private readonly Image img;
+        private readonly Image textBg;
         private readonly Text text;
 
-        public ToolbarButton(Image pane, Button button, Text text)
+        public ToolbarButton(
+            Transform parent, string name,
+            Vec2 pos, Vec2 size, Font font,
+            UnityAction fn)
         {
-            this.pane = pane;
-            this.text = text;
+            pane = Gui.CreatePane(
+                parent, name, offColor,
+                size, Anchor.BottomLeft, pos);
+
+            img = Gui.CreateImage(pane.rectTransform, "<image>", null);
+            img.rectTransform.SetFill();
+            Gui.AddButton(img.gameObject, fn);
+
+            textBg = Gui.CreateColor(pane.rectTransform, "<text>", offColor);
+            textBg.rectTransform.SetFill();
+            Gui.AddButton(textBg.gameObject, fn);
+
+            TextCfg cfg = new TextCfg
+            {
+                font = font,
+                fontSize = 40,
+                style = FontStyle.Normal,
+                anchor = TextAnchor.UpperCenter,
+                horiWrap = HorizontalWrapMode.Wrap,
+                vertWrap = VerticalWrapMode.Truncate
+            };
+            text = Gui.CreateText(textBg.transform, "<text>", cfg);
+            text.rectTransform.SetFill();
         }
 
-        // TODO: prob have to diable everything
-        public bool enabled { set => pane.enabled = value; }
+        public void SetActive(bool active)
+            => pane.gameObject.SetActive(active);
 
         public void SetSelected(bool selected)
         {
             pane.color = selected ? onColor : offColor;
+            textBg.color = pane.color;
         }
 
-        public void SetText(string text) => this.text.text = text;
+        public void Configure(string text)
+        {
+            this.text.text = text;
+            textBg.gameObject.SetActive(true);
+            img.gameObject.SetActive(false);
+        }
+
+        public void Configure(Sprite sprite)
+        {
+            this.img.sprite = sprite;
+            img.gameObject.SetActive(true);
+            textBg.gameObject.SetActive(false);
+        }
+
+        public void Reset() => SetSelected(false);
     }
 
     public class GameUI
@@ -49,6 +89,8 @@ namespace BB
         //Transform selectionHighlight;
         public readonly Line dragOutline;
 
+        public readonly ToolbarButton buildButton;
+        public readonly ToolbarButton orderButton;
         public readonly List<ToolbarButton> buttons
             = new List<ToolbarButton>();
 
@@ -68,40 +110,20 @@ namespace BB
 
             Color color = new Color(.19f, .19f, .19f);
 
-            var buttonPane1 = Gui.CreatePane(canvas, "Build Button", color,
-                new Vec2(180, 180), Anchor.BottomLeft, new Vec2(840, 0));
-            var spriteBuild = ctrl.assets.sprites.Get(ctrl.registry.defs.Get<SpriteDef>("BB:BuildIcon"));
-            Gui.CreateButton(buttonPane1.rectTransform, spriteBuild, () => ctrl.OnBuildMenu());
+            buildButton = CreateToolbarButton(
+                "Build Button", new Vec2(840, 0),
+                () => ctrl.OnBuildMenu());
+            buildButton.Configure(
+                ctrl.assets.sprites.Get(
+                    ctrl.registry.defs.Get<SpriteDef>("BB:BuildIcon")));
 
-            var buttonPane2 = Gui.CreatePane(canvas, "Order Button", color,
-                new Vec2(180, 180), Anchor.BottomLeft, new Vec2(840, 220));
-            var spriteOrder = ctrl.assets.sprites.Get(ctrl.registry.defs.Get<SpriteDef>("BB:MineOverlay"));
-            var b = Gui.CreateButton(buttonPane2.rectTransform, spriteOrder, () => ctrl.OnOrdersMenu());
-            b.GetComponent<Image>().enabled = false;
+            orderButton = CreateToolbarButton(
+                "Order Button", new Vec2(840, 220),
+                () => ctrl.OnOrdersMenu());
+            orderButton.Configure(
+                ctrl.assets.sprites.Get(
+                    ctrl.registry.defs.Get<SpriteDef>("BB:MineOverlay")));
 
-            /* TextCfg cfg = new TextCfg
-             {
-                 font = assets.fonts.Get("Arial.ttf"),
-                 fontSize = 40,
-                 style = FontStyle.Normal,
-                 anchor = TextAnchor.UpperCenter,
-                 horiWrap = HorizontalWrapMode.Wrap,
-                 vertWrap = VerticalWrapMode.Truncate
-             };
-
-             buildBtns = new Dictionary<IBuildable, Btn>();
-             for (int i = 0; i < buildables.Count; ++i)
-             {
-                 int xofs = 840 + 180 + 40;
-                 xofs += i * (180 + 40);
-                 IBuildable buildable = buildables[i];
-
-                 var buttonPane = CreatePane(canvas, $"Buildable {i}", color,
-                     new Vec2(180, 180), Anchor.BottomLeft, new Vec2(xofs, 0));
-                 cfg.text = buildable.name;
-                 CreateButton(buttonPane.rectTransform, cfg, () => ctrl.SetBuildable(buildable));
-                 buildBtns[buildable] = new Btn(buttonPane);
-             }*/
 
             var imageTest = Gui.CreateObject(canvas, "image");
             imageTest.SetSizePivotAnchor(new Vec2(800, 400), Vec2.zero, Vec2.zero);
@@ -109,7 +131,7 @@ namespace BB
             var img = imageTest.gameObject.AddComponent<Image>();
             img.color = color;
 
-            selectionText = CreateText(imageTest, Color.red);
+            selectionText = CreateTextTest(imageTest, Color.red);
 
             var buttonTest = Gui.CreateObject(imageTest, "button");
             var buttonImage = buttonTest.gameObject.AddComponent<Image>();
@@ -130,7 +152,7 @@ namespace BB
         public void HideBuildButtons()
         {
             foreach (var btn in buttons)
-                btn.enabled = false;
+                btn.SetActive(false);
         }
 
         public void ShowBuildButtons(int count)
@@ -139,33 +161,30 @@ namespace BB
             {
                 // TODO: reset button state
                 if (i < buttons.Count)
-                    buttons[i].enabled = true;
+                {
+                    ToolbarButton button = buttons[i];
+                    button.SetActive(true);
+                    button.Reset();
+                }
                 else
                     buttons.Add(CreateToolbarButton(i));
             }
         }
 
         private ToolbarButton CreateToolbarButton(int pos)
-        {
-            TextCfg cfg = new TextCfg
-            {
-                font = ctrl.assets.fonts.Get("Arial.ttf"),
-                fontSize = 40,
-                style = FontStyle.Normal,
-                anchor = TextAnchor.UpperCenter,
-                horiWrap = HorizontalWrapMode.Wrap,
-                vertWrap = VerticalWrapMode.Truncate
-            };
+            => CreateToolbarButton(
+                $"Toolbar {pos}",
+                new Vec2(840 + (180 + 40) * (pos + 1), 0),
+                () => ctrl.OnToolbar(pos));
 
-            int xofs = 840 + (180 + 40) * (pos + 1);
-            var buttonPane = Gui.CreatePane(canvas, $"Toolbar {pos}", ToolbarButton.offColor,
-                new Vec2(180, 180), Anchor.BottomLeft, new Vec2(xofs, 0));
-            var button = Gui.CreateButton(buttonPane.rectTransform, cfg, () => ctrl.OnToolbar(pos));
-            return new ToolbarButton(buttonPane, button,
-                button.gameObject.GetComponentInChildren<Text>());
+        private ToolbarButton CreateToolbarButton(string name, Vec2 pos, UnityAction fn)
+        {
+            return new ToolbarButton(
+                canvas, name, pos, new Vec2(180, 180),
+                ctrl.assets.fonts.Get("Arial.ttf"), fn);
         }
 
-        private Text CreateText(Transform parent, Color? backgroundClr)
+        private Text CreateTextTest(Transform parent, Color? backgroundClr)
         {
             var node = Gui.CreateObject(parent, "<text>");
             node.SetFillWithMargin(40);
@@ -227,7 +246,7 @@ namespace BB
         IScrollHandler
     {
         private GameController ctrl;
-        private Dictionary<PointerEventData.InputButton, bool> isDragging
+        private readonly Dictionary<PointerEventData.InputButton, bool> isDragging
             = new Dictionary<PointerEventData.InputButton, bool>();
 
         public void Init(GameController ctrl)

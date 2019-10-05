@@ -25,8 +25,8 @@ namespace BB
         public readonly GameUI gui;
 
         private readonly ToolBuildSelect builds;
-        private readonly Stack<UITool2> activeTools = new Stack<UITool2>();
-        private UITool2 activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
+        private readonly Stack<UITool> activeTools = new Stack<UITool>();
+        private UITool activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
         private bool mouseOver;
         private Vec2 dragStart;
@@ -44,7 +44,7 @@ namespace BB
             builds = new ToolBuildSelect(this);
         }
 
-        public void PushTool(UITool2 tool)
+        public void PushTool(UITool tool)
         {
             // TODO: handle case where we are currently dragging
             activeTool?.OnSuspend();
@@ -74,8 +74,11 @@ namespace BB
             if (mouseOver)
                 activeTool?.OnUpdate(mouse.Floor());
 
-            if (Input.GetKeyDown("tab"))
+            if (Input.GetKeyDown(KeyCode.Tab))
                 activeTool?.K_OnTab();
+            if (Input.GetKeyDown(KeyCode.Escape))
+                if (activeTools.Count > 0)
+                    PopTool();
 
             // Panning
             Vec2 panDir = new Vec2(0, 0);

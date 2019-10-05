@@ -7,10 +7,10 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public abstract class UITool2
+    public abstract class UITool
     {
         public readonly GameController ctrl;
-        protected UITool2(GameController ctrl) => this.ctrl = ctrl;
+        protected UITool(GameController ctrl) => this.ctrl = ctrl;
 
         public virtual void OnActivate() { }
         public virtual void OnDeactivate() { }
@@ -32,7 +32,7 @@ namespace BB
         public virtual void K_OnTab() { }
     }
 
-    public class ToolBuildSelect : UITool2
+    public class ToolBuildSelect : UITool
     {
         public readonly List<IBuildable> buildables
             = new List<IBuildable>();
@@ -52,7 +52,6 @@ namespace BB
 
         public override void OnButton(int button)
         {
-            BB.LogInfo($"build onbutton {button} cur: {selectedBuild}");
             if (selectedBuild >= 0)
                 ctrl.PopTool();
 
@@ -63,24 +62,24 @@ namespace BB
             }
             else
                 selectedBuild = -1;
-            BB.LogInfo($"build endbutton {button} cur: {selectedBuild}");
         }
 
         public override void OnActivate()
         {
+            ctrl.gui.buildButton.SetSelected(true);
             ctrl.gui.ShowBuildButtons(buildables.Count);
             for (int i = 0; i < buildables.Count; ++i)
-                ctrl.gui.buttons[i].SetText(buildables[i].name);
+                ctrl.gui.buttons[i].Configure(buildables[i].name);
         }
 
         public override void OnDeactivate()
         {
-            BB.LogInfo($"build deactivated");
             selectedBuild = -1;
             ctrl.gui.HideBuildButtons();
+            ctrl.gui.buildButton.SetSelected(false);
         }
 
-        public class ToolBuild : UITool2
+        public class ToolBuild : UITool
         {
             private static readonly Color colorAllowed = new Color(.2f, .6f, .2f);
             private static readonly Color colorDisallowed = new Color(.6f, .2f, .2f);
@@ -185,17 +184,17 @@ namespace BB
         }
     }
 
-    public abstract class UITool
+    public abstract class UIToolOLD
     {
         protected readonly Game game;
-        protected UITool(Game game) => this.game = game;
+        protected UIToolOLD(Game game) => this.game = game;
         public virtual void OnClick(Vec2I pos) { }
         protected virtual void OnDragStart(RectInt rect) => OnDragUpdate(rect);
         protected virtual void OnDragUpdate(RectInt rec) { }
         protected virtual void OnDragEnd(RectInt rect) { }
     }
 
-    public class ToolControlMinion : UITool
+    public class ToolControlMinion : UIToolOLD
     {
         public ToolControlMinion(Game game) : base(game) { }
 
@@ -206,7 +205,7 @@ namespace BB
         }
     }
 
-    public class ToolOrders : UITool
+    public class ToolOrders : UIToolOLD
     {
         private IOrdersGiver currentOrders;
         private Dictionary<Vec2I, Transform> activeOverlays
@@ -267,7 +266,7 @@ namespace BB
         }
     }
 
-    public class ToolPlace : UITool
+    public class ToolPlace : UIToolOLD
     {
         public ToolPlace(Game game) : base(game) { }
 
