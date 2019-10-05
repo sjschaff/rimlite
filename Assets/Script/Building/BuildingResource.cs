@@ -12,6 +12,8 @@ namespace BB
 
         public override IBuilding CreateBuilding() => new BuildingResource(this);
 
+        public override string name => def.name;
+
         public override bool passable => false;
 
         public class BuildingResource : BuildingBase<BuildingProtoResource>, IMineable

@@ -68,6 +68,8 @@ namespace BB
                 .Select(i => new MaterialInfo(i)));
         }
 
+        public override string name => "Constructing: " + buildProto.name;
+
         public override bool passable => constructionBegan ? buildProto.passable : true;
         public override BuildingBounds bounds => buildProto.Bounds(dir);
         public override RenderFlags renderFlags => buildProto.GetFlags(dir);

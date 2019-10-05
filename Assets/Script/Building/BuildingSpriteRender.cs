@@ -38,6 +38,7 @@ namespace BB
         }
 
         public abstract IBuilding CreateBuilding();
+        public abstract string name { get; }
         public abstract bool passable { get; }
 
         public BuildingBounds Bounds(Dir dir) => bounds.RotatedFromDown(dir);

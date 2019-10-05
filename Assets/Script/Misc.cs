@@ -36,4 +36,9 @@ namespace BB
             }
         }
     }
+
+    public interface ISelectable
+    {
+        string name { get; }
+    }
 }

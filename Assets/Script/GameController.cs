@@ -9,7 +9,7 @@ using Vec3 = UnityEngine.Vector3;
 
 namespace BB
 {
-    class GameController
+    public class GameController
     {
         public bool lockToMap = false;
         private const float panSpeed = 2.5f;
@@ -18,12 +18,12 @@ namespace BB
         private const float maxZoom = 20;
 
         private readonly Camera cam;
-        private readonly Game game;
-        private readonly Gui gui;
+        public readonly Game game;
+        public readonly Gui gui;
 
-        private readonly LinkedList<UITool> tools;
-        private LinkedListNode<UITool> currentTool;
-        private UITool tool => currentTool.Value;
+        private readonly ToolBuildSelect builds;
+        private readonly Stack<UITool2> activeTools = new Stack<UITool2>();
+        private UITool2 activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
         private Vec2 dragStart;
         private Vec2 dragStartCam;
@@ -33,10 +33,30 @@ namespace BB
         {
             cam = Camera.main;
             game = new Game();
-            gui = new Gui(this, game.assets, cam);
+            builds = new ToolBuildSelect(this);
+            gui = new Gui(this, game.assets);
+        }
 
-            tools = UITool.RegisterTools(game);
-            currentTool = tools.First;
+        public void PushTool(UITool2 tool)
+        {
+            // TODO: handle case where we are currently dragging
+            activeTool?.OnSuspend();
+            activeTools.Push(tool);
+            tool.OnActivate();
+        }
+
+        public void PopTool()
+        {
+            // TODO: handle case where we are currently dragging
+            BB.Assert(activeTools.Count > 0);
+            activeTool.OnDeactivate();
+            activeTools.Pop();
+        }
+
+        public void PopAll()
+        {
+            while (activeTools.Count > 0)
+                PopTool();
         }
 
         public void Update(float dt)
@@ -53,23 +73,24 @@ namespace BB
             if (panDir != Vec2.zero)
                 cam.transform.localPosition += (panDir * panSpeed * cam.orthographicSize * Time.deltaTime).Vec3();
 
-            // Tools
-            if (Input.GetKeyDown("tab"))
-                tool.OnTab();
-            if (Input.GetKeyDown("p"))
-                tool.OnKeyP();
-
-            if (Input.GetKeyDown("l"))
-            {
-                currentTool = currentTool.Next;
-                if (currentTool == null)
-                    currentTool = tools.First;
-
-                BB.LogInfo("Current Tool: " + tool);
-            }
-
             // Game
             game.Update(dt);
+        }
+
+        public void OnBuildMenu()
+        {
+            PopAll();
+            PushTool(builds);
+        }
+
+        public void OnOrdersMenu()
+        {
+            // TODO:
+        }
+
+        public void OnToolbar(int button)
+        {
+            activeTool?.OnButton(button);
         }
 
         private void UpdateDragOutline(Vec2 end)
@@ -91,9 +112,41 @@ namespace BB
 
         public void OnClick(Vec2 scPos, InputButton button)
         {
-            Vec2 pos = ScreenToWorld(scPos);
-            if (game.ValidTile(pos.Floor()))
-                tool.OnClick(pos.Floor());
+            BB.LogInfo("on click");
+            Vec2I pos = ScreenToWorld(scPos).Floor();
+            if (button == InputButton.Left)
+            {
+                BB.LogInfo("on left");
+                if (activeTool != null && activeTool.IsClickable())
+                {
+                    BB.LogInfo("has tool");
+                    if (game.ValidTile(pos))
+                        activeTool.OnClick(pos);
+                }
+                else
+                {
+                    // TODO: selection logic
+                }
+            }
+            else if (button == InputButton.Right)
+            {
+                // TODO: move up to selection logic
+                if (game.ValidTile(pos))
+                {
+                    Tile tile = game.Tile(pos);
+                    if (tile.hasBuilding)
+                    {
+                        gui.selectionText.text = tile.building.name;
+                    }
+                }
+            }
+        }
+
+        private RectInt DragRect(Vec2 pos)
+        {
+            RectInt rect = MathExt.RectInclusive(dragStart, pos);
+            // TODO: clamp to map
+            return rect;
         }
 
         public void OnDragStart(Vec2 scStart, Vec2 scPos, InputButton button)
@@ -103,7 +156,15 @@ namespace BB
             if (button == InputButton.Left)
             {
                 dragStart = start;
-                tool.OnDragStart(start, pos);
+                if (activeTool != null && activeTool.IsDragable())
+                {
+                    activeTool.OnDragStart(DragRect(pos));
+                }
+                else
+                {
+                    // TODO: selection logic
+                }
+
                 UpdateDragOutline(pos);
                 gui.dragOutline.enabled = true;
             }
@@ -119,7 +180,15 @@ namespace BB
             Vec2 pos = ScreenToWorld(scPos);
             if (button == InputButton.Left)
             {
-                tool.OnDragUpdate(dragStart, pos);
+                if (activeTool != null && activeTool.IsDragable())
+                {
+                    activeTool.OnDrag(DragRect(pos));
+                }
+                else
+                {
+                    // TODO: selection logic
+                }
+
                 UpdateDragOutline(pos);
             }
             else if (button == InputButton.Right)
@@ -135,7 +204,15 @@ namespace BB
             Vec2 pos = ScreenToWorld(scPos);
             if (button == InputButton.Left)
             {
-                tool.OnDragEnd(dragStart, pos);
+                if (activeTool != null && activeTool.IsDragable())
+                {
+                    activeTool.OnDragEnd(DragRect(pos));
+                }
+                else
+                {
+                    // TODO: selection logic
+                }
+
                 gui.dragOutline.enabled = false;
             }
         }

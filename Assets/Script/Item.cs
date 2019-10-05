@@ -22,7 +22,7 @@ namespace BB
         public ItemInfo WithNewAmount(int amt) => new ItemInfo(def, amt);
     }
 
-    public class Item
+    public class Item : ISelectable
     {
         public readonly Game game;
         private readonly GameObject gameObject;
@@ -35,6 +35,8 @@ namespace BB
         public int amtAvailable => info.amt - amtClaimed;
         public int amt => info.amt;
         public ItemDef def => info.def;
+
+        public string name => info.def.name;
 
         public Item(Game game, Vec2I pos, ItemInfo info)
         {
@@ -64,7 +66,7 @@ namespace BB
             canvasTrans.anchorMax = Vec2.zero;
             canvasTrans.localPosition = new Vec2(.5f, .228f); // has to be last for some reason
 
-            var canvas = canvasObj.AddComponent<UnityEngine.Canvas>();
+            var canvas = canvasObj.AddComponent<Canvas>();
             canvas.SetLayer(RenderLayer.Default.Layer(101));
 
             var scaler = canvasObj.AddComponent<CanvasScaler>();

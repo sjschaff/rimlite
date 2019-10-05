@@ -8,6 +8,7 @@ namespace BB
 
         IBuilding CreateBuilding();
 
+        string name { get; }
         bool passable { get; }
         BuildingBounds Bounds(Dir dir);
         RenderFlags GetFlags(Dir dir);

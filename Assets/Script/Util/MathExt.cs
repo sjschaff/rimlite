@@ -63,5 +63,16 @@ namespace BB
 
         public static bool InGrid(Vec2I gridSize, Vec2I pt) =>
             pt.x >= 0 && pt.y >= 0 && pt.x < gridSize.x && pt.y < gridSize.y;
+
+        public static RectInt RectInclusive(Vec2 start, Vec2 end)
+        {
+            Vec2 lower = Vec2.Min(start, end);
+            Vec2 upper = Vec2.Max(start, end);
+
+            Vec2I tileStart = lower.Floor();
+            Vec2I tileEnd = upper.Ceil();
+
+            return new RectInt(tileStart, tileEnd - tileStart);
+        }
     }
 }

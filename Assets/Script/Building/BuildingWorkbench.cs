@@ -17,6 +17,8 @@ namespace BB
         public IBuilding CreateBuilding(Dir dir)
             => new BuildingWorkbench(this, dir);
 
+        public override string name => def.name;
+
         public override bool passable => false;
 
         public IEnumerable<Dir> AllowedOrientations()

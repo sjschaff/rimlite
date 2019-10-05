@@ -81,7 +81,7 @@ namespace BB
         Oversized = 2,
     }
 
-    public interface IBuilding
+    public interface IBuilding : ISelectable
     {
         IBuildingProto prototype { get; }
         HashSet<JobHandle> jobHandles { get; }
@@ -119,6 +119,7 @@ namespace BB
 
         public abstract Dir dir { get; }
 
+        public virtual string name => proto.name;
         public virtual bool passable => proto.passable;
         public virtual BuildingBounds bounds => proto.Bounds(Dir.Down);
         public virtual RenderFlags renderFlags => proto.GetFlags(Dir.Down);

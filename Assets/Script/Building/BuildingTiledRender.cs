@@ -12,6 +12,7 @@ namespace BB
             => this.game = game;
 
         public abstract IBuilding CreateBuilding();
+        public abstract string name { get; }
         public abstract bool passable { get; }
         public abstract TileSprite GetSprite(Dir dir, Vec2I pos, Vec2I subTile);
 

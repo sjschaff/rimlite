@@ -18,6 +18,8 @@ namespace BB
             return CreateBuilding();
         }
 
+        public override string name => def.name;
+
         public override bool passable => true;
 
         private bool IsSame(Vec2I pos)

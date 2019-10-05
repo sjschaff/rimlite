@@ -80,12 +80,11 @@ namespace BB
                 RenderLayer.Highlight);
 
         public Line CreateLine(
-            Transform parent, Vec2 pos, string name,
+            Transform parent, string name,
             RenderLayer layer, Color color, float width,
-            bool loop, bool useWorldspace, Vec2[] pts)
+            bool loop, bool useWorldspace)
         {
-
-            var line = CreateObjectWithRenderer<LineRenderer>(parent, pos, name, layer);
+            var line = CreateObjectWithRenderer<LineRenderer>(parent, Vec2.zero, name, layer);
             line.material = lineMaterials.Get(color);
             line.loop = loop;
             line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -93,8 +92,6 @@ namespace BB
             line.useWorldSpace = useWorldspace;
             line.widthMultiplier = width;
             var ret = new Line(line);
-            if (pts != null)
-                ret.SetPts(pts);
 
             return ret;
         }

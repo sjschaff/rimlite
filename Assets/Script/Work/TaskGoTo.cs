@@ -71,10 +71,10 @@ namespace BB
                     return Status.Fail;
 
                 pathVis = game.assets.CreateLine(
-                    game.transform, Vec2.zero, "MinionPath",
+                    game.transform, "MinionPath",
                     RenderLayer.Default.Layer(1000),
                     new Color(.2f, .2f, .2f, .5f),
-                    1 / 32f, false, true, null);
+                    1 / 32f, false, true);
                 UpdatePathVis();
 
                 agent.SetAnim(MinionAnim.Walk);

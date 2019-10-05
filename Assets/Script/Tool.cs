@@ -2,54 +2,149 @@
 using System.Linq;
 using UnityEngine;
 
-using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public abstract class UITool
+    public abstract class UITool2
     {
-        public static LinkedList<UITool> RegisterTools(Game game)
-        {
-            LinkedList<UITool> tools = new LinkedList<UITool>();
+        public readonly GameController ctrl;
+        protected UITool2(GameController ctrl) => this.ctrl = ctrl;
 
-            tools.AddLast(new ToolControlMinion(game));
-            tools.AddLast(new ToolOrders(game));
-            tools.AddLast(new ToolPlace(game));
-            tools.AddLast(new ToolBuild(game));
+        public virtual void OnActivate() { }
+        public virtual void OnDeactivate() { }
+        // TODO: better name
+        public virtual void OnSuspend() { }
+        public virtual void OnUnsuspend() { }
 
-            return tools;
-        }
-
-        protected readonly Game game;
-
-        protected UITool(Game game) => this.game = game;
-
-        public static RectInt RectInclusive(Vec2 start, Vec2 end)
-        {
-            Vec2 lower = Vec2.Min(start, end);
-            Vec2 upper = Vec2.Max(start, end);
-
-            Vec2I tileStart = lower.Floor();
-            Vec2I tileEnd = upper.Ceil();
-
-            return new RectInt(tileStart, tileEnd - tileStart);
-        }
-
-        // TODO: make this more general
-        public virtual void OnTab() { }
-        public virtual void OnKeyP() { }
+        public virtual bool IsClickable() => false;
+        public virtual bool IsDragable() => false;
 
         public virtual void OnClick(Vec2I pos) { }
-        public virtual void OnDragStart(Vec2 start, Vec2 end)
-            => OnDragStart(RectInclusive(start, end));
+        public virtual void OnDragStart(RectInt rect) { }
+        public virtual void OnDrag(RectInt rect) { }
+        public virtual void OnDragEnd(RectInt rect) { }
 
-        public virtual void OnDragUpdate(Vec2 start, Vec2 end)
-            => OnDragUpdate(RectInclusive(start, end));
+        public virtual void OnButton(int button) { }
+        public virtual void K_OnTab() { }
+    }
 
-        public virtual void OnDragEnd(Vec2 start, Vec2 end)
-            => OnDragEnd(RectInclusive(start, end));
+    public class ToolBuildSelect : UITool2
+    {
+        public readonly List<IBuildable> buildables
+            = new List<IBuildable>();
+        private readonly ToolBuild builder;
+        private int selectedBuild = -1;
 
+        public ToolBuildSelect(GameController ctrl)
+            : base(ctrl)
+        {
+            builder = new ToolBuild(ctrl, this);
+            foreach (var proto in ctrl.game.registry.buildings.Values)
+            {
+                if (proto is IBuildable buildable)
+                    buildables.Add(buildable);
+            }
+        }
+
+        public override void OnButton(int button)
+        {
+            BB.LogInfo($"build onbutton {button} cur: {selectedBuild}");
+            if (selectedBuild >= 0)
+                ctrl.PopTool();
+
+            if (button != selectedBuild)
+            {
+                selectedBuild = button;
+                ctrl.PushTool(builder);
+            }
+            else
+                selectedBuild = -1;
+            BB.LogInfo($"build endbutton {button} cur: {selectedBuild}");
+        }
+
+        public override void OnActivate()
+        {
+            ctrl.gui.ShowBuildButtons(buildables.Count);
+            for (int i = 0; i < buildables.Count; ++i)
+                ctrl.gui.buttons[i].SetText(buildables[i].name);
+        }
+
+        public override void OnDeactivate()
+        {
+            BB.LogInfo($"build deactivated");
+            selectedBuild = -1;
+            ctrl.gui.HideBuildButtons();
+        }
+
+        public class ToolBuild : UITool2
+        {
+            public readonly ToolBuildSelect selector;
+
+            private ToolbarButton button;
+            private IBuildable buildable;
+            private Dir curDir;
+
+            public ToolBuild(GameController ctrl, ToolBuildSelect selector)
+                : base(ctrl) => this.selector = selector;
+
+            public override void OnButton(int button)
+                => selector.OnButton(button);
+
+            public override void K_OnTab()
+            {
+                do
+                {
+                    curDir = curDir.NextCW();
+                } while (!buildable.AllowedOrientations().Contains(curDir));
+
+                BB.LogInfo($"Active Build: {buildable.GetType().Name}:{curDir}");
+            }
+
+            public override void OnClick(Vec2I pos)
+            {
+                if (!ctrl.game.ValidTile(pos))
+                    return;
+
+                var tile = ctrl.game.Tile(pos);
+                if (ctrl.game.CanPlaceBuilding(tile, buildable.Bounds(curDir)))
+                {
+                    SystemBuild.K_instance.CreateBuild(buildable, tile, curDir);
+                    //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
+                }
+            }
+
+            public override void OnDragEnd(RectInt rect)
+            {
+                foreach (var v in rect.allPositionsWithin)
+                    OnClick(v);
+            }
+
+            public override void OnActivate()
+            {
+                button = ctrl.gui.buttons[selector.selectedBuild];
+                buildable = selector.buildables[selector.selectedBuild];
+                curDir = buildable.AllowedOrientations().First();
+
+                button.SetSelected(true);
+                BB.LogInfo($"Active Build: {buildable.GetType().Name}:{curDir}");
+            }
+
+            public override void OnDeactivate()
+            {
+                button.SetSelected(false);
+            }
+
+            public override bool IsClickable() => true;
+            public override bool IsDragable() => true;
+        }
+    }
+
+    public abstract class UITool
+    {
+        protected readonly Game game;
+        protected UITool(Game game) => this.game = game;
+        public virtual void OnClick(Vec2I pos) { }
         protected virtual void OnDragStart(RectInt rect) => OnDragUpdate(rect);
         protected virtual void OnDragUpdate(RectInt rec) { }
         protected virtual void OnDragEnd(RectInt rect) { }
@@ -124,64 +219,6 @@ namespace BB
                 kvp.Value.Destroy();
 
             activeOverlays = new Dictionary<Vec2I, Transform>();
-        }
-    }
-
-    public class ToolBuild : UITool
-    {
-        private readonly IBuildable[] builds;
-        private int currentBuild;
-        private Dir curDir;
-
-        private IBuildable curProto => builds[currentBuild];
-
-        public ToolBuild(Game game) : base(game)
-        {
-            builds = new IBuildable[] {
-                D_Proto<BldgWorkbenchDef>("BB:Woodcutter"),
-                D_Proto<BldgWallDef>("BB:StoneBrick"),
-                D_Proto<BldgFloorDef>("BB:StoneBrick")
-            };
-
-            currentBuild = builds.Length - 1;
-            OnTab();
-        }
-
-        private IBuildable D_Proto<T>(string name) where T : BldgDef
-            => (IBuildable)game.registry.D_GetProto<T>(name);
-
-        public override void OnTab()
-        {
-            currentBuild = (currentBuild + 1) % builds.Length;
-            curDir = curProto.AllowedOrientations().First();
-
-            BB.LogInfo($"Active Build: {curProto.GetType().Name}:{curDir}");
-        }
-
-        public override void OnKeyP()
-        {
-             do {
-                 curDir = curDir.NextCW();
-             } while (!curProto.AllowedOrientations().Contains(curDir));
-
-            BB.LogInfo($"Active Build: {curProto.GetType().Name}:{curDir}");
-        }
-
-        public override void OnClick(Vec2I pos)
-        {
-            // TODO: only work an valid tiles
-            var tile = game.Tile(pos);
-            if (game.CanPlaceBuilding(tile, curProto.Bounds(curDir)))
-            {
-                SystemBuild.K_instance.CreateBuild(curProto, tile, curDir);
-                //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
-            }
-        }
-
-        protected override void OnDragEnd(RectInt rect)
-        {
-            foreach (var v in rect.allPositionsWithin)
-                OnClick(v);
         }
     }
 
