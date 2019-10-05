@@ -37,7 +37,7 @@ namespace BB
         public void SetText(string text) => this.text.text = text;
     }
 
-    public partial class Gui
+    public class GameUI
     {
         public readonly GameController ctrl;
         private readonly AssetSrc assets;
@@ -52,13 +52,13 @@ namespace BB
         public readonly List<ToolbarButton> buttons
             = new List<ToolbarButton>();
 
-        public Gui(GameController ctrl, AssetSrc assets)
+        public GameUI(GameController ctrl, AssetSrc assets)
         {
             this.ctrl = ctrl;
             this.assets = assets;
 
             var root = new GameObject("GUI");
-            canvas = SetupCanvas(root.transform, new Vec2I(4096, 2160));
+            canvas = CreateCanvas(root.transform, new Vec2I(4096, 2160));
             CreateInputSink();
 
             mouseHighlight = assets.CreateLine(
@@ -76,15 +76,15 @@ namespace BB
 
             Color color = new Color(.19f, .19f, .19f);
 
-            var buttonPane1 = CreatePane(canvas, "Build Button", color,
+            var buttonPane1 = Gui.CreatePane(canvas, "Build Button", color,
                 new Vec2(180, 180), Anchor.BottomLeft, new Vec2(840, 0));
             var spriteBuild = assets.sprites.Get(ctrl.game.defs.Get<SpriteDef>("BB:BuildIcon"));
-            CreateButton(buttonPane1.rectTransform, spriteBuild, () => ctrl.OnBuildMenu());
+            Gui.CreateButton(buttonPane1.rectTransform, spriteBuild, () => ctrl.OnBuildMenu());
 
-            var buttonPane2 = CreatePane(canvas, "Order Button", color,
+            var buttonPane2 = Gui.CreatePane(canvas, "Order Button", color,
                 new Vec2(180, 180), Anchor.BottomLeft, new Vec2(840, 220));
             var spriteOrder = assets.sprites.Get(ctrl.game.defs.Get<SpriteDef>("BB:MineOverlay"));
-            CreateButton(buttonPane2.rectTransform, spriteOrder, () => ctrl.OnOrdersMenu());
+            Gui.CreateButton(buttonPane2.rectTransform, spriteOrder, () => ctrl.OnOrdersMenu());
 
            /* TextCfg cfg = new TextCfg
             {
@@ -110,7 +110,7 @@ namespace BB
                 buildBtns[buildable] = new Btn(buttonPane);
             }*/
 
-            var imageTest = MakeObject(canvas, "image");
+            var imageTest = Gui.CreateObject(canvas, "image");
             imageTest.SetSizePivotAnchor(new Vec2(800, 400), Vec2.zero, Vec2.zero);
 
             var img = imageTest.gameObject.AddComponent<Image>();
@@ -118,7 +118,7 @@ namespace BB
 
             selectionText = CreateText(imageTest, Color.red);
 
-            var buttonTest = MakeObject(imageTest, "button");
+            var buttonTest = Gui.CreateObject(imageTest, "button");
             var buttonImage = buttonTest.gameObject.AddComponent<Image>();
             var button = buttonTest.gameObject.AddComponent<Button>();
             button.onClick.AddListener(() => BB.LogInfo("clicked"));
@@ -165,16 +165,16 @@ namespace BB
             };
 
             int xofs = 840 + (180 + 40) * (pos + 1);
-            var buttonPane = CreatePane(canvas, $"Toolbar {pos}", ToolbarButton.offColor,
+            var buttonPane = Gui.CreatePane(canvas, $"Toolbar {pos}", ToolbarButton.offColor,
                 new Vec2(180, 180), Anchor.BottomLeft, new Vec2(xofs, 0));
-            var button = CreateButton(buttonPane.rectTransform, cfg, () => ctrl.OnToolbar(pos));
+            var button = Gui.CreateButton(buttonPane.rectTransform, cfg, () => ctrl.OnToolbar(pos));
             return new ToolbarButton(buttonPane, button,
                 button.gameObject.GetComponentInChildren<Text>());
         }
 
         private Text CreateText(Transform parent, Color? backgroundClr)
         {
-            var node = MakeObject(parent, "<text>");
+            var node = Gui.CreateObject(parent, "<text>");
             node.SetFillWithMargin(40);
 
             var nodeText = node;
@@ -183,7 +183,7 @@ namespace BB
                 var img = node.gameObject.AddComponent<Image>();
                 img.color = (Color)backgroundClr;
 
-                nodeText = MakeObject(node, "<text>");
+                nodeText = Gui.CreateObject(node, "<text>");
                 nodeText.SetFill();
             }
 
@@ -202,16 +202,16 @@ namespace BB
 
         private void CreateInputSink()
         {
-            var node = MakeObject(canvas, "Input Sink");
+            var node = Gui.CreateObject(canvas, "Input Sink");
             node.SetFill();
 
             var sink = node.gameObject.AddComponent<InputSink>();
             sink.Init(ctrl);
         }
 
-        private Transform SetupCanvas(Transform parent, Vec2I refSize)
+        private Transform CreateCanvas(Transform parent, Vec2I refSize)
         {
-            var node = CreateCanvas(parent, refSize);
+            var node = Gui.CreateCanvas(parent, refSize);
             var obj = node.gameObject;
 
             obj.AddComponent<GraphicRaycaster>();

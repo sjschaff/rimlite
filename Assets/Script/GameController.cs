@@ -19,7 +19,7 @@ namespace BB
 
         private readonly Camera cam;
         public readonly Game game;
-        public readonly Gui gui;
+        public readonly GameUI gui;
 
         private readonly ToolBuildSelect builds;
         private readonly Stack<UITool2> activeTools = new Stack<UITool2>();
@@ -34,7 +34,7 @@ namespace BB
             cam = Camera.main;
             game = new Game();
             builds = new ToolBuildSelect(this);
-            gui = new Gui(this, game.assets);
+            gui = new GameUI(this, game.assets);
         }
 
         public void PushTool(UITool2 tool)

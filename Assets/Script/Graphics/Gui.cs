@@ -7,39 +7,39 @@ using UnityEngine.Events;
 
 namespace BB
 {
-    public partial class Gui
+    public enum Anchor
     {
-        public enum Anchor
+        TopLeft, Top, TopRight,
+        Left, Center, Right,
+        BottomLeft, Bottom, BottomRight
+    }
+
+    public struct TextCfg
+    {
+        public string text;
+        public Font font;
+        public int fontSize;
+        public FontStyle style;
+        public TextAnchor anchor;
+        public HorizontalWrapMode horiWrap;
+        public VerticalWrapMode vertWrap;
+
+        public void Apply(Text text)
         {
-            TopLeft, Top, TopRight,
-            Left, Center, Right,
-            BottomLeft, Bottom, BottomRight
+            text.font = font;
+            text.fontSize = fontSize;
+            text.fontStyle = style;
+            text.alignment = anchor;
+            text.horizontalOverflow = horiWrap;
+            text.verticalOverflow = vertWrap;
+            text.text = this.text;
+            text.raycastTarget = false;
+            text.supportRichText = false;
         }
+    }
 
-        public struct TextCfg
-        {
-            public string text;
-            public Font font;
-            public int fontSize;
-            public FontStyle style;
-            public TextAnchor anchor;
-            public HorizontalWrapMode horiWrap;
-            public VerticalWrapMode vertWrap;
-
-            public void Apply(Text text)
-            {
-                text.font = font;
-                text.fontSize = fontSize;
-                text.fontStyle = style;
-                text.alignment = anchor;
-                text.horizontalOverflow = horiWrap;
-                text.verticalOverflow = vertWrap;
-                text.text = this.text;
-                text.raycastTarget = false;
-                text.supportRichText = false;
-            }
-        }
-
+    public static class Gui
+    {
         public static Button CreateButton(
             Transform parent, TextCfg cfg, UnityAction fn)
         {
@@ -105,7 +105,7 @@ namespace BB
         public static Text CreateText(
             Transform parent, string name, TextCfg cfg)
         {
-            var node = MakeObject(parent, name);
+            var node = CreateObject(parent, name);
             var text = node.gameObject.AddComponent<Text>();
             cfg.Apply(text);
             return text;
@@ -130,14 +130,14 @@ namespace BB
         public static Image CreateImage(
             Transform parent, string name)
         {
-            var node = MakeObject(parent, name);
+            var node = CreateObject(parent, name);
             var img = node.gameObject.AddComponent<Image>();
             return img;
         }
 
         public static Transform CreateCanvas(Transform parent, Vec2I refSize)
         {
-            var node = MakeObject(parent, "<canvas>");
+            var node = CreateObject(parent, "<canvas>");
             var obj = node.gameObject;
 
             var canvas = obj.AddComponent<Canvas>();
@@ -150,12 +150,12 @@ namespace BB
             return node;
         }
 
-        public static RectTransform MakeObject(string name)
+        public static RectTransform CreateObject(string name)
             => (RectTransform)new GameObject(name, typeof(RectTransform)).transform;
 
-        public static RectTransform MakeObject(Transform parent, string name)
+        public static RectTransform CreateObject(Transform parent, string name)
         {
-            var node = MakeObject(name);
+            var node = CreateObject(name);
             node.SetParent(parent, false);
             return node;
         }
@@ -163,20 +163,20 @@ namespace BB
 
     public static class GuiExt
     {
-        private static bool IsOneOf(this Gui.Anchor t,
-            Gui.Anchor a, Gui.Anchor b, Gui.Anchor c)
+        private static bool IsOneOf(this Anchor t,
+            Anchor a, Anchor b, Anchor c)
             => t.Equals(a) || t.Equals(b) || t.Equals(c);
 
-        public static bool IsTop(this Gui.Anchor anchor)
-            => anchor.IsOneOf(Gui.Anchor.TopLeft, Gui.Anchor.Top, Gui.Anchor.TopRight);
-        public static bool IsBottom(this Gui.Anchor anchor)
-            => anchor.IsOneOf(Gui.Anchor.BottomLeft, Gui.Anchor.Bottom, Gui.Anchor.BottomRight);
-        public static bool IsLeft(this Gui.Anchor anchor)
-            => anchor.IsOneOf(Gui.Anchor.TopLeft, Gui.Anchor.Left, Gui.Anchor.BottomLeft);
-        public static bool IsRight(this Gui.Anchor anchor)
-            => anchor.IsOneOf(Gui.Anchor.TopRight, Gui.Anchor.Right, Gui.Anchor.BottomRight);
+        public static bool IsTop(this Anchor anchor)
+            => anchor.IsOneOf(Anchor.TopLeft, Anchor.Top, Anchor.TopRight);
+        public static bool IsBottom(this Anchor anchor)
+            => anchor.IsOneOf(Anchor.BottomLeft, Anchor.Bottom, Anchor.BottomRight);
+        public static bool IsLeft(this Anchor anchor)
+            => anchor.IsOneOf(Anchor.TopLeft, Anchor.Left, Anchor.BottomLeft);
+        public static bool IsRight(this Anchor anchor)
+            => anchor.IsOneOf(Anchor.TopRight, Anchor.Right, Anchor.BottomRight);
 
-        public static Vec2 Pivot(this Gui.Anchor anchor)
+        public static Vec2 Pivot(this Anchor anchor)
             =>  new Vec2(
                     anchor.IsLeft() ? 0 : (anchor.IsRight() ? 1 : .5f),
                     anchor.IsBottom() ? 0 : (anchor.IsTop() ? 1 : .5f));
