@@ -4,7 +4,6 @@ using Vec2 = UnityEngine.Vector2;
 
 namespace BB
 {
-
     public static class ComponentExt
     {
         public static void Destroy(this GameObject o) => Object.Destroy(o);
