@@ -11,7 +11,7 @@ namespace BB
     {
         IEnumerable<Dir> AllowedOrientations();
         IEnumerable<ItemInfo> GetBuildMaterials();
-        IBuilding CreateBuilding(Dir dir);
+        IBuilding CreateBuilding(Tile tile, Dir dir);
     }
 
     public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
@@ -19,16 +19,20 @@ namespace BB
         // TODO: kludge
         public static SystemBuild K_instance;
 
+        private readonly Cache<IBuildable, BldgConstructionDef> virtualDefs;
+
         public SystemBuild(Game game) : base(game)
         {
             BB.AssertNull(K_instance);
             K_instance = this;
+            virtualDefs = new Cache<IBuildable, BldgConstructionDef>(
+                (buildable) => new BldgConstructionDef(buildable));
         }
 
         public override IOrdersGiver orders => null;
 
         public void CreateBuild(IBuildable proto, Tile tile, Dir dir)
-            => AddJob(new JobBuild(this, tile, proto, dir));
+            => AddJob(new JobBuild(this, virtualDefs.Get(proto), tile, dir));
 
         public override void WorkAbandoned(JobHandle handle, Work work)
         {
@@ -49,14 +53,14 @@ namespace BB
             public readonly BuildingConstruction building;
             public readonly RectInt area;
 
-            public JobBuild(SystemBuild build, Tile tile, IBuildable proto, Dir dir)
+            public JobBuild(SystemBuild build, BldgConstructionDef def, Tile tile, Dir dir)
                 : base(build, tile)
             {
-                building = new BuildingConstruction(proto, dir);
-                area = building.Area(tile);
+                building = new BuildingConstruction(def, tile, dir);
+                area = building.bounds;
 
                 building.jobHandles.Add(this);
-                game.AddBuilding(tile, building);
+                game.AddBuilding(building);
             }
 
             private class ItemPriority : FastPriorityQueueNode
@@ -159,7 +163,7 @@ namespace BB
                             return new Work.ClaimLambda(() => building.hasBuilder = false);
                         }), out var buildClaim);
 
-                    if (!building.buildProto.passable)
+                    if (!building.conDef.proto.passable)
                         yield return new TaskLambda(game,
                             (work) =>
                             {
@@ -186,7 +190,8 @@ namespace BB
                             work.Unclaim(buildClaim);
                             BB.Assert(tile.building == building);
                             building.jobHandles.Remove(this);
-                            game.ReplaceBuilding(tile, building.buildProto.CreateBuilding(building.dir));
+                            game.ReplaceBuilding(
+                                building.conDef.proto.CreateBuilding(tile, building.dir));
 
                             activeWorks.Remove(work);
                             systemTyped.RemoveJob(this);
@@ -215,7 +220,7 @@ namespace BB
                         building.jobHandles.Count == 0 ||
                             (building.jobHandles.Count == 1 &&
                             building.jobHandles.Contains(this)));
-                    game.RemoveBuilding(tile);
+                    game.RemoveBuilding(building);
                     foreach (var mat in building.materials)
                     {
                         if (mat.amtStored > 0)

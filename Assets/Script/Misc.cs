@@ -1,6 +1,7 @@
-﻿
-// A dumping ground for things I don't yet know where to put
+﻿// A dumping ground for things I don't yet know where to put
 using System;
+
+using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
@@ -39,6 +40,7 @@ namespace BB
 
     public interface ISelectable
     {
-        string name { get; }
+        DefNamed def { get; }
+        Vec2I pos { get; }
     }
 }

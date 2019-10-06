@@ -9,7 +9,8 @@ namespace BB
 {
     public class BuildingConstruction : BuildingBase<IBuildingProto>
     {
-        public readonly IBuildable buildProto;
+        public readonly BldgConstructionDef conDef;
+
         public override Dir dir { get; }
 
         // All stuff used by JobBuild
@@ -56,31 +57,31 @@ namespace BB
             return true;
         }
 
-        public BuildingConstruction(IBuildable buildProto, Dir dir)
-            : base(null)
+        public BuildingConstruction(BldgConstructionDef def, Tile tile, Dir dir)
+            : base(null, tile)
         {
-            this.buildProto = buildProto;
+            this.conDef = def;
             this.dir = dir;
             constructionBegan = false;
             constructionPercent = 0;
             materials = new List<MaterialInfo>(
-                buildProto.GetBuildMaterials()
+                conDef.proto.GetBuildMaterials()
                 .Select(i => new MaterialInfo(i)));
         }
 
-        public override string name => "Constructing: " + buildProto.name;
+        public override DefNamed def => conDef;
 
-        public override bool passable => constructionBegan ? buildProto.passable : true;
-        public override BuildingBounds bounds => buildProto.Bounds(dir);
-        public override RenderFlags renderFlags => buildProto.GetFlags(dir);
+        public override bool passable => constructionBegan ? conDef.proto.passable : true;
+        public override RectInt bounds => conDef.proto.Bounds(dir).AsRect(tile);
+        public override RenderFlags renderFlags => conDef.proto.GetFlags(dir);
 
         private TileSprite Virtualize(TileSprite sprite)
             => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .5f));
 
         public override TileSprite GetSprite(Vec2I pos, Vec2I subTile)
-            => Virtualize(buildProto.GetSprite(dir, pos, subTile));
+            => Virtualize(conDef.proto.GetSprite(dir, pos, subTile));
 
         public override TileSprite GetSpriteOver(Vec2I pos)
-            => Virtualize(buildProto.GetSpriteOver(dir, pos));
+            => Virtualize(conDef.proto.GetSpriteOver(dir, pos));
     }
 }

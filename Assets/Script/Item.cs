@@ -35,8 +35,7 @@ namespace BB
         public int amtAvailable => info.amt - amtClaimed;
         public int amt => info.amt;
         public ItemDef def => info.def;
-
-        public string name => info.def.name;
+        DefNamed ISelectable.def => info.def;
 
         public Item(Game game, Vec2I pos, ItemInfo info)
         {

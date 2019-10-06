@@ -26,6 +26,7 @@ namespace BB
 
         private readonly ToolBuildSelect builds;
         private readonly ToolOrdersSelect orders;
+        private readonly ToolSelection selection;
         private readonly Stack<UITool> activeTools = new Stack<UITool>();
         private UITool activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
@@ -44,6 +45,7 @@ namespace BB
 
             builds = new ToolBuildSelect(this);
             orders = new ToolOrdersSelect(this);
+            selection = new ToolSelection(this);
         }
 
         public void PushTool(UITool tool)
@@ -52,6 +54,12 @@ namespace BB
             activeTool?.OnSuspend();
             activeTools.Push(tool);
             tool.OnActivate();
+        }
+
+        public void ReplaceTool(UITool tool)
+        {
+            PopAll();
+            PushTool(tool);
         }
 
         public void PopTool()
@@ -96,17 +104,8 @@ namespace BB
             game.Update(dt);
         }
 
-        public void OnBuildMenu()
-        {
-            PopAll();
-            PushTool(builds);
-        }
-
-        public void OnOrdersMenu()
-        {
-            PopAll();
-            PushTool(orders);
-        }
+        public void OnBuildMenu() => ReplaceTool(builds);
+        public void OnOrdersMenu() => ReplaceTool(orders);
 
         public void OnToolbar(int button)
         {
@@ -135,27 +134,37 @@ namespace BB
             Vec2I pos = ScreenToWorld(scPos).Floor();
             if (button == InputButton.Left)
             {
-                if (activeTool != null && activeTool.IsClickable())
+                if (game.ValidTile(pos))
                 {
-                    if (game.ValidTile(pos))
+                    if (activeTool != null && activeTool.IsClickable())
+                    {
                         activeTool.OnClick(pos);
-                }
-                else
-                {
-                    // TODO: selection logic
+                    }
+                    else
+                    {
+                        // TODO: items/minions
+                        var tile = game.Tile(pos);
+                        if (tile.hasBuilding)
+                        {
+                            selection.SetSelection(tile.building);
+                        }
+                    }
                 }
             }
             else if (button == InputButton.Right)
             {
-                // TODO: move up to selection logic
-                if (game.ValidTile(pos))
-                {
-                    Tile tile = game.Tile(pos);
-                    if (tile.hasBuilding)
-                    {
-                        gui.selectionText.text = tile.building.name;
-                    }
-                }
+                // TODO: context menu?
+            }
+        }
+
+        private IEnumerable<ISelectable> SelectDrag(Vec2 dragEnd)
+        {
+            var area = DragRect(dragEnd);
+            foreach (var pos in area.allPositionsWithin)
+            {
+                var tile = game.Tile(pos);
+                if (tile.hasBuilding)
+                    yield return tile.building;
             }
         }
 
@@ -178,7 +187,7 @@ namespace BB
                 }
                 else
                 {
-                    // TODO: selection logic
+                    // TODO: selection preview?
                 }
 
                 UpdateDragOutline(pos);
@@ -202,7 +211,7 @@ namespace BB
                 }
                 else
                 {
-                    // TODO: selection logic
+                    // TODO: selection preview?
                 }
 
                 UpdateDragOutline(pos);
@@ -221,13 +230,9 @@ namespace BB
             if (button == InputButton.Left)
             {
                 if (activeTool != null && activeTool.IsDragable())
-                {
                     activeTool.OnDragEnd(DragRect(pos));
-                }
                 else
-                {
-                    // TODO: selection logic
-                }
+                    selection.SetSelection(SelectDrag(pos));
 
                 gui.dragOutline.enabled = false;
             }

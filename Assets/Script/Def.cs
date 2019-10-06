@@ -246,6 +246,17 @@ namespace BB
         }
     }
 
+    public class BldgConstructionDef : DefNamed
+    {
+        public readonly IBuildable proto;
+
+        public BldgConstructionDef(IBuildable proto) : base(
+            "BB:Construction",
+            proto.GetType().Name + "Construct",
+            "Construction: " + proto.buildingDef.name)
+            => this.proto = proto;
+    }
+
     // TODO: alls these building defs are getting quite unwieldy
     // TODO: maybe some sort of generic building, with modules,
     // i.e minable, has recipes, tiledrender/sprite render,

@@ -11,14 +11,16 @@ namespace BB
         public BuildingProtoFloor(Game game, BldgFloorDef def)
             : base(game) => this.def = def;
 
-        public override IBuilding CreateBuilding() => new BuildingFloor(this);
-        public IBuilding CreateBuilding(Dir dir)
+        public override IBuilding CreateBuilding(Tile tile)
+            => new BuildingFloor(this, tile);
+
+        public IBuilding CreateBuilding(Tile tile, Dir dir)
         {
             BB.Assert(dir == Dir.Down);
-            return CreateBuilding();
+            return CreateBuilding(tile);
         }
 
-        public override string name => def.name;
+        public override DefNamed buildingDef => def;
 
         public override bool passable => true;
 
@@ -47,7 +49,8 @@ namespace BB
 
         private class BuildingFloor : BuildingBase<BuildingProtoFloor>
         {
-            public BuildingFloor(BuildingProtoFloor proto) : base(proto) { }
+            public BuildingFloor(BuildingProtoFloor proto, Tile tile)
+                : base(proto, tile) { }
             public override Dir dir => Dir.Down;
         }
     }

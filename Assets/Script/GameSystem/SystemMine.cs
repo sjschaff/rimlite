@@ -66,7 +66,7 @@ namespace BB
                         BB.Assert(work == activeWork);
                         BB.Assert(mineable.mineAmt <= 0);
 
-                        game.RemoveBuilding(tile);
+                        game.RemoveBuilding(mineable);
                         foreach (ItemInfo item in mineable.GetMinedMaterials())
                             game.DropItem(tile.pos, item);
                     }

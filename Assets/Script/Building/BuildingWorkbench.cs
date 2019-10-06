@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
+using UnityEngine;
 
 namespace BB
 {
@@ -11,13 +12,13 @@ namespace BB
             : base(game, def.bounds, def.spriteDown, def.spriteRight)
             => this.def = def;
 
-        public override IBuilding CreateBuilding()
+        public override IBuilding CreateBuilding(Tile tile)
             => throw new NotSupportedException();
 
-        public IBuilding CreateBuilding(Dir dir)
-            => new BuildingWorkbench(this, dir);
+        public IBuilding CreateBuilding(Tile tile, Dir dir)
+            => new BuildingWorkbench(this, tile, dir);
 
-        public override string name => def.name;
+        public override DefNamed buildingDef => def;
 
         public override bool passable => false;
 
@@ -29,11 +30,12 @@ namespace BB
 
         private class BuildingWorkbench : BuildingBase<BuildingProtoWorkbench>
         {
-            public BuildingWorkbench(BuildingProtoWorkbench proto, Dir dir)
-                : base(proto) => this.dir = dir;
+            public BuildingWorkbench(BuildingProtoWorkbench proto, Tile tile, Dir dir)
+                : base(proto, tile) => this.dir = dir;
 
             public override Dir dir { get; }
-            public override BuildingBounds bounds => proto.Bounds(dir);
+            public override RectInt bounds
+                => proto.Bounds(dir).AsRect(tile);
         }
     }
 }

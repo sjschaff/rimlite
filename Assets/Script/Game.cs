@@ -102,20 +102,21 @@ namespace BB
                     yield return item;
         }
 
-        public void RemoveBuilding(Tile tile)
+        public void RemoveBuilding(IBuilding building)
         {
             // TODO: cancel outstanding job handles
+            var tile = building.tile;
             BB.Assert(tile.hasBuilding);
+            BB.Assert(building.tile.building == building);
 
             bool passable = tile.passable;
-            var bounds = tile.building.Area(tile);
+            var bounds = building.bounds;
             map.RemoveBuilding(tile);
             RerouteMinions(bounds, passable, tile.passable);
         }
 
-        public bool CanPlaceBuilding(Tile tile, BuildingBounds bounds)
+        public bool CanPlaceBuilding(RectInt area)
         {
-            RectInt area = bounds.AsRect(tile);
             foreach (var pos in area.allPositionsWithin)
                 if (!ValidTile(pos))
                     return false;
@@ -123,23 +124,25 @@ namespace BB
             return !map.HasBuilding(area);
         }
 
-        public void AddBuilding(Tile tile, IBuilding building)
+        public void AddBuilding(IBuilding building)
         {
-            BB.Assert(CanPlaceBuilding(tile, building.bounds));
+            BB.Assert(CanPlaceBuilding(building.bounds));
 
+            var tile = building.tile;
             bool passable = tile.passable;
-            map.AddBuilding(tile, building);
-            RerouteMinions(building.Area(tile), passable, tile.passable);
+            map.AddBuilding(building);
+            RerouteMinions(building.bounds, passable, tile.passable);
         }
 
-        public void ReplaceBuilding(Tile tile, IBuilding building)
+        public void ReplaceBuilding(IBuilding building)
         {
             // TODO: cancel outstanding job handles
+            var tile = building.tile;
             BB.Assert(tile.hasBuilding);
 
             bool passable = tile.passable;
-            map.ReplaceBuilding(tile, building);
-            RerouteMinions(building.Area(tile), passable, tile.passable);
+            map.ReplaceBuilding(building);
+            RerouteMinions(building.bounds, passable, tile.passable);
         }
 
         public void ModifyTerrain(Tile tile, Terrain terrain)

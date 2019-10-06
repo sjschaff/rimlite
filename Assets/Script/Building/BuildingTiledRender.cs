@@ -11,8 +11,8 @@ namespace BB
         protected BuildingProtoTiledRender(Game game)
             => this.game = game;
 
-        public abstract IBuilding CreateBuilding();
-        public abstract string name { get; }
+        public abstract IBuilding CreateBuilding(Tile tile);
+        public abstract DefNamed buildingDef { get; }
         public abstract bool passable { get; }
         public abstract TileSprite GetSprite(Dir dir, Vec2I pos, Vec2I subTile);
 
@@ -40,7 +40,7 @@ namespace BB
 
             var bldgOther = game.Tile(pos).building;
             if (bldgOther is BuildingConstruction bldgConstruction)
-                proto = bldgConstruction.buildProto as TThis;
+                proto = bldgConstruction.conDef.proto as TThis;
             else
                 proto = bldgOther?.prototype as TThis;
 

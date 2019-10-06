@@ -10,9 +10,10 @@ namespace BB
             : base(game, BuildingBounds.Unit, def.sprite, null)
             => this.def = def;
 
-        public override IBuilding CreateBuilding() => new BuildingResource(this);
+        public override IBuilding CreateBuilding(Tile tile)
+            => new BuildingResource(this, tile);
 
-        public override string name => def.name;
+        public override DefNamed buildingDef => def;
 
         public override bool passable => false;
 
@@ -21,7 +22,8 @@ namespace BB
             public float mineAmt { get; set; }
             public float mineTotal { get; }
 
-            public BuildingResource(BuildingProtoResource proto) : base(proto)
+            public BuildingResource(BuildingProtoResource proto, Tile tile)
+                : base(proto, tile)
                 => mineAmt = mineTotal = 2;
 
             public override Dir dir => Dir.Down;

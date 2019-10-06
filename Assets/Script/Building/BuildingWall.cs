@@ -11,14 +11,16 @@ namespace BB
         public BuildingProtoWall(Game game, BldgWallDef def)
             : base(game) => this.def = def;
 
-        public override IBuilding CreateBuilding() => new BuildingWall(this);
-        public IBuilding CreateBuilding(Dir dir)
+        public override IBuilding CreateBuilding(Tile tile)
+            => new BuildingWall(this, tile);
+
+        public IBuilding CreateBuilding(Tile tile, Dir dir)
         {
             BB.Assert(dir == Dir.Down);
-            return CreateBuilding();
+            return CreateBuilding(tile);
         }
 
-        public override string name => def.name;
+        public override DefNamed buildingDef => def;
 
         public override bool passable => false;
 
@@ -96,7 +98,8 @@ namespace BB
 
         private class BuildingWall : BuildingBase<BuildingProtoWall>
         {
-            public BuildingWall(BuildingProtoWall proto) : base(proto) { }
+            public BuildingWall(BuildingProtoWall proto, Tile tile)
+                : base(proto, tile) { }
             public override Dir dir => Dir.Down;
         }
     }

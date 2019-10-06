@@ -54,7 +54,6 @@ namespace BB
             var colors = button.colors;
             colors.pressedColor = new Color(.5f, .5f, .5f, 1);
             colors.highlightedColor = new Color(.78f, .78f, .78f, 1);
-            //colors.selectedColor = Color.green;// new Color(.6f, .6f, .6f, 1);
             colors.fadeDuration = .06f;
             button.colors = colors;
             return button;

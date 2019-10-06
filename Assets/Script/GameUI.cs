@@ -72,6 +72,13 @@ namespace BB
         public void Reset() => SetSelected(false);
     }
 
+    public class InfoPane
+    {
+        public readonly Text header;
+
+        public InfoPane(Text header) => this.header = header;
+    }
+
     public class GameUI
     {
         public readonly GameController ctrl;
@@ -79,11 +86,9 @@ namespace BB
         public readonly Transform root;
         private readonly Transform canvas;
 
-        public Text selectionText;
-
-        //Transform selectionHighlight;
         public readonly Line dragOutline;
 
+        public InfoPane infoPane;
         public readonly ToolbarButton buildButton;
         public readonly ToolbarButton orderButton;
         public readonly List<ToolbarButton> buttons
@@ -126,7 +131,8 @@ namespace BB
             var img = imageTest.gameObject.AddComponent<Image>();
             img.color = color;
 
-            selectionText = CreateTextTest(imageTest, Color.red);
+            var selectionText = CreateTextTest(imageTest, Color.red);
+            infoPane = new InfoPane(selectionText);
 
             var buttonTest = Gui.CreateObject(imageTest, "button");
             var buttonImage = buttonTest.gameObject.AddComponent<Image>();

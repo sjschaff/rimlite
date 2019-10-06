@@ -45,17 +45,17 @@ namespace BB
 
             public override IEnumerable<Task> GetTasks()
             {
-                yield return new TaskGoTo(game, PathCfg.Adjacent(building.Area(tile)));
+                yield return new TaskGoTo(game, PathCfg.Adjacent(building.bounds));
                 yield return new TaskTimedLambda(
                     game, MinionAnim.Slash, Tool.Hammer, 2,
-                    TaskTimed.FaceArea(building.Area(tile)),
+                    TaskTimed.FaceArea(building.bounds),
                     _ => 1,
                     null, // TODO: track deconstruct amt
                     (work) =>
                     {
                         BB.Assert(tile.building == building);
                         building.jobHandles.Remove(this);
-                        game.RemoveBuilding(tile);
+                        game.RemoveBuilding(building);
                         foreach (var item in buildable.GetBuildMaterials())
                             game.DropItem(tile.pos, item);
                     });

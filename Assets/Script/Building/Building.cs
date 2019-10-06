@@ -83,13 +83,14 @@ namespace BB
 
     public interface IBuilding : ISelectable
     {
+        Tile tile { get; }
         IBuildingProto prototype { get; }
         HashSet<JobHandle> jobHandles { get; }
 
         bool passable { get; }
 
         // bounds when facing down
-        BuildingBounds bounds { get; }
+        RectInt bounds { get; }
         RenderFlags renderFlags { get; }
         TileSprite GetSprite(Vec2I pos, Vec2I subTile);
         TileSprite GetSpriteOver(Vec2I pos);
@@ -101,27 +102,27 @@ namespace BB
             => bldg.renderFlags.HasFlag(RenderFlags.Tiled);
         public static bool Oversized(this IBuilding bldg)
             => bldg.renderFlags.HasFlag(RenderFlags.Oversized);
-
-        public static RectInt Area(this IBuilding bldg, Vec2I pos) => bldg.bounds.AsRect(pos);
-        public static RectInt Area(this IBuilding bldg, Tile tile) => bldg.Area(tile.pos);
     }
 
     public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingProto
     {
+        public Tile tile { get; }
         protected readonly TProto proto;
         public IBuildingProto prototype => proto;
         public HashSet<JobHandle> jobHandles { get; }
-        protected BuildingBase(TProto proto)
+        protected BuildingBase(TProto proto, Tile tile)
         {
+            this.tile = tile;
             this.proto = proto;
             this.jobHandles = new HashSet<JobHandle>();
         }
 
         public abstract Dir dir { get; }
 
-        public virtual string name => proto.name;
+        public Vec2I pos => tile.pos;
+        public virtual DefNamed def => proto.buildingDef;
         public virtual bool passable => proto.passable;
-        public virtual BuildingBounds bounds => proto.Bounds(Dir.Down);
+        public virtual RectInt bounds => proto.Bounds(Dir.Down).AsRect(tile);
         public virtual RenderFlags renderFlags => proto.GetFlags(Dir.Down);
         public virtual TileSprite GetSprite(Vec2I pos, Vec2I subTile)
             => proto.GetSprite(dir, pos, subTile);

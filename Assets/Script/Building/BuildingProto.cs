@@ -6,9 +6,9 @@ namespace BB
     {
         /*IBuildingProto(Game game, TBldgDef def);*/
 
-        IBuilding CreateBuilding();
+        IBuilding CreateBuilding(Tile tile);
 
-        string name { get; }
+        DefNamed buildingDef { get; }
         bool passable { get; }
         BuildingBounds Bounds(Dir dir);
         RenderFlags GetFlags(Dir dir);

@@ -119,7 +119,7 @@ namespace BB
                 tileMain = null;
             }
 
-            foreach (var t in building.Area(pos).allPositionsWithin)
+            foreach (var t in building.bounds.allPositionsWithin)
             {
                 var tile = Tile(t);
                 tile.bldgMain = null;
@@ -141,17 +141,18 @@ namespace BB
             SetBuilding(tile.pos, null);
         }
 
-        public void ReplaceBuilding(Tile tile, IBuilding building)
+        public void ReplaceBuilding(IBuilding building)
         {
+            var tile = building.tile;
             BB.Assert(tile.hasBuilding);
-            BB.Assert(tile.building.bounds == building.bounds);
+            BB.Assert(tile.building.bounds.Equals(building.bounds));
             SetBuilding(tile.pos, building);
         }
 
-        public void AddBuilding(Tile tile, IBuilding building)
+        public void AddBuilding(IBuilding building)
         {
-            BB.Assert(!HasBuilding(building.Area(tile)));
-            SetBuilding(tile.pos, building);
+            BB.Assert(!HasBuilding(building.bounds));
+            SetBuilding(building.tile.pos, building);
         }
 
         public void ModifyTerrain(Tile tile, Terrain terrain)
@@ -173,6 +174,12 @@ namespace BB
             // load data
             Init();
         }*/
+
+        private void D_AddBuilding(int x, int y, IBuildingProto proto)
+        {
+            var tile = tiles[x, y];
+            tile.bldgMain = proto.CreateBuilding(tile.handle);
+        }
 
         public void InitDebug(Vec2I size)
         {
@@ -215,17 +222,17 @@ namespace BB
                             if (y == 0 && perm[b][x] == 0)
                                 continue;
 
-                            tiles[xofs + x, 2 + y].bldgMain = wallProto.CreateBuilding();
+                            D_AddBuilding(xofs + x, 2 + y, wallProto);
                         }
                     }
                 }
             }
 
-            tiles[5, 5].bldgMain = rockProto.CreateBuilding();
-            tiles[6, 5].bldgMain = treeProto.CreateBuilding();
+            D_AddBuilding(5, 5, rockProto);
+            D_AddBuilding(6, 5, treeProto);
 
             for (int i = 0; i < 16; ++i)
-                tiles[i + 2, 7].bldgMain = rockProto.CreateBuilding();
+                D_AddBuilding(i + 2, 7, rockProto);
 
             Init();
         }
