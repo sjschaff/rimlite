@@ -133,7 +133,7 @@ namespace BB
             public JobHandleOrders(TThis orders, Tile tile)
                 : base(orders, tile)
                 => overlay = game.assets.CreateJobOverlay(
-                    game.transform, tile.pos, orders.sprite).transform;
+                    game.transform, tile.pos, orders.guiSprite).transform;
 
             public override void Destroy()
             {
@@ -142,16 +142,22 @@ namespace BB
             }
         }
 
-        protected readonly SpriteDef sprite;
+        protected readonly SpriteDef guiSprite;
+        protected readonly string guiText;
 
-        protected GameSystemAsOrders(Game game, SpriteDef sprite)
-            : base(game) => this.sprite = sprite;
+        protected GameSystemAsOrders(Game game, SpriteDef guiSprite, string guiText)
+            : base(game)
+        {
+            this.guiSprite = guiSprite;
+            this.guiText = guiText;
+        }
 
         protected abstract TJob CreateJob(Tile tile);
         public abstract OrdersFlags flags { get; }
 
 
-        public SpriteDef Sprite() => sprite;
+        public SpriteDef GuiSprite() => guiSprite;
+        public string GuiText() => guiText;
 
         public override IOrdersGiver orders => this;
 

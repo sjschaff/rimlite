@@ -16,7 +16,8 @@ namespace BB
 
     public class SystemMine : GameSystemAsOrders<SystemMine, SystemMine.JobMine>
     {
-        public SystemMine(Game game) : base(game, game.defs.Get<SpriteDef>("BB:MineIcon")) { }
+        public SystemMine(Game game)
+            : base(game, game.defs.Get<SpriteDef>("BB:MineIcon"), "Mine") { }
 
         public override OrdersFlags flags => OrdersFlags.AppliesBuilding | OrdersFlags.AppliesGlobally;
 

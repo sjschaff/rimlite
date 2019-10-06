@@ -196,7 +196,7 @@ namespace BB
 
             public Tilemap(Map map, Transform layout, Material mat, RenderLayer layer, BoundsInt bounds, TM.TileBase[] buffer)
             {
-                var node = new GameObject();
+                var node = new GameObject(typeof(T).Name.Remove(0, 11));
                 node.transform.SetParent(layout, false);
                 tilemap = node.AddComponent<TM.Tilemap>();
                 tilemap.origin = Vec3I.zero;

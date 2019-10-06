@@ -18,7 +18,6 @@ namespace BB
 
         private readonly Image pane;
         private readonly Image img;
-        private readonly Image textBg;
         private readonly Text text;
 
         public ToolbarButton(
@@ -34,21 +33,21 @@ namespace BB
             img.rectTransform.SetFill();
             Gui.AddButton(img.gameObject, fn);
 
-            textBg = Gui.CreateColor(pane.rectTransform, "<text>", offColor);
-            textBg.rectTransform.SetFill();
-            Gui.AddButton(textBg.gameObject, fn);
-
             TextCfg cfg = new TextCfg
             {
                 font = font,
-                fontSize = 40,
-                style = FontStyle.Normal,
-                anchor = TextAnchor.UpperCenter,
+                fontSizeMin = 10,
+                fontSizeMax = 27,
+                autoResize = true,
+                style = FontStyle.Bold,
+                anchor = TextAnchor.LowerCenter,
                 horiWrap = HorizontalWrapMode.Wrap,
                 vertWrap = VerticalWrapMode.Truncate
             };
-            text = Gui.CreateText(textBg.transform, "<text>", cfg);
-            text.rectTransform.SetFill();
+
+            text = Gui.CreateText(img.transform, "<text>", cfg);
+            text.rectTransform.SetFillPartial(
+                new Vec2(0, .08f), new Vec2(1, .48f));
         }
 
         public void SetActive(bool active)
@@ -57,21 +56,17 @@ namespace BB
         public void SetSelected(bool selected)
         {
             pane.color = selected ? onColor : offColor;
-            textBg.color = pane.color;
         }
 
-        public void Configure(string text)
+        public void Configure(Sprite sprite, string text = "", bool bigText = false)
         {
             this.text.text = text;
-            textBg.gameObject.SetActive(true);
-            img.gameObject.SetActive(false);
-        }
-
-        public void Configure(Sprite sprite)
-        {
-            this.img.sprite = sprite;
-            img.gameObject.SetActive(true);
-            textBg.gameObject.SetActive(false);
+            img.color = sprite == null ? offColor : Color.white;
+            img.sprite = sprite;
+            if (bigText)
+                this.text.resizeTextMaxSize = 40;
+            else
+                this.text.resizeTextMaxSize = 27;
         }
 
         public void Reset() => SetSelected(false);
@@ -110,19 +105,19 @@ namespace BB
 
             Color color = new Color(.19f, .19f, .19f);
 
+            Sprite spriteBuild = ctrl.assets.sprites.Get(
+                    ctrl.registry.defs.Get<SpriteDef>("BB:BuildIcon"));
             buildButton = CreateToolbarButton(
                 "Build Button", new Vec2(840, 0),
                 () => ctrl.OnBuildMenu());
-            buildButton.Configure(
-                ctrl.assets.sprites.Get(
-                    ctrl.registry.defs.Get<SpriteDef>("BB:BuildIcon")));
+            buildButton.Configure(spriteBuild, "Build", true);
 
+            Sprite spriteOrders = ctrl.assets.sprites.Get(
+                    ctrl.registry.defs.Get<SpriteDef>("BB:MineIcon"));
             orderButton = CreateToolbarButton(
-                "Order Button", new Vec2(840, 220),
+                "Orders Button", new Vec2(840, 220),
                 () => ctrl.OnOrdersMenu());
-            orderButton.Configure(
-                ctrl.assets.sprites.Get(
-                    ctrl.registry.defs.Get<SpriteDef>("BB:MineIcon")));
+            orderButton.Configure(spriteOrders, "Orders", true);
 
 
             var imageTest = Gui.CreateObject(canvas, "image");

@@ -114,7 +114,7 @@ namespace BB
         }
 
         public override void ConfigureButton(ToolbarButton button, IBuildable buildable)
-            => button.Configure(buildable.name);
+            => button.Configure(null, buildable.name);
 
         public override void OnActivate()
         {
@@ -229,7 +229,8 @@ namespace BB
         }
 
         public override void ConfigureButton(ToolbarButton button, IOrdersGiver orders)
-            => button.Configure(ctrl.assets.sprites.Get(orders.Sprite()));
+            => button.Configure(
+                ctrl.assets.sprites.Get(orders.GuiSprite()), orders.GuiText());
 
         public override void OnActivate()
         {
@@ -290,7 +291,7 @@ namespace BB
                             !selection.HasOrder(tile))
                         {
                             var overlay = ctrl.assets.CreateJobOverlay(
-                                ctrl.game.transform, v, selection.Sprite());
+                                ctrl.game.transform, v, selection.GuiSprite());
                             dragOverlays.Add(v, overlay.transform);
                         }
                     }

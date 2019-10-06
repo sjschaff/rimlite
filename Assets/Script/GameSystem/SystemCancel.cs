@@ -16,7 +16,8 @@ namespace BB
             OrdersFlags.AppliesBuilding |
             OrdersFlags.AppliesGlobally;
 
-        public SpriteDef Sprite() => sprite;
+        public SpriteDef GuiSprite() => sprite;
+        public string GuiText() => "Cancel";
 
         public bool HasOrder(Tile tile) => false;
 

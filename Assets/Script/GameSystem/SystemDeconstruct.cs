@@ -8,7 +8,7 @@ namespace BB
             SystemDeconstruct.JobDeconstruct>
     {
         public SystemDeconstruct(Game game)
-            : base(game, game.defs.Get<SpriteDef>("BB:BuildIcon")) { }
+            : base(game, game.defs.Get<SpriteDef>("BB:BuildIcon"), "Deconstruct") { }
 
         public override OrdersFlags flags =>
             OrdersFlags.AppliesBuilding |

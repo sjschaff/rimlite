@@ -44,9 +44,11 @@ namespace BB
 
     public interface IOrdersGiver
     {
+        SpriteDef GuiSprite();
+        string GuiText();
+
         bool HasOrder(Tile tile);
         void AddOrder(Tile tile);
-        SpriteDef Sprite();
         OrdersFlags flags { get; }
         bool ApplicableToItem(Item item);
         bool ApplicableToBuilding(IBuilding building);

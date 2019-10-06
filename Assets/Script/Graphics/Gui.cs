@@ -19,6 +19,9 @@ namespace BB
         public string text;
         public Font font;
         public int fontSize;
+        public int fontSizeMin;
+        public int fontSizeMax;
+        public bool autoResize;
         public FontStyle style;
         public TextAnchor anchor;
         public HorizontalWrapMode horiWrap;
@@ -28,6 +31,10 @@ namespace BB
         {
             text.font = font;
             text.fontSize = fontSize;
+            text.resizeTextMinSize = fontSizeMin;
+            text.resizeTextMaxSize = fontSizeMax;
+            text.resizeTextForBestFit = autoResize;
+            text.alignByGeometry = autoResize;
             text.fontStyle = style;
             text.alignment = anchor;
             text.horizontalOverflow = horiWrap;
@@ -171,11 +178,17 @@ namespace BB
 
         public static void SetFillWithMargin(this RectTransform rect, float margin)
         {
-            rect.anchorMin = Vec2.zero;
-            rect.anchorMax = new Vec2(1, 1);
-            rect.pivot = Vec2.zero;
+            rect.SetFillPartial(Vec2.zero, Vec2.one);
             rect.offsetMin = new Vec2(margin, margin);
             rect.offsetMax = new Vec2(-margin, -margin);
+        }
+
+        public static void SetFillPartial(this RectTransform rect, Vec2 anchorMin, Vec2 anchorMax)
+        {
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = Vec2.zero;
+            rect.offsetMin = rect.offsetMax = Vec2.zero;
         }
 
         public static void SetSizePivotAnchor(this RectTransform rect, Vec2 size, Vec2 pivot, Vec2 anchor)
