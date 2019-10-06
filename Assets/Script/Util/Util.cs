@@ -4,7 +4,9 @@ using System;
 
 namespace BB
 {
+#if UNITY_EDITOR
     [UnityEditor.InitializeOnLoad]
+#endif
     public static class BB
     {
         static BB()
