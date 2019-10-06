@@ -51,7 +51,6 @@ namespace BB
             => selector.OnManipulatorButton(button);
     }
 
-
     public abstract class ToolSelector<TSelectable, TManip> : UITool
         where TManip : ToolSelectorManipulator<TSelectable, TManip>
     {
@@ -481,39 +480,6 @@ namespace BB
         {
             ClearHighlights();
             base.OnDeactivate();
-        }
-    }
-
-    public abstract class UIToolOLD
-    {
-        protected readonly Game game;
-        protected UIToolOLD(Game game) => this.game = game;
-        public virtual void OnClick(Vec2I pos) { }
-        protected virtual void OnDragStart(RectInt rect) => OnDragUpdate(rect);
-        protected virtual void OnDragUpdate(RectInt rec) { }
-        protected virtual void OnDragEnd(RectInt rect) { }
-    }
-
-    public class ToolControlMinion : UIToolOLD
-    {
-        public ToolControlMinion(Game game) : base(game) { }
-
-        public override void OnClick(Vec2I pos)
-        {
-            if (game.Tile(pos).passable)
-                game.K_MoveMinion(pos);
-        }
-    }
-
-    public class ToolPlace : UIToolOLD
-    {
-        public ToolPlace(Game game) : base(game) { }
-
-        public override void OnClick(Vec2I pos)
-        {
-            //game.ModifyTerrain(pos, new Terrain(game, game.defs.Get<TerrainDef>("BB:Path")));
-            // game.AddBuilding(pos, game.registry.walls.Get(game.defs.Get<BldgWallDef>("BB:StoneBrick"))
-            //     .CreateBuilding());
         }
     }
 }
