@@ -32,25 +32,29 @@ namespace BB
         public virtual void K_OnTab() { }
     }
 
-    public abstract class ToolSelector<TSelectable, TManip> : UITool
-        where TManip : ToolSelector<TSelectable, TManip>.Manipulator
+    public abstract class ToolSelectorManipulator<TSelectable, TManipulator> : UITool
+        where TManipulator : ToolSelectorManipulator<TSelectable, TManipulator>
     {
-        public abstract class Manipulator : UITool
-        {
-            private ToolSelector<TSelectable, TManip> selector;
-            protected TSelectable selection;
+        private ToolSelector<TSelectable, TManipulator> selector;
+        protected TSelectable selection;
 
-            protected Manipulator(GameController ctrl) : base(ctrl) { }
+        protected ToolSelectorManipulator(GameController ctrl)
+            : base(ctrl) { }
 
-            public void Init(ToolSelector<TSelectable, TManip> selector)
-                => this.selector = selector;
+        public void Init(ToolSelector<TSelectable, TManipulator> selector)
+            => this.selector = selector;
 
-            public void Configure(TSelectable selection)
-                => this.selection = selection;
+        public void Configure(TSelectable selection)
+            => this.selection = selection;
 
-            public override void OnButton(int button)
-                => selector.OnManipButton(button);
-        }
+        public override void OnButton(int button)
+            => selector.OnManipulatorButton(button);
+    }
+
+
+    public abstract class ToolSelector<TSelectable, TManip> : UITool
+        where TManip : ToolSelectorManipulator<TSelectable, TManip>
+    {
 
         protected readonly List<TSelectable> selectables;
         private readonly TManip manipulator;
@@ -64,7 +68,7 @@ namespace BB
             manipulator.Init(this);
         }
 
-        private void OnManipButton(int button)
+        public void OnManipulatorButton(int button)
         {
             ctrl.gui.buttons[selection].SetSelected(false);
             OnButton(button);
@@ -102,7 +106,7 @@ namespace BB
         public abstract void ConfigureButton(ToolbarButton button, TSelectable selectable);
     }
 
-    public class ToolBuildSelect : ToolSelector<IBuildable, ToolBuildSelect.ToolBuild>
+    public class ToolBuildSelect : ToolSelector<IBuildable, ToolBuild>
     {
         public ToolBuildSelect(GameController ctrl)
             : base(ctrl, new ToolBuild(ctrl))
@@ -128,96 +132,96 @@ namespace BB
             ctrl.gui.buildButton.SetSelected(false);
             base.OnDeactivate();
         }
-
-        public class ToolBuild : Manipulator
-        {
-            private static readonly Color colorAllowed = new Color(.2f, .6f, .2f);
-            private static readonly Color colorDisallowed = new Color(.6f, .2f, .2f);
-
-            private readonly Line outlineAllow;
-            private readonly Line outlineDisallow;
-
-            private Dir curDir;
-
-            public ToolBuild(GameController ctrl) : base(ctrl)
-            {
-                outlineAllow = ctrl.assets.CreateLine(
-                    ctrl.gui.root, "Build Outline",
-                    RenderLayer.Highlight,
-                    colorAllowed,
-                    1 / 32f, true, false);
-                outlineAllow.enabled = false;
-
-                outlineDisallow = ctrl.assets.CreateLine(
-                    ctrl.gui.root, "Build Outline",
-                    RenderLayer.Highlight,
-                    colorDisallowed,
-                    1 / 32f, true, false);
-                outlineDisallow.enabled = false;
-            }
-
-            public override void OnUpdate(Vec2I mouse)
-            {
-                var bounds = selection.Bounds(curDir);
-                bool valid =
-                    ctrl.game.ValidTile(mouse) && 
-                    ctrl.game.CanPlaceBuilding(bounds.AsRect(mouse));
-                var area = bounds.AsRect(mouse);
-
-                outlineAllow.SetRect(area);
-                outlineAllow.enabled = valid;
-
-                outlineDisallow.SetRect(area);
-                outlineDisallow.enabled = !valid;
-            }
-
-            public override void OnMouseExit()
-            {
-                outlineAllow.enabled = false;
-                outlineDisallow.enabled = false;
-            }
-
-            public override void K_OnTab()
-            {
-                do {
-                    curDir = curDir.NextCW();
-                } while (!selection.AllowedOrientations().Contains(curDir));
-            }
-
-            public override void OnClick(Vec2I pos)
-            {
-                if (ctrl.game.CanPlaceBuilding(selection.Bounds(curDir).AsRect(pos)))
-                {
-                    var tile = ctrl.game.Tile(pos);
-                    SystemBuild.K_instance.CreateBuild(selection, tile, curDir);
-                    //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
-                }
-            }
-
-            public override void OnDragEnd(RectInt rect)
-            {
-                foreach (var v in rect.allPositionsWithin)
-                    OnClick(v);
-            }
-
-            public override void OnActivate()
-            {
-                curDir = selection.AllowedOrientations().First();
-                BB.LogInfo($"Active Build: {selection.GetType().Name}:{curDir}");
-            }
-
-            public override void OnDeactivate()
-            {
-                outlineAllow.enabled = false;
-                outlineDisallow.enabled = false;
-            }
-
-            public override bool IsClickable() => true;
-            public override bool IsDragable() => true;
-        }
     }
 
-    public class ToolOrdersSelect : ToolSelector<IOrdersGiver, ToolOrdersSelect.ToolOrders>
+    public class ToolBuild : ToolSelectorManipulator<IBuildable, ToolBuild>
+    {
+        private static readonly Color colorAllowed = new Color(.2f, .6f, .2f);
+        private static readonly Color colorDisallowed = new Color(.6f, .2f, .2f);
+
+        private readonly Line outlineAllow;
+        private readonly Line outlineDisallow;
+
+        private Dir curDir;
+
+        public ToolBuild(GameController ctrl) : base(ctrl)
+        {
+            outlineAllow = ctrl.assets.CreateLine(
+                ctrl.gui.root, "Build Outline",
+                RenderLayer.Highlight,
+                colorAllowed,
+                1 / 32f, true, false);
+            outlineAllow.enabled = false;
+
+            outlineDisallow = ctrl.assets.CreateLine(
+                ctrl.gui.root, "Build Outline",
+                RenderLayer.Highlight,
+                colorDisallowed,
+                1 / 32f, true, false);
+            outlineDisallow.enabled = false;
+        }
+
+        public override void OnUpdate(Vec2I mouse)
+        {
+            var bounds = selection.Bounds(curDir);
+            bool valid =
+                ctrl.game.ValidTile(mouse) && 
+                ctrl.game.CanPlaceBuilding(bounds.AsRect(mouse));
+            var area = bounds.AsRect(mouse);
+
+            outlineAllow.SetRect(area);
+            outlineAllow.enabled = valid;
+
+            outlineDisallow.SetRect(area);
+            outlineDisallow.enabled = !valid;
+        }
+
+        public override void OnMouseExit()
+        {
+            outlineAllow.enabled = false;
+            outlineDisallow.enabled = false;
+        }
+
+        public override void K_OnTab()
+        {
+            do {
+                curDir = curDir.NextCW();
+            } while (!selection.AllowedOrientations().Contains(curDir));
+        }
+
+        public override void OnClick(Vec2I pos)
+        {
+            if (ctrl.game.CanPlaceBuilding(selection.Bounds(curDir).AsRect(pos)))
+            {
+                var tile = ctrl.game.Tile(pos);
+                SystemBuild.K_instance.CreateBuild(selection, tile, curDir);
+                //game.AddBuilding(pos, curProto.CreateBuilding(curDir));
+            }
+        }
+
+        public override void OnDragEnd(RectInt rect)
+        {
+            foreach (var v in rect.allPositionsWithin)
+                OnClick(v);
+        }
+
+        public override void OnActivate()
+        {
+            curDir = selection.AllowedOrientations().First();
+            BB.LogInfo($"Active Build: {selection.GetType().Name}:{curDir}");
+        }
+
+        public override void OnDeactivate()
+        {
+            outlineAllow.enabled = false;
+            outlineDisallow.enabled = false;
+        }
+
+        public override bool IsClickable() => true;
+        public override bool IsDragable() => true;
+    }
+
+    public class ToolOrdersSelect : ToolSelector<IOrdersGiver, ToolOrders>
     {
         public ToolOrdersSelect(GameController ctrl)
             : base(ctrl, new ToolOrders(ctrl))
@@ -244,80 +248,80 @@ namespace BB
             ctrl.gui.orderButton.SetSelected(false);
             base.OnDeactivate();
         }
+    }
 
-        public class ToolOrders : Manipulator
+    public class ToolOrders : ToolSelectorManipulator<IOrdersGiver, ToolOrders>
+    {
+        private Dictionary<Vec2I, Transform> dragOverlays
+            = new Dictionary<Vec2I, Transform>();
+
+        public ToolOrders(GameController ctrl) : base(ctrl) {}
+
+        public override void OnClick(Vec2I pos)
         {
-            private Dictionary<Vec2I, Transform> dragOverlays
-                = new Dictionary<Vec2I, Transform>();
-
-            public ToolOrders(GameController ctrl) : base(ctrl) {}
-
-            public override void OnClick(Vec2I pos)
-            {
-                // TODO: handle items
-                var tile = ctrl.game.Tile(pos);
-                if (tile.hasBuilding &&
-                    selection.ApplicableToBuilding(tile.building) &&
-                    !selection.HasOrder(tile))
-                    selection.AddOrder(tile);
-            }
-
-            public override void OnDragStart(RectInt rect)
-                => OnDrag(rect);
-
-            public override void OnDrag(RectInt rect)
-            {
-                List<Vec2I> toRemove = new List<Vec2I>();
-                foreach (var kvp in dragOverlays)
-                {
-                    if (!rect.Contains(kvp.Key))
-                    {
-                        kvp.Value.Destroy();
-                        toRemove.Add(kvp.Key);
-                    }
-                }
-
-                foreach (var v in toRemove)
-                    dragOverlays.Remove(v);
-
-                foreach (var v in rect.allPositionsWithin)
-                {
-                    if (!dragOverlays.ContainsKey(v))
-                    {
-                        // TODO: handle items
-                        // TODO: overlays will be a bit wierd for large buildings
-                        // but it should work out
-                        var tile = ctrl.game.Tile(v);
-                        if (tile.hasBuilding && selection.ApplicableToBuilding(tile.building) &&
-                            !selection.HasOrder(tile))
-                        {
-                            var overlay = ctrl.assets.CreateJobOverlay(
-                                ctrl.game.transform, v, selection.GuiSprite());
-                            dragOverlays.Add(v, overlay.transform);
-                        }
-                    }
-                }
-            }
-
-            public override void OnDragEnd(RectInt rect)
-            {
-                foreach (var v in rect.allPositionsWithin)
-                    OnClick(v);
-
-                DestroyDragOverlays();
-            }
-
-            private void DestroyDragOverlays()
-            {
-                foreach (var kvp in dragOverlays)
-                    kvp.Value.Destroy();
-
-                dragOverlays = new Dictionary<Vec2I, Transform>();
-            }
-
-            public override bool IsClickable() => true;
-            public override bool IsDragable() => true;
+            // TODO: handle items
+            var tile = ctrl.game.Tile(pos);
+            if (tile.hasBuilding &&
+                selection.ApplicableToBuilding(tile.building) &&
+                !selection.HasOrder(tile))
+                selection.AddOrder(tile);
         }
+
+        public override void OnDragStart(RectInt rect)
+            => OnDrag(rect);
+
+        public override void OnDrag(RectInt rect)
+        {
+            List<Vec2I> toRemove = new List<Vec2I>();
+            foreach (var kvp in dragOverlays)
+            {
+                if (!rect.Contains(kvp.Key))
+                {
+                    kvp.Value.Destroy();
+                    toRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var v in toRemove)
+                dragOverlays.Remove(v);
+
+            foreach (var v in rect.allPositionsWithin)
+            {
+                if (!dragOverlays.ContainsKey(v))
+                {
+                    // TODO: handle items
+                    // TODO: overlays will be a bit wierd for large buildings
+                    // but it should work out
+                    var tile = ctrl.game.Tile(v);
+                    if (tile.hasBuilding && selection.ApplicableToBuilding(tile.building) &&
+                        !selection.HasOrder(tile))
+                    {
+                        var overlay = ctrl.assets.CreateJobOverlay(
+                            ctrl.game.transform, v, selection.GuiSprite());
+                        dragOverlays.Add(v, overlay.transform);
+                    }
+                }
+            }
+        }
+
+        public override void OnDragEnd(RectInt rect)
+        {
+            foreach (var v in rect.allPositionsWithin)
+                OnClick(v);
+
+            DestroyDragOverlays();
+        }
+
+        private void DestroyDragOverlays()
+        {
+            foreach (var kvp in dragOverlays)
+                kvp.Value.Destroy();
+
+            dragOverlays = new Dictionary<Vec2I, Transform>();
+        }
+
+        public override bool IsClickable() => true;
+        public override bool IsDragable() => true;
     }
 
     public class ToolSelection : UITool
