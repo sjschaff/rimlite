@@ -37,9 +37,7 @@ namespace BB
     public enum OrdersFlags
     {
         None = 0,
-        AppliesItem = 1,
-        AppliesBuilding = 2,
-        AppliesGlobally = 4,
+        AppliesGlobally = 1,
     }
 
     public interface IOrdersGiver

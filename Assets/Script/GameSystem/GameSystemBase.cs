@@ -158,24 +158,9 @@ namespace BB
 
         public SpriteDef GuiSprite() => guiSprite;
         public string GuiText() => guiText;
-
         public override IOrdersGiver orders => this;
-
-        private bool ApplicableErrorCheck(OrdersFlags flag)
-        {
-            if (flags.HasFlag(flag))
-                throw new NotImplementedException();
-            else
-                throw new NotSupportedException();
-        }
-
-        public virtual bool ApplicableToBuilding(IBuilding building)
-            => ApplicableErrorCheck(OrdersFlags.AppliesBuilding);
-
-        public virtual bool ApplicableToItem(Item item)
-            => ApplicableErrorCheck(OrdersFlags.AppliesItem);
-
-
+        public virtual bool ApplicableToBuilding(IBuilding building) => false;
+        public virtual bool ApplicableToItem(Item item) => false;
         public bool HasOrder(Tile tile) => HasJob(tile);
         public void AddOrder(Tile tile) => AddJob(CreateJob(tile));
     }

@@ -12,8 +12,6 @@ namespace BB
             => sprite = game.defs.Get<SpriteDef>("BB:CancelIcon");
 
         public OrdersFlags flags =>
-            OrdersFlags.AppliesItem |
-            OrdersFlags.AppliesBuilding |
             OrdersFlags.AppliesGlobally;
 
         public SpriteDef GuiSprite() => sprite;
@@ -32,7 +30,7 @@ namespace BB
         public bool ApplicableToItem(Item item)
         {
             // TODO: support items
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool ApplicableToBuilding(IBuilding building)

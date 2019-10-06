@@ -11,7 +11,6 @@ namespace BB
             : base(game, game.defs.Get<SpriteDef>("BB:BuildIcon"), "Deconstruct") { }
 
         public override OrdersFlags flags =>
-            OrdersFlags.AppliesBuilding |
             OrdersFlags.AppliesGlobally;
 
         public override bool ApplicableToBuilding(IBuilding building)

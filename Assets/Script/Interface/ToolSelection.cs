@@ -47,22 +47,12 @@ namespace BB
             }
         }
 
-        // TODO: we should just get rid of orders flags
-        // and default AppliesToX can return false
         public bool Applicable(IOrdersGiver orders)
         {
             if (building != null)
-            {
-                if (orders.flags.HasFlag(OrdersFlags.AppliesBuilding))
-                    return orders.ApplicableToBuilding(building);
-            }
+                return orders.ApplicableToBuilding(building);
             else
-            {
-                if (orders.flags.HasFlag(OrdersFlags.AppliesItem))
-                    return orders.ApplicableToItem(item);
-            }
-
-            return false;
+                return orders.ApplicableToItem(item);
         }
     }
 
@@ -138,6 +128,7 @@ namespace BB
         private readonly List<IOrdersGiver> orders;
         private readonly Transform poolRoot;
         private readonly Pool<Highlight> highlights;
+
         private readonly List<Selection> selections;
         private readonly List<IOrdersGiver> ordersCurrent;
 
@@ -165,8 +156,12 @@ namespace BB
             IOrdersGiver orders = ordersCurrent[button];
             foreach (var selection in selections)
             {
-                if (selection.selectable.Applicable(orders))
-                    // TODO: MEGA Kludge
+                // TODO: MEGA Kludge
+                if (selection.selectable.building == null)
+                    return;
+
+                if (selection.selectable.Applicable(orders) &&
+                    !orders.HasOrder(selection.selectable.building.tile))
                     orders.AddOrder(selection.selectable.building.tile);
             }
         }
