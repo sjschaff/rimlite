@@ -18,13 +18,12 @@ namespace BB
             => this.selection = selection;
 
         public override void OnButton(int button)
-            => selector.OnManipulatorButton(button);
+            => selector.OnButton(button);
     }
 
     public abstract class ToolSelector<TSelectable, TManip> : UITool
         where TManip : ToolSelectorManipulator<TSelectable, TManip>
     {
-
         protected readonly List<TSelectable> selectables;
         private readonly TManip manipulator;
         private int selection = -1;
@@ -37,26 +36,28 @@ namespace BB
             manipulator.Init(this);
         }
 
-        public void OnManipulatorButton(int button)
-        {
-            ctrl.gui.buttons[selection].SetSelected(false);
-            OnButton(button);
-        }
-
         public override void OnButton(int button)
         {
+            bool wasSelected = button == selection;
             if (selection >= 0)
                 ctrl.PopTool();
 
-            if (button != selection)
+            if (!wasSelected)
             {
                 selection = button;
                 ctrl.gui.buttons[selection].SetSelected(true);
                 manipulator.Configure(selectables[selection]);
                 ctrl.PushTool(manipulator);
             }
-            else
+        }
+
+        public override void OnUnsuspend()
+        {
+            if (selection != -1)
+            {
+                ctrl.gui.buttons[selection].SetSelected(false);
                 selection = -1;
+            }
         }
 
         public override void OnActivate()

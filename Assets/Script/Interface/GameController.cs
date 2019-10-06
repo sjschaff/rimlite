@@ -49,18 +49,18 @@ namespace BB
             selection = new ToolSelection(this);
         }
 
+        public void ReplaceTool(UITool tool)
+        {
+            PopAll();
+            PushTool(tool);
+        }
+
         public void PushTool(UITool tool)
         {
             // TODO: handle case where we are currently dragging
             activeTool?.OnSuspend();
             activeTools.Push(tool);
             tool.OnActivate();
-        }
-
-        public void ReplaceTool(UITool tool)
-        {
-            PopAll();
-            PushTool(tool);
         }
 
         public void PopTool()

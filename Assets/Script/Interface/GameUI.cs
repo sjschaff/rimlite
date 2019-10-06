@@ -54,6 +54,8 @@ namespace BB
         public void SetSelected(bool selected)
         {
             pane.color = selected ? onColor : offColor;
+            if (img.sprite == null)
+                img.color = pane.color;
         }
 
         public void Configure(Sprite sprite, string text = "", bool bigText = false)
