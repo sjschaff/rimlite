@@ -9,8 +9,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    // TODO: where should this live
-    // TODO: make better
     public class ToolbarButton
     {
         private static readonly Color onColor = new Color(.4f, .4f, .4f);
@@ -72,11 +70,32 @@ namespace BB
         public void Reset() => SetSelected(false);
     }
 
+    // TODO: make better
     public class InfoPane
     {
+        public readonly Image pane;
         public readonly Text header;
 
-        public InfoPane(Text header) => this.header = header;
+        public InfoPane(Transform parent, Vec2 size, Font font)
+        {
+            pane = Gui.CreatePane(
+                parent, "Info Panel", new Color(.19f, .19f, .19f),
+                size, Anchor.BottomLeft, Vec2.zero);
+
+            TextCfg cfg = new TextCfg()
+            {
+                font = font,
+                fontSize = 60,
+                autoResize = false,
+                style = FontStyle.Bold,
+                anchor = TextAnchor.UpperCenter,
+                horiWrap = HorizontalWrapMode.Wrap,
+                vertWrap = VerticalWrapMode.Truncate
+            };
+
+            header = Gui.CreateText(pane.rectTransform, "<header>", cfg);
+            header.rectTransform.SetFillWithMargin(40);
+        }
     }
 
     public class GameUI
@@ -124,20 +143,8 @@ namespace BB
                 () => ctrl.OnOrdersMenu());
             orderButton.Configure(spriteOrders, "Orders", true);
 
-
-            var imageTest = Gui.CreateObject(canvas, "image");
-            imageTest.SetSizePivotAnchor(new Vec2(800, 400), Vec2.zero, Vec2.zero);
-
-            var img = imageTest.gameObject.AddComponent<Image>();
-            img.color = color;
-
-            var selectionText = CreateTextTest(imageTest, Color.red);
-            infoPane = new InfoPane(selectionText);
-
-            var buttonTest = Gui.CreateObject(imageTest, "button");
-            var buttonImage = buttonTest.gameObject.AddComponent<Image>();
-            var button = buttonTest.gameObject.AddComponent<Button>();
-            button.onClick.AddListener(() => BB.LogInfo("clicked"));
+            infoPane = new InfoPane(canvas, new Vec2(800, 400),
+                ctrl.assets.fonts.Get("Arial.ttf"));
 
             /*CreatePane(canvas, "bl", Color.blue, new Vec2(200, 200), Anchor.BottomLeft, new Vec2(40, 40));
             CreatePane(canvas, "bc", Color.blue, new Vec2(200, 200), Anchor.Bottom, new Vec2(40, 40));
@@ -183,34 +190,6 @@ namespace BB
             return new ToolbarButton(
                 canvas, name, pos, new Vec2(180, 180),
                 ctrl.assets.fonts.Get("Arial.ttf"), fn);
-        }
-
-        private Text CreateTextTest(Transform parent, Color? backgroundClr)
-        {
-            var node = Gui.CreateObject(parent, "<text>");
-            node.SetFillWithMargin(40);
-
-            var nodeText = node;
-            if (backgroundClr != null)
-            {
-                var img = node.gameObject.AddComponent<Image>();
-                img.color = (Color)backgroundClr;
-
-                nodeText = Gui.CreateObject(node, "<text>");
-                nodeText.SetFill();
-            }
-
-            var text = nodeText.gameObject.AddComponent<Text>();
-            text.font = ctrl.assets.fonts.Get("Arial.ttf");
-            text.fontSize = 60;
-            text.fontStyle = FontStyle.Bold;
-            text.alignment = TextAnchor.UpperCenter;
-            text.raycastTarget = false;
-            text.supportRichText = false;
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.text = "POOP";
-            return text;
         }
 
         private void CreateInputSink()

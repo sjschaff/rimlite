@@ -31,8 +31,11 @@ namespace BB
         {
             text.font = font;
             text.fontSize = fontSize;
-            text.resizeTextMinSize = fontSizeMin;
-            text.resizeTextMaxSize = fontSizeMax;
+            if (autoResize)
+            {
+                text.resizeTextMinSize = fontSizeMin;
+                text.resizeTextMaxSize = fontSizeMax;
+            }
             text.resizeTextForBestFit = autoResize;
             text.alignByGeometry = autoResize;
             text.fontStyle = style;
