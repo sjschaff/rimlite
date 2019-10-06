@@ -38,7 +38,11 @@ namespace BB
         protected abstract IEnumerable<Work> QueryWorkForJob(TJob job);
 
         public IEnumerable<Work> QueryWork()
-            => jobs.Values.SelectMany(job => QueryWorkForJob(job));
+        {
+            foreach (var job in jobs.Values)
+                foreach (var work in QueryWorkForJob(job))
+                    yield return work;
+        }
 
         protected bool HasJob(Tile tile) => jobs.ContainsKey(tile);
 

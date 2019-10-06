@@ -104,6 +104,7 @@ namespace BB
 
         public void RemoveBuilding(Tile tile)
         {
+            // TODO: cancel outstanding job handles
             BB.Assert(tile.hasBuilding);
 
             bool passable = tile.passable;
@@ -133,6 +134,7 @@ namespace BB
 
         public void ReplaceBuilding(Tile tile, IBuilding building)
         {
+            // TODO: cancel outstanding job handles
             BB.Assert(tile.hasBuilding);
 
             bool passable = tile.passable;
@@ -214,11 +216,12 @@ namespace BB
 
                 if (!minion.hasWork)
                 {
-                    foreach (var work in registry.systems.SelectMany(w => w.QueryWork()))
-                    {
-                        if (minion.AssignWork(work))
-                            break;
-                    }
+                    foreach (var system in registry.systems)
+                        foreach (var work in system.QueryWork())
+                        {
+                            if (minion.AssignWork(work))
+                                break;
+                        }
                 }
             }
 

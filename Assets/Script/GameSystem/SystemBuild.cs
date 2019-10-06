@@ -187,16 +187,20 @@ namespace BB
                             BB.Assert(tile.building == building);
                             building.jobHandles.Remove(this);
                             game.ReplaceBuilding(tile, building.buildProto.CreateBuilding(building.dir));
+
+                            activeWorks.Remove(work);
                             systemTyped.RemoveJob(this);
                         });
                 }
-
-                yield return new TaskLambda(game,
-                    (work) =>
-                    {
-                        activeWorks.Remove(work);
-                        return true;
-                    });
+                else
+                {
+                    yield return new TaskLambda(game,
+                        (work) =>
+                        {
+                            activeWorks.Remove(work);
+                            return true;
+                        });
+                }
             }
 
             public override void Destroy()
@@ -207,6 +211,10 @@ namespace BB
 
                 if (tile.building == building)
                 {
+                    BB.Assert(
+                        building.jobHandles.Count == 0 ||
+                            (building.jobHandles.Count == 1 &&
+                            building.jobHandles.Contains(this)));
                     game.RemoveBuilding(tile);
                     foreach (var mat in building.materials)
                     {

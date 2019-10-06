@@ -27,6 +27,8 @@
                 Item item = game.TakeItem(claim.item, claim.amt);
                 agent.PickupItem(item);
             }
+
+            base.OnEndTask(canceled);
         }
 
         protected override float WorkSpeed() => 1;
