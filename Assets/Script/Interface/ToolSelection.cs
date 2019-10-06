@@ -46,8 +46,25 @@ namespace BB
                     return new RectInt(item.tile.pos, Vec2I.one);
             }
         }
-    }
 
+        // TODO: we should just get rid of orders flags
+        // and default AppliesToX can return false
+        public bool Applicable(IOrdersGiver orders)
+        {
+            if (building != null)
+            {
+                if (orders.flags.HasFlag(OrdersFlags.AppliesBuilding))
+                    return orders.ApplicableToBuilding(building);
+            }
+            else
+            {
+                if (orders.flags.HasFlag(OrdersFlags.AppliesItem))
+                    return orders.ApplicableToItem(item);
+            }
+
+            return false;
+        }
+    }
 
     public class ToolSelection : UITool
     {
@@ -118,9 +135,11 @@ namespace BB
             }
         }
 
+        private readonly List<IOrdersGiver> orders;
         private readonly Transform poolRoot;
         private readonly Pool<Highlight> highlights;
         private readonly List<Selection> selections;
+        private readonly List<IOrdersGiver> ordersCurrent;
 
         public ToolSelection(GameController ctrl)
             : base(ctrl)
@@ -131,6 +150,25 @@ namespace BB
 
             highlights = new Pool<Highlight>(
                 () => new Highlight(ctrl.assets, poolRoot));
+
+            orders = new List<IOrdersGiver>();
+            ordersCurrent = new List<IOrdersGiver>();
+            foreach (var system in ctrl.registry.systems)
+            {
+                if (system.orders != null)
+                    orders.Add(system.orders);
+            }
+        }
+
+        public override void OnButton(int button)
+        {
+            IOrdersGiver orders = ordersCurrent[button];
+            foreach (var selection in selections)
+            {
+                if (selection.selectable.Applicable(orders))
+                    // TODO: MEGA Kludge
+                    orders.AddOrder(selection.selectable.building.tile);
+            }
         }
 
         public void SetSelection(Selectable selectable)
@@ -166,16 +204,8 @@ namespace BB
             }
         }
 
-        public override void OnActivate()
+        private void ConfigureInfoPane()
         {
-            BB.Assert(selections.Count > 0);
-            foreach (var selection in selections)
-            {
-                selection.highlight = highlights.Get();
-                selection.highlight.Enable(selection.selectable.rect);
-            }
-
-
             var first = selections[0].selectable;
             DefNamed def = first.def;
             bool isItem = first.item != null;
@@ -206,12 +236,42 @@ namespace BB
                     text += $" x{selections.Count}";
             }
             ctrl.gui.infoPane.header.text = text;
+        }
+
+        public override void OnActivate()
+        {
+            BB.Assert(selections.Count > 0);
+            foreach (var selection in selections)
+            {
+                selection.highlight = highlights.Get();
+                selection.highlight.Enable(selection.selectable.rect);
+            }
+
+            ConfigureInfoPane();
+
+            foreach (IOrdersGiver orders in orders)
+            {
+                foreach (var selection in selections)
+                {
+                    if (selection.selectable.Applicable(orders))
+                    {
+                        ordersCurrent.Add(orders);
+                        break;
+                    }
+                }
+            }
+
+            ctrl.gui.ShowToolbarButtons(ordersCurrent.Count);
+            for (int i = 0; i < ordersCurrent.Count; ++i)
+                ctrl.gui.buttons[i].Configure(ctrl.assets, ordersCurrent[i]);
 
             base.OnActivate();
         }
 
         public override void OnDeactivate()
         {
+            ctrl.gui.HideToolbarButtons();
+            ordersCurrent.Clear();
             ClearHighlights();
             base.OnDeactivate();
         }

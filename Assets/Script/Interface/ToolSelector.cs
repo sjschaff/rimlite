@@ -62,7 +62,7 @@ namespace BB
 
         public override void OnActivate()
         {
-            ctrl.gui.ShowBuildButtons(selectables.Count);
+            ctrl.gui.ShowToolbarButtons(selectables.Count);
             for (int i = 0; i < selectables.Count; ++i)
                 ConfigureButton(ctrl.gui.buttons[i], selectables[i]);
         }
@@ -70,7 +70,7 @@ namespace BB
         public override void OnDeactivate()
         {
             selection = -1;
-            ctrl.gui.HideBuildButtons();
+            ctrl.gui.HideToolbarButtons();
         }
 
         public abstract void ConfigureButton(ToolbarButton button, TSelectable selectable);

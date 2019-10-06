@@ -12,14 +12,13 @@ namespace BB
         {
             foreach (var system in ctrl.registry.systems)
             {
-                if (system.orders != null)
+                if (system.orders != null && system.orders.flags.HasFlag(OrdersFlags.AppliesGlobally))
                     selectables.Add(system.orders);
             }
         }
 
         public override void ConfigureButton(ToolbarButton button, IOrdersGiver orders)
-            => button.Configure(
-                ctrl.assets.sprites.Get(orders.GuiSprite()), orders.GuiText());
+            => button.Configure(ctrl.assets, orders);
 
         public override void OnActivate()
         {

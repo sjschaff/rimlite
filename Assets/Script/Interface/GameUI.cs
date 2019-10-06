@@ -69,6 +69,9 @@ namespace BB
                 this.text.resizeTextMaxSize = 27;
         }
 
+        public void Configure(AssetSrc assets, IOrdersGiver orders)
+            => Configure(assets.sprites.Get(orders.GuiSprite()), orders.GuiText());
+
         public void Reset() => SetSelected(false);
     }
 
@@ -159,13 +162,13 @@ namespace BB
             CreatePane(canvas, "tr", Color.blue, new Vec2(200, 200), Anchor.TopRight, new Vec2(40, 40));*/
         }
 
-        public void HideBuildButtons()
+        public void HideToolbarButtons()
         {
             foreach (var btn in buttons)
                 btn.SetActive(false);
         }
 
-        public void ShowBuildButtons(int count)
+        public void ShowToolbarButtons(int count)
         {
             for (int i = 0; i < count; ++i)
             {
