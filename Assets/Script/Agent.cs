@@ -36,7 +36,7 @@ namespace BB
 #endif
             this.game = game;
             transform = new GameObject(nodeName).transform;
-            transform.SetParent(game.transform, false);
+            transform.SetParent(game.agentContainer, false);
             realPos = pos;
         }
 
@@ -86,7 +86,7 @@ namespace BB
             return ret;
         }
 
-        public void DropItem() => game.DropItem(pos, RemoveItem());
+        public void DropItem() => game.DropItem(game.Tile(pos), RemoveItem());
 
         public void Update(float deltaTime)
         {

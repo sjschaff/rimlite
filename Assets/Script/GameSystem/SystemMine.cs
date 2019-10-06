@@ -68,7 +68,7 @@ namespace BB
 
                         game.RemoveBuilding(mineable);
                         foreach (ItemInfo item in mineable.GetMinedMaterials())
-                            game.DropItem(tile.pos, item);
+                            game.DropItem(tile, item);
                     }
                 );
             }

@@ -81,9 +81,10 @@ namespace BB
         Oversized = 2,
     }
 
-    public interface IBuilding : ISelectable
+    public interface IBuilding
     {
         Tile tile { get; }
+        DefNamed def { get; }
         IBuildingProto prototype { get; }
         HashSet<JobHandle> jobHandles { get; }
 
@@ -119,7 +120,6 @@ namespace BB
 
         public abstract Dir dir { get; }
 
-        public Vec2I pos => tile.pos;
         public virtual DefNamed def => proto.buildingDef;
         public virtual bool passable => proto.passable;
         public virtual RectInt bounds => proto.Bounds(Dir.Down).AsRect(tile);

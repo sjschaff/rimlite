@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 using static UnityEngine.EventSystems.PointerEventData;
@@ -137,18 +138,9 @@ namespace BB
                 if (game.ValidTile(pos))
                 {
                     if (activeTool != null && activeTool.IsClickable())
-                    {
                         activeTool.OnClick(pos);
-                    }
                     else
-                    {
-                        // TODO: items/minions
-                        var tile = game.Tile(pos);
-                        if (tile.hasBuilding)
-                        {
-                            selection.SetSelection(tile.building);
-                        }
-                    }
+                        selection.SetSelection(SelectTile(pos).ToList());
                 }
             }
             else if (button == InputButton.Right)
@@ -157,14 +149,23 @@ namespace BB
             }
         }
 
-        private IEnumerable<ISelectable> SelectDrag(Vec2 dragEnd)
+        private IEnumerable<Selectable> SelectTile(Vec2I pos)
+        {
+            // TODO: select minions
+            var tile = game.Tile(pos);
+            if (tile.hasBuilding)
+                yield return new Selectable(tile.building);
+            if (tile.hasItems)
+                yield return new Selectable(tile.item);
+        }
+
+        private IEnumerable<Selectable> SelectDrag(Vec2 dragEnd)
         {
             var area = DragRect(dragEnd);
             foreach (var pos in area.allPositionsWithin)
             {
-                var tile = game.Tile(pos);
-                if (tile.hasBuilding)
-                    yield return tile.building;
+                foreach (var selectable in SelectTile(pos))
+                    yield return selectable;
             }
         }
 
@@ -232,7 +233,7 @@ namespace BB
                 if (activeTool != null && activeTool.IsDragable())
                     activeTool.OnDragEnd(DragRect(pos));
                 else
-                    selection.SetSelection(SelectDrag(pos));
+                    selection.SetSelection(SelectDrag(pos).ToList());
 
                 gui.dragOutline.enabled = false;
             }

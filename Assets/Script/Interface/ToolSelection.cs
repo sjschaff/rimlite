@@ -7,8 +7,51 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public struct Selectable
+    {
+        public readonly IBuilding building;
+        public readonly Item item;
+        // TODO: agents
+
+        private Selectable(IBuilding building, Item item)
+        {
+            this.building = building;
+            this.item = item;
+        }
+
+        public Selectable(IBuilding building)
+            : this(building, null) { }
+
+        public Selectable(Item item)
+            : this(null, item) { }
+
+        public DefNamed def
+        {
+            get
+            {
+                if (building != null)
+                    return building.def;
+                else
+                    return item.def;
+            }
+        }
+
+        public RectInt rect
+        {
+            get
+            {
+                if (building != null)
+                    return building.bounds;
+                else
+                    return new RectInt(item.tile.pos, Vec2I.one);
+            }
+        }
+    }
+
+
     public class ToolSelection : UITool
     {
+        #region Vis
         private class Highlight
         {
             private static readonly Vec2[] ptsBL = new Vec2[]
@@ -61,14 +104,14 @@ namespace BB
             public void Disable()
                 => bl.enabled = br.enabled = tr.enabled = tl.enabled = false;
         }
-
+        #endregion
 
         private class Selection
         {
-            public readonly ISelectable selectable;
+            public readonly Selectable selectable;
             public Highlight highlight;
 
-            public Selection(ISelectable selectable)
+            public Selection(Selectable selectable)
             {
                 this.selectable = selectable;
                 this.highlight = null;
@@ -90,7 +133,7 @@ namespace BB
                 () => new Highlight(ctrl.assets, poolRoot));
         }
 
-        public void SetSelection(ISelectable selectable)
+        public void SetSelection(Selectable selectable)
         {
             ClearHighlights();
             selections.Clear();
@@ -98,8 +141,11 @@ namespace BB
             ctrl.ReplaceTool(this);
         }
 
-        public void SetSelection(IEnumerable<ISelectable> selectables)
+        public void SetSelection(List<Selectable> selectables)
         {
+            if (selectables.Count == 0)
+                return;
+
             ClearHighlights();
             selections.Clear();
             foreach (var selectable in selectables)
@@ -109,7 +155,6 @@ namespace BB
 
         private void ClearHighlights()
         {
-            BB.LogInfo("clearing highlights");
             foreach (var selection in selections)
             {
                 if (selection.highlight != null)
@@ -127,35 +172,40 @@ namespace BB
             foreach (var selection in selections)
             {
                 selection.highlight = highlights.Get();
-
-                RectInt rect;
-                if (selection.selectable is IBuilding building) // TODO: jank
-                    rect = building.bounds;
-                else
-                    rect = new RectInt(selection.selectable.pos, Vec2I.one);
-                selection.highlight.Enable(rect);
+                selection.highlight.Enable(selection.selectable.rect);
             }
 
-            if (selections.Count == 1)
+
+            var first = selections[0].selectable;
+            DefNamed def = first.def;
+            bool isItem = first.item != null;
+            bool allSame = true;
+            int itemCount = 0;
+            foreach (Selection selection in selections)
             {
-                ctrl.gui.infoPane.header.text = selections[0].selectable.def.name;
+                if (selection.selectable.def != def)
+                {
+                    allSame = false;
+                    break;
+                }
+
+                if (isItem)
+                    itemCount += selection.selectable.item.amt;
+
+            }
+
+            string text;
+            if (allSame && isItem)
+            {
+                text = $"{def.name} x{itemCount}";
             }
             else
             {
-                DefNamed def = selections[0].selectable.def;
-                bool allSame = true;
-                foreach (Selection selection in selections)
-                {
-                    if (selection.selectable.def != def)
-                    {
-                        allSame = false;
-                        break;
-                    }
-                }
-
-                string name = allSame ? def.name : "Various";
-                ctrl.gui.infoPane.header.text = $"{name}x{selections.Count}";
+                text = allSame ? def.name : "Various";
+                if (selections.Count > 1)
+                    text += $" x{selections.Count}";
             }
+            ctrl.gui.infoPane.header.text = text;
 
             base.OnActivate();
         }

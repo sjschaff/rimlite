@@ -44,13 +44,14 @@ namespace BB
         public Defs defs => registry.defs;
         public Vec2I size => map.size;
 
-        // TODO: be more organized about where we 
-        // our game objects
-        public Transform transform;
+        private readonly Transform gameContainer;
+        public readonly Transform itemContainer;
+        public readonly Transform agentContainer;
+        public readonly Transform workOverlays;
 
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
         private readonly Minion D_minionNoTask;
-        private readonly LinkedList<Item> items = new LinkedList<Item>();
+        private readonly LinkedList<Item> _items = new LinkedList<Item>();
 
         public Game(Registry registry, AssetSrc assets)
         {
@@ -59,7 +60,10 @@ namespace BB
             // TODO: initialization order is getting wonky
             registry.LoadTypes(this);
 
-            transform = new GameObject("Game").transform;
+            gameContainer = new GameObject("Game").transform;
+            itemContainer = CreateContainer("Items");
+            agentContainer = CreateContainer("Agents");
+            workOverlays = CreateContainer("Work Overlays");
 
             map = new Map(this);
             map.InitDebug(new Vec2I(128, 128));
@@ -67,6 +71,13 @@ namespace BB
             for (int i = 0; i < 10; ++i)
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
             D_minionNoTask = minions.First.Value;
+        }
+
+        private Transform CreateContainer(string name)
+        {
+            var container = new GameObject(name).transform;
+            container.SetParent(gameContainer, false);
+            return container;
         }
 
         public bool ValidTile(Vec2I pos) => map.ValidTile(pos);
@@ -97,7 +108,7 @@ namespace BB
 
         public IEnumerable<Item> FindItems(ItemDef def)
         {
-            foreach (Item item in items)
+            foreach (Item item in _items)
                 if (item.def == def)
                     yield return item;
         }
@@ -157,26 +168,30 @@ namespace BB
         }
 
         // TODO: make this DropItems so we can do fast flood fill in O(n)
-        public void DropItem(Vec2I pos, Item item)
+        public void DropItem(Tile tile, Item item)
         {
             BB.AssertNotNull(item);
-            item.ReParent(transform, pos);
-            item.Place(pos);
+            BB.AssertNull(item.tile);
+            BB.Assert(!tile.hasItems); // TODO: deal with this
+            item.ReParent(tile);
             item.Configure(Item.Config.Ground);
-            items.AddLast(item);
+            _items.AddLast(item);
+            map.PlaceItem(tile, item);
         }
 
-        public void DropItem(Vec2I pos, ItemInfo info) => DropItem(pos, new Item(this, pos, info));
+        public void DropItem(Tile tile, ItemInfo info) => DropItem(tile, new Item(this, info));
 
         public Item TakeItem(Item item, int amt)
         {
             BB.AssertNotNull(item);
+            BB.AssertNotNull(item.tile);
             BB.Assert(item.amtAvailable >= amt);
-            BB.Assert(items.Contains(item));
+            BB.Assert(_items.Contains(item));
 
             if (amt == item.amt)
             {
-                items.Remove(item);
+                _items.Remove(item);
+                map.RemoveItem(item);
                 return item;
             }
             else

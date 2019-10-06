@@ -22,31 +22,29 @@ namespace BB
         public ItemInfo WithNewAmount(int amt) => new ItemInfo(def, amt);
     }
 
-    public class Item : ISelectable
+    // TODO: this needs a fat re-design
+    public class Item
     {
         public readonly Game game;
         private readonly GameObject gameObject;
         private readonly SpriteRenderer spriteRenderer;
         private readonly Text text;
+        public Tile tile { get; private set; }
 
-        public Vec2I pos { get; private set; }
         public ItemInfo info { get; private set; }
         private int amtClaimed;
         public int amtAvailable => info.amt - amtClaimed;
         public int amt => info.amt;
         public ItemDef def => info.def;
-        DefNamed ISelectable.def => info.def;
 
-        public Item(Game game, Vec2I pos, ItemInfo info)
+        public Item(Game game, ItemInfo info)
         {
             BB.Assert(info.amt > 0);
             this.game = game;
-            this.pos = pos;
             this.info = info;
             this.amtClaimed = 0;
 
             gameObject = new GameObject("Item:" + info.def.defName);
-            ReParent(game.transform, pos);
 
             spriteRenderer = game.assets.CreateSpriteObject(
                 gameObject.transform, new Vec2(.5f, .5f), "icon",
@@ -94,10 +92,22 @@ namespace BB
             UpdateText();
         }
 
-        public void ReParent(Transform parent, Vec2 pos)
+        private void ReParentInternal(Transform parent, Vec2 pos)
         {
             gameObject.transform.parent = parent;
             gameObject.transform.localPosition = pos;
+        }
+
+        public void ReParent(Transform parent, Vec2 pos)
+        {
+            ReParentInternal(parent, pos);
+            tile = null;
+        }
+
+        public void ReParent(Tile tile)
+        {
+            ReParentInternal(game.itemContainer, tile.pos);
+            this.tile = tile;
         }
 
         public void Destroy() => gameObject.Destroy();
@@ -126,7 +136,7 @@ namespace BB
         public Item Split(int amt)
         {
             Remove(amt);
-            return new Item(game, pos, new ItemInfo(def, amt));
+            return new Item(game, new ItemInfo(def, amt));
         }
 
         public enum Config { Ground, PlayerAbove, PlayerBelow }
@@ -151,7 +161,5 @@ namespace BB
         }
 
         private void UpdateText() => text.text = info.amt.ToString();
-
-        public void Place(Vec2I pos) => this.pos = pos;
     }
 }

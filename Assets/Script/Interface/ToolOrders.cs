@@ -81,7 +81,7 @@ namespace BB
                         !selection.HasOrder(tile))
                     {
                         var overlay = ctrl.assets.CreateJobOverlay(
-                            ctrl.game.transform, v, selection.GuiSprite());
+                            ctrl.game.workOverlays, v, selection.GuiSprite());
                         dragOverlays.Add(v, overlay.transform);
                     }
                 }

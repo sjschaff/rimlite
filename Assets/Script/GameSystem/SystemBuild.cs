@@ -96,7 +96,7 @@ namespace BB
                                 if (item.amtAvailable > 0)
                                     queue.Enqueue(
                                         new ItemPriority(item),
-                                        Vec2.Distance(item.pos, tile.pos) / (float)mat.HaulAmount(item));
+                                        Vec2.Distance(item.tile.pos, tile.pos) / mat.HaulAmount(item));
                             }
 
                             if (queue.Count == 0)
@@ -116,7 +116,7 @@ namespace BB
                                     return new Work.ClaimLambda(() => mat.amtClaimed -= haulAmt);
                                 }), out var claimHaul);
                             yield return Capture(new TaskClaimItem(game, itemHaul, haulAmt), out var claimItem);
-                            yield return new TaskGoTo(game, PathCfg.Point(itemHaul.pos));
+                            yield return new TaskGoTo(game, PathCfg.Point(itemHaul.tile.pos));
                             yield return new TaskPickupItem(claimItem);
                             yield return new TaskGoTo(game, PathCfg.Area(area));
                             yield return new TaskLambda(game,
@@ -130,7 +130,7 @@ namespace BB
                                     if (item.amt > haulAmt)
                                     {
                                         item.Remove(haulAmt);
-                                        game.DropItem(work.agent.pos, item);
+                                        game.DropItem(game.Tile(work.agent.pos), item);
                                     }
                                     else
                                     {
@@ -225,7 +225,7 @@ namespace BB
                     {
                         if (mat.amtStored > 0)
                             game.DropItem(
-                                tile.pos,
+                                tile,
                                 new ItemInfo(mat.info.def, mat.amtStored));
                     }
                 }

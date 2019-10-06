@@ -133,7 +133,7 @@ namespace BB
             public JobHandleOrders(TThis orders, Tile tile)
                 : base(orders, tile)
                 => overlay = game.assets.CreateJobOverlay(
-                    game.transform, tile.pos, orders.guiSprite).transform;
+                    game.workOverlays, tile.pos, orders.guiSprite).transform;
 
             public override void Destroy()
             {

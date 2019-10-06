@@ -57,7 +57,7 @@ namespace BB
                         building.jobHandles.Remove(this);
                         game.RemoveBuilding(building);
                         foreach (var item in buildable.GetBuildMaterials())
-                            game.DropItem(tile.pos, item);
+                            game.DropItem(tile, item);
                     });
             }
         }

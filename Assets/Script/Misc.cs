@@ -37,10 +37,4 @@ namespace BB
             }
         }
     }
-
-    public interface ISelectable
-    {
-        DefNamed def { get; }
-        Vec2I pos { get; }
-    }
 }

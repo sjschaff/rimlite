@@ -36,6 +36,9 @@ namespace BB
                 return tile.bldgMain;
             }
         }
+
+        public bool hasItems => tile.item != null;
+        public Item item => tile.item;
     }
 
     public class Map
@@ -47,6 +50,9 @@ namespace BB
             public Terrain terrain;
             public IBuilding bldgMain;
             public BBTile bldgAdj;
+
+            // TODO: maybe support multiple items
+            public Item item;
 
             public BBTile(Vec2I pos) => handle = new Tile(this, pos);
 
@@ -159,6 +165,19 @@ namespace BB
         {
             Tile(tile.pos).terrain = terrain;
             tiler.UpdateTerrain(tile.pos);
+        }
+
+        public void PlaceItem(Tile tile, Item item)
+        {
+            BB.Assert(!tile.hasItems);
+            Tile(tile.pos).item = item;
+        }
+
+        public void RemoveItem(Item item)
+        {
+            BB.AssertNotNull(item.tile);
+            BB.Assert(item == item.tile.item);
+            Tile(item.tile.pos).item = null;
         }
 
         private void GetPath(Vec2I start, Vec2I end)
