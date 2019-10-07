@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -10,52 +7,10 @@ namespace BB
     public class BuildingConstruction : BuildingBase<IBuildingProto>
     {
         public readonly BldgConstructionDef conDef;
-
         public override Dir dir { get; }
 
-        // All stuff used by JobBuild
-        // TODO: this whole file should prob be moved to BuildSystem
-        public readonly List<MaterialInfo> materials;
         public bool constructionBegan;
         public float constructionPercent; // or some such thing...
-        public bool hasBuilder;
-
-        public class MaterialInfo
-        {
-            public readonly ItemInfo info;
-            public int amtStored;
-            public int amtClaimed;
-
-            public int amtRemaining => info.amt - amtStored;
-            public int haulRemaining => amtRemaining - amtClaimed;
-
-            public MaterialInfo(ItemInfo info)
-            {
-                this.info = info;
-                this.amtStored = this.amtClaimed = 0;
-            }
-
-            public int HaulAmount(Item item) => Math.Min(haulRemaining, item.amtAvailable);
-        }
-
-
-        public bool HasAvailableHauls()
-        {
-            foreach (var info in materials)
-                if (info.haulRemaining > 0)
-                    return true;
-
-            return false;
-        }
-
-        public bool HasAllMaterials()
-        {
-            foreach (var info in materials)
-                if (info.amtRemaining != 0)
-                    return false;
-
-            return true;
-        }
 
         public BuildingConstruction(BldgConstructionDef def, Tile tile, Dir dir)
             : base(null, tile)
@@ -64,9 +19,6 @@ namespace BB
             this.dir = dir;
             constructionBegan = false;
             constructionPercent = 0;
-            materials = new List<MaterialInfo>(
-                conDef.proto.GetBuildMaterials()
-                .Select(i => new MaterialInfo(i)));
         }
 
         public override DefNamed def => conDef;

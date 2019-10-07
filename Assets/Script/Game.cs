@@ -51,7 +51,7 @@ namespace BB
 
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
         private readonly Minion D_minionNoTask;
-        private readonly LinkedList<Item> _items = new LinkedList<Item>();
+        private readonly LinkedList<Item> items = new LinkedList<Item>();
 
         public Game(Registry registry, AssetSrc assets)
         {
@@ -108,7 +108,7 @@ namespace BB
 
         public IEnumerable<Item> FindItems(ItemDef def)
         {
-            foreach (Item item in _items)
+            foreach (Item item in items)
                 if (item.def == def)
                     yield return item;
         }
@@ -176,7 +176,7 @@ namespace BB
 
             item.ReParent(tile);
             item.Configure(Item.Config.Ground);
-            _items.AddLast(item);
+            items.AddLast(item);
             map.PlaceItem(tile, item);
         }
 
@@ -240,16 +240,35 @@ namespace BB
             }
         }
 
-        public Item TakeItem(Item item, int amt)
+        public ItemQuery QueryItems(ItemQueryCfg cfg)
+        {
+            // TODO: interesting things
+            return new ItemQuery(new QueryUpdater(this, cfg));
+        }
+
+        public void UnregisterItemQuery(QueryUpdater query)
+        {
+            // TODO: undo interesting things
+        }
+
+
+        // TODO: move item claiming here
+        public Work.IClaim ClaimItem(Item item)
+        {
+            return null;
+        }
+
+        // TODO: make this better
+        public Item ResolveClaim(Item item, int amt)
         {
             BB.AssertNotNull(item);
             BB.AssertNotNull(item.tile);
             BB.Assert(item.amtAvailable >= amt);
-            BB.Assert(_items.Contains(item));
+            BB.Assert(items.Contains(item));
 
             if (amt == item.amt)
             {
-                _items.Remove(item);
+                items.Remove(item);
                 map.RemoveItem(item);
                 return item;
             }

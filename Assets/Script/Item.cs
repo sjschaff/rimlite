@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using Priority_Queue;
 using UnityEngine;
 using UnityEngine.UI;
 
 using Vec2 = UnityEngine.Vector2;
-using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
@@ -20,6 +21,98 @@ namespace BB
         }
 
         public ItemInfo WithAmount(int amt) => new ItemInfo(def, amt);
+    }
+
+    // TODO: query params
+
+    public struct ItemQueryCfg
+    {
+        public readonly ItemDef def;
+        public readonly PathCfg dst;
+
+        public ItemQueryCfg(ItemDef def, PathCfg dst)
+        {
+            this.def = def;
+            this.dst = dst;
+        }
+    }
+
+    public class QueryUpdater
+    {
+        public readonly Game game;
+        private readonly ItemQueryCfg cfg;
+
+        private class ItemPriority : FastPriorityQueueNode
+        {
+            public readonly Item item;
+            public ItemPriority(Item item) => this.item = item;
+        }
+
+        // This is the janky part
+        private FastPriorityQueue<ItemPriority> lastSearch;
+
+        public QueryUpdater(Game game, ItemQueryCfg cfg)
+        {
+            this.game = game;
+            this.cfg = cfg;
+        }
+
+        // TODO: this shouldnt prob need amt? could go either way
+        public bool HasAvailable(int amt)
+        {
+            lastSearch = null;
+            var items = new List<Item>(game.FindItems(cfg.def));
+            if (items.Count == 0)
+                return false;
+
+            // TODO: make this more general, move somewhere useful
+            var queue = new FastPriorityQueue<ItemPriority>(items.Count);
+            foreach (Item item in items)
+            {
+                if (item.amtAvailable > 0)
+                    queue.Enqueue(
+                        new ItemPriority(item),
+                        cfg.dst.hueristicFn(item.tile.pos) / HaulAmt(item, amt));
+            }
+
+            if (queue.Count == 0)
+                return false;
+
+            lastSearch = queue;
+            return true;
+        }
+
+        private int HaulAmt(Item item, int amt) => Math.Min(amt, item.amtAvailable);
+
+        public Work.ItemClaim ClaimBest(int amt)
+        {
+            if (lastSearch == null)
+                return null;
+
+            Item itemHaul = lastSearch.Dequeue().item;
+            if (itemHaul.amtAvailable > 0)
+                return new Work.ItemClaim(itemHaul, HaulAmt(itemHaul, amt));
+
+            return null;
+        }
+    }
+
+
+    public class ItemQuery
+    {
+        private readonly QueryUpdater query;
+
+        public ItemQuery(QueryUpdater query)
+        {
+            BB.AssertNotNull(query);
+            this.query = query;
+        }
+
+        public bool HasAvailable(int amt) => query.HasAvailable(amt);
+        public void Close() => query.game.UnregisterItemQuery(query);
+
+        public TaskClaim<Work.ItemClaim> TaskClaim(int amt)
+            => new TaskClaim<Work.ItemClaim>(query.game, (work) => query.ClaimBest(amt));
     }
 
     // TODO: this needs a fat re-design

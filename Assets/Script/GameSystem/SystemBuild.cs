@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Priority_Queue;
-
-using Vec2 = UnityEngine.Vector2;
 
 namespace BB
 {
@@ -36,9 +33,13 @@ namespace BB
 
         public class JobBuild : JobStandard<SystemBuild, JobBuild>
         {
-           private readonly HashSet<Work> activeWorks = new HashSet<Work>();
-           private readonly BuildingConstruction building;
-           private readonly RectInt area;
+            private readonly HashSet<Work> activeWorks = new HashSet<Work>();
+            private readonly BuildingConstruction building;
+            private readonly RectInt area;
+
+            // Build State
+            private readonly List<HaulProvider> hauls;
+            private bool hasBuilder;
 
             public JobBuild(SystemBuild build, BldgConstructionDef def, Tile tile, Dir dir)
                 : base(build, tile)
@@ -48,158 +49,148 @@ namespace BB
 
                 building.jobHandles.Add(this);
                 game.AddBuilding(building);
+
+                hauls = new List<HaulProvider>();
+                PathCfg dst = PathCfg.Area(area);
+                hauls = def.proto.GetBuildMaterials().Select(
+                    item => new HaulProvider(build.game, dst, item)).ToList();
             }
 
-            private class ItemPriority : FastPriorityQueueNode
+            private Work.IClaim ClaimBuild()
             {
-                public readonly Item item;
-                public ItemPriority(Item item) => this.item = item;
+                if (hasBuilder)
+                    return null;
+
+                hasBuilder = true;
+                return new Work.ClaimLambda(() => hasBuilder = false);
             }
 
             public override IEnumerable<Work> QueryWork()
             {
-                if (building.HasAvailableHauls() ||
-                    (building.HasAllMaterials() && !building.hasBuilder))
-                    yield return new Work(this, GetTasks());
+                // Already building
+                if (hasBuilder)
+                    yield break;
+
+                // Ready to build
+                if (HasAllMaterials())
+                    yield return new Work(this, GetBuildWork());
+
+                // Ready to haul and build
+                if (AllMaterialsAvailable())
+                    yield return new Work(this, GetHaulAndBuildWork());
+
+                // Hauls only
+                foreach (var haul in hauls)
+                    if (haul.HasAvailableHauls())
+                        yield return new Work(this, GetHaulWork(haul));
             }
 
-            public IEnumerable<Task> GetTasks()
+            private bool HasAvailableHauls(out HaulProvider haulAvailable)
             {
-                yield return new TaskLambda(game,
-                    (work) =>
+                haulAvailable = null;
+                foreach (var haul in hauls)
+                    if (haul.HasAvailableHauls())
                     {
-                        activeWorks.Add(work);
+                        haulAvailable = haul;
                         return true;
-                    });
-
-                while (building.HasAvailableHauls())
-                {
-                    bool foundNothing = true;
-                    foreach (var mat in building.materials)
-                    {
-                        if (mat.haulRemaining > 0)
-                        {
-                            var items = new List<Item>(game.FindItems(mat.info.def));
-                            if (items.Count == 0)
-                                continue;
-
-                            // TODO: make this more general, move somewhere useful
-                            var queue = new FastPriorityQueue<ItemPriority>(items.Count);
-                            foreach (Item item in items)
-                            {
-                                if (item.amtAvailable > 0)
-                                    queue.Enqueue(
-                                        new ItemPriority(item),
-                                        Vec2.Distance(item.tile.pos, tile.pos) / mat.HaulAmount(item));
-                            }
-
-                            if (queue.Count == 0)
-                                continue;
-
-                            foundNothing = false;
-                            Item itemHaul = queue.Dequeue().item;
-                            int haulAmt = mat.HaulAmount(itemHaul);
-                            yield return Capture(new TaskClaim(game,
-                                (work) =>
-                                {
-                                    // This really should never happen
-                                    if (mat.haulRemaining < haulAmt)
-                                        return null;
-
-                                    mat.amtClaimed += haulAmt;
-                                    return new Work.ClaimLambda(() => mat.amtClaimed -= haulAmt);
-                                }), out var claimHaul);
-                            yield return Capture(new TaskClaimItem(game, itemHaul, haulAmt), out var claimItem);
-                            yield return new TaskGoTo(game, PathCfg.Point(itemHaul.tile.pos));
-                            yield return new TaskPickupItem(claimItem);
-                            yield return new TaskGoTo(game, PathCfg.Area(area));
-                            yield return new TaskLambda(game,
-                                (work) =>
-                                {
-                                    if (!work.agent.carryingItem)
-                                        return false;
-
-                                    Item item = work.agent.RemoveItem();
-                                    int amt = haulAmt;
-                                    if (item.amt > haulAmt)
-                                    {
-                                        item.Remove(haulAmt);
-                                        game.K_DropItem(game.Tile(work.agent.pos), item);
-                                    }
-                                    else
-                                    {
-                                        if (item.amt < haulAmt)
-                                            amt = item.amt;
-                                        item.Destroy();
-                                    }
-
-                                    work.Unclaim(claimHaul);
-                                    mat.amtStored += item.amt;
-                                    return true;
-                                });
-                        }
                     }
 
-                    if (foundNothing)
-                        break;
+                return false;
+            }
+
+            private bool AllMaterialsAvailable()
+            {
+                foreach (var haul in hauls)
+                    if (!haul.HasAllMaterials() && !haul.HasAvailableHauls())
+                        return false;
+
+                return true;
+            }
+
+            private bool HasAllMaterials()
+            {
+                foreach (var haul in hauls)
+                    if (!haul.HasAllMaterials())
+                        return false;
+
+                return true;
+            }
+
+            private Task TaskBegin()
+                => new TaskLambda(game, (work) => activeWorks.Add(work));
+            private Task TaskEnd()
+                => new TaskLambda(game, (work) => activeWorks.Remove(work));
+
+            private IEnumerable<Task> GetHaulWork(HaulProvider haul)
+                => haul.GetHaulTasks().Append(TaskBegin()).Prepend(TaskEnd());
+
+            private IEnumerable<Task> GetBuildWork()
+                => GetBuildTasks().Prepend(TaskBegin());
+
+            public IEnumerable<Task> GetHaulAndBuildWork()
+            {
+                yield return TaskBegin();
+
+                while (HasAvailableHauls(out var haul))
+                {
+                    foreach (var task in haul.GetHaulTasks())
+                        yield return task;
                 }
 
-                // TODO: move items out of build area
-                if (building.HasAllMaterials())
+                if (HasAllMaterials())
                 {
-                    yield return Capture(new TaskClaim(game,
-                        (work) =>
-                        {
-                            if (building.hasBuilder)
-                                return null;
-
-                            building.hasBuilder = true;
-                            return new Work.ClaimLambda(() => building.hasBuilder = false);
-                        }), out var buildClaim);
-
-                    if (!building.conDef.proto.passable)
-                        yield return new TaskLambda(game,
-                            (work) =>
-                            {
-                                game.VacateArea(area);
-                                if (!game.IsAreaOccupied(area, work.agent))
-                                {
-                                    building.constructionBegan = true;
-                                    game.RerouteMinions(area, true);
-                                    return true;
-                                }
-
-                                return false;
-                            });
-
-                    yield return new TaskGoTo(game, PathCfg.Adjacent(area));
-                    yield return new TaskTimedLambda(
-                        game, MinionAnim.Slash, Tool.Hammer, 2,
-                        TaskTimed.FaceArea(area),
-                        _ => 1,
-                        // TODO: track work amount on building
-                        null, //(work, workAmt) => /**/, 9
-                        (work) =>
-                        {
-                            work.Unclaim(buildClaim);
-                            BB.Assert(tile.building == building);
-                            building.jobHandles.Remove(this);
-                            game.ReplaceBuilding(
-                                building.conDef.proto.CreateBuilding(tile, building.dir));
-
-                            activeWorks.Remove(work);
-                            systemTyped.RemoveJob(this);
-                        });
+                    foreach (var task in GetBuildTasks())
+                        yield return task;
                 }
                 else
                 {
+                    yield return TaskEnd();
+                }
+            }
+
+            private IEnumerable<Task> GetBuildTasks()
+            {
+                // TODO: move items out of build area
+                yield return Capture(new TaskClaim<Work.IClaim>(game,
+                    (work) => ClaimBuild()), out var buildClaim);
+
+                if (!building.conDef.proto.passable)
                     yield return new TaskLambda(game,
                         (work) =>
                         {
-                            activeWorks.Remove(work);
-                            return true;
+                            game.VacateArea(area);
+                            if (!game.IsAreaOccupied(area, work.agent))
+                            {
+                                building.constructionBegan = true;
+                                game.RerouteMinions(area, true);
+                                return true;
+                            }
+
+                            return false;
                         });
-                }
+
+                yield return new TaskGoTo(game, PathCfg.Adjacent(area));
+                yield return new TaskTimedLambda(
+                    game, MinionAnim.Slash, Tool.Hammer, 2,
+                    TaskTimed.FaceArea(area),
+                    _ => 1,
+                    // TODO: track work amount on building
+                    null, //(work, workAmt) => /**/, 9
+                    (work) =>
+                    {
+                        BB.Assert(tile.building == building);
+
+                        work.Unclaim(buildClaim);
+                        foreach (var haul in hauls)
+                            haul.RemoveStored();
+
+                        building.jobHandles.Remove(this);
+                        game.ReplaceBuilding(
+                            building.conDef.proto.CreateBuilding(tile, building.dir));
+
+                        activeWorks.Remove(work);
+                        systemTyped.RemoveJob(this);
+                    });
             }
 
             public override void AbandonWork(Work work)
@@ -221,12 +212,15 @@ namespace BB
                             (building.jobHandles.Count == 1 &&
                             building.jobHandles.Contains(this)));
                     game.RemoveBuilding(building);
-                    // TODO: delete queries
-                    game.DropItems(tile, building.materials
-                        .Where((mat) => mat.amtStored > 0)
-                        .Select((mat) => mat.info.WithAmount(mat.amtStored))
+
+                    game.DropItems(tile, hauls
+                        .Where((haul) => haul.HasSomeMaterials())
+                        .Select((haul) => haul.RemoveStored())
                     );
                 }
+
+                foreach (var haul in hauls)
+                    haul.Destroy();
 
                 base.Destroy();
             }

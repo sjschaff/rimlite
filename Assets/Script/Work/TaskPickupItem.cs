@@ -2,9 +2,9 @@
 {
     public class TaskPickupItem : TaskTimed
     {
-        private readonly TaskClaimItem claim;
+        private readonly TaskClaim<Work.ItemClaim> claim;
 
-        public TaskPickupItem(TaskClaimItem claim)
+        public TaskPickupItem(TaskClaim<Work.ItemClaim> claim)
             : base(claim.game, MinionAnim.Magic, Tool.None, .425f, FaceSame())
         {
             BB.AssertNotNull(claim);
@@ -23,9 +23,7 @@
         {
             if (!canceled)
             {
-                work.Unclaim(claim);
-                Item item = game.TakeItem(claim.item, claim.amt);
-                agent.PickupItem(item);
+                agent.PickupItem(claim.claim.ResolveClaim(game, work));
             }
 
             base.OnEndTask(canceled);

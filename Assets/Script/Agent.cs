@@ -99,8 +99,13 @@ namespace BB
             if (currentWork != null)
                 currentWork.Abandon(this);
 
-            currentWork = work;
-            return currentWork.ClaimWork(this);
+            // TODO: if can do work:
+            {
+                currentWork = work;
+                currentWork.ClaimWork(this);
+                return true;
+            }
+            // else return false
         }
 
         public void RemoveWork(Work work)

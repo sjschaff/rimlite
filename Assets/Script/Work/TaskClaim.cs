@@ -2,12 +2,13 @@
 
 namespace BB
 {
-    public class TaskClaim : TaskImmediate
+    public class TaskClaim<TClaim> : TaskImmediate
+        where TClaim : Work.IClaim
     {
-        public Work.IClaim claim { get; private set; }
-        private readonly Func<Work, Work.IClaim> claimFn;
+        public TClaim claim { get; private set; }
+        private readonly Func<Work, TClaim> claimFn;
 
-        public TaskClaim(Game game, Func<Work, Work.IClaim> claimFn)
+        public TaskClaim(Game game, Func<Work, TClaim> claimFn)
             : base(game) => this.claimFn = claimFn;
 
         protected override Status OnBeginTask()
@@ -20,25 +21,6 @@ namespace BB
             }
 
             return Status.Fail;
-        }
-    }
-
-    public class TaskClaimItem : TaskClaim
-    {
-        public readonly Item item;
-        public readonly int amt;
-
-        public TaskClaimItem(Game game, Item item, int amt)
-            : base(game, (work) =>
-            {
-                if (item.amtAvailable < amt)
-                    return null;
-
-                return new Work.ItemClaim(item, amt);
-            })
-        {
-            this.item = item;
-            this.amt = amt;
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
 
+using Vec2I = UnityEngine.Vector2Int;
+
 namespace BB
 {
     public class Work
@@ -36,7 +38,7 @@ namespace BB
         public Work(JobHandle job, params Task[] tasks)
             : this(job, (IEnumerable<Task>)tasks) { }
 
-        public bool ClaimWork(Agent agent)
+        public void ClaimWork(Agent agent)
         {
             BB.AssertNull(this.agent);
             BB.AssertNull(activeTask);
@@ -44,7 +46,7 @@ namespace BB
             if (agent is Minion minion)
                 this.minion = minion;
 
-            return MoveToNextTask();
+            BB.Assert(MoveToNextTask(), "Work task failed immediately");
         }
 
         public void Abandon(Agent agent)
@@ -65,7 +67,8 @@ namespace BB
 
         public void MakeClaim(IClaim claim) => claims.Add(claim);
 
-        public void Unclaim(TaskClaim task) => Unclaim(task.claim);
+        public void Unclaim<T>(TaskClaim<T> task) where T : IClaim
+            => Unclaim(task.claim);
 
         public void Unclaim(IClaim claim)
         {
@@ -145,15 +148,19 @@ namespace BB
         #endregion
 
         #region Claims
+        // TODO: move to own file
         public interface IClaim
         {
             void Unclaim();
         }
 
+        // TODO: dont store item publicaly, this will serve as ItemHandle
         public class ItemClaim : IClaim
         {
-            private readonly Item item;
-            private readonly int amt;
+            private readonly Item item; // TODO: meh
+
+            public Vec2I pos => item.tile.pos;
+            public readonly int amt;
 
             public ItemClaim(Item item, int amt)
             {
@@ -163,6 +170,12 @@ namespace BB
                 this.item = item;
                 this.amt = amt;
                 item.Claim(amt);
+            }
+
+            public Item ResolveClaim(Game game, Work work)
+            {
+                work.Unclaim(this);
+                return game.ResolveClaim(item, amt);
             }
 
             public void Unclaim()
