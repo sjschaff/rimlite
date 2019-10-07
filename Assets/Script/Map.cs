@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System;
+using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -184,6 +186,70 @@ namespace BB
         {
             AssertValidTile(start);
             AssertValidTile(end);
+        }
+
+        private bool TryTile(Vec2I pos, out Tile tile)
+        {
+            tile = null;
+            if (ValidTile(pos))
+                tile = GetTile(pos);
+            return tile != null;
+        }
+
+        public IEnumerable<Tile> AdjacentTiles(Tile tile)
+        {
+            if (TryTile(tile.pos + new Vec2I(-1, 0), out var left))
+                yield return left;
+            if (TryTile(tile.pos + new Vec2I(+1, 0), out var right))
+                yield return right;
+            if (TryTile(tile.pos + new Vec2I(0, +1), out var up))
+                yield return up;
+            if (TryTile(tile.pos + new Vec2I(0, -1), out var down))
+                yield return down;
+        }
+
+        public void FloodFill(
+            Tile tileStart,
+            Func<Tile, bool> fillableFn,
+            Func<Tile, bool> fillFn)
+        {
+            HashSet<Tile> closed = new HashSet<Tile>();
+            Queue<Tile> open = new Queue<Tile>();
+
+            closed.Add(tileStart);
+            if (fillableFn(tileStart))
+                open.Enqueue(tileStart);
+
+            bool finished = false;
+            Tile lastTileFilled = tileStart;
+            while (!finished)
+            {
+                if (open.Count == 0)
+                {
+                    FloodFill(lastTileFilled, (tile) => true,
+                        (tile) =>
+                        {
+                            if (closed.Contains(tile) || !fillableFn(tile))
+                                return false;
+                            open.Enqueue(tile);
+                            return true;
+                        });
+                }
+
+                lastTileFilled = open.Dequeue();
+                finished = fillFn(lastTileFilled);
+                if (!finished)
+                {
+                    foreach (Tile tileAdj in AdjacentTiles(lastTileFilled))
+                    {
+                        if (!closed.Contains(tileAdj) && fillableFn(tileAdj))
+                        {
+                            closed.Add(tileAdj);
+                            open.Enqueue(tileAdj);
+                        }
+                    }
+                }
+            }
         }
 
         // TODO:

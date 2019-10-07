@@ -130,7 +130,7 @@ namespace BB
                                     if (item.amt > haulAmt)
                                     {
                                         item.Remove(haulAmt);
-                                        game.DropItem(game.Tile(work.agent.pos), item);
+                                        game.K_DropItem(game.Tile(work.agent.pos), item);
                                     }
                                     else
                                     {
@@ -221,13 +221,10 @@ namespace BB
                             (building.jobHandles.Count == 1 &&
                             building.jobHandles.Contains(this)));
                     game.RemoveBuilding(building);
-                    foreach (var mat in building.materials)
-                    {
-                        if (mat.amtStored > 0)
-                            game.DropItem(
-                                tile,
-                                new ItemInfo(mat.info.def, mat.amtStored));
-                    }
+                    game.DropItems(tile, building.materials
+                        .Where((mat) => mat.amtStored > 0)
+                        .Select((mat) => mat.info.WithAmount(mat.amtStored))
+                    );
                 }
 
                 base.Destroy();

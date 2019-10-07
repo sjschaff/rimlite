@@ -100,7 +100,7 @@ namespace BB
             }
         }
 
-        private readonly Vec2I size;
+        //private readonly Vec2I size;
         private readonly Func<Vec2I, bool> passFn;
 
         private readonly Vec2I asize;
@@ -184,7 +184,7 @@ namespace BB
             BB.Assert(size.x % aDim == 0);
             BB.Assert(size.y % aDim == 0);
 
-            this.size = size;
+            //this.size = size;
             this.passFn = passFn;
 
             this.asize = new Vec2I(size.x / aDim, size.y / aDim);

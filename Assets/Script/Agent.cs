@@ -86,7 +86,7 @@ namespace BB
             return ret;
         }
 
-        public void DropItem() => game.DropItem(game.Tile(pos), RemoveItem());
+        public void DropItem() => game.K_DropItem(game.Tile(pos), RemoveItem());
 
         public void Update(float deltaTime)
         {

@@ -58,6 +58,11 @@ namespace BB
             return dict.TryGetValue(key, out TV val) ? val : defaultVal;
         }
 
+        public static IEnumerable<T> Enumerate<T>(this T t)
+        {
+            yield return t;
+        }
+
         private static void Log(string msg, string level)
         {
             // Something (probably unity) is injecting an extra

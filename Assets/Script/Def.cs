@@ -106,10 +106,16 @@ namespace BB
     public class ItemDef : DefNamed
     {
         public readonly SpriteDef sprite;
+        public readonly int maxStack;
 
-        public ItemDef(string defName, string name, SpriteDef icon)
-            : base("BB:Item", defName, name) => this.sprite = icon;
-
+        public ItemDef(
+            string defName, string name, SpriteDef icon,
+            int maxStack)
+            : base("BB:Item", defName, name)
+        {
+            this.sprite = icon;
+            this.maxStack = maxStack;
+        }
     }
 
     public class BldgProtoDef : Def
@@ -299,8 +305,8 @@ namespace BB
             Register(new SpriteDef("BB:BuildIcon", sprites64, new Vec2I(0, 30), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:CancelIcon", sprites64, new Vec2I(2, 30), new Vec2I(2, 2), Vec2I.one));
 
-            Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone")));
-            Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood")));
+            Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone"), 5));
+            Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood"), 5));
 
 
             Register(BldgProtoDef.Create<BuildingProtoResource, BldgMineableDef>());

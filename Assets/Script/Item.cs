@@ -19,7 +19,7 @@ namespace BB
             this.amt = amt;
         }
 
-        public ItemInfo WithNewAmount(int amt) => new ItemInfo(def, amt);
+        public ItemInfo WithAmount(int amt) => new ItemInfo(def, amt);
     }
 
     // TODO: this needs a fat re-design
@@ -124,12 +124,18 @@ namespace BB
             amtClaimed -= amt;
         }
 
-        // TODO: Add
+        public void Add(int amt)
+        {
+            BB.Assert(info.amt + amt <= def.maxStack);
+            info = info.WithAmount(info.amt + amt);
+            UpdateText();
+        }
+
         public void Remove(int amt)
         {
             BB.Assert(amt < info.amt);
             BB.Assert(amt <= amtAvailable);
-            info = info.WithNewAmount(info.amt - amt);
+            info = info.WithAmount(info.amt - amt);
             UpdateText();
         }
 
