@@ -100,7 +100,7 @@ namespace BB
 
 
         // TODO: move item claiming here
-        public Work.IClaim ClaimItem(Item item)
+        public IClaim ClaimItem(Item item)
         {
             return null;
         }

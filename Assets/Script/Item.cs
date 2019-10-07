@@ -84,14 +84,14 @@ namespace BB
 
         private int HaulAmt(Item item, int amt) => Math.Min(amt, item.amtAvailable);
 
-        public Work.ItemClaim ClaimBest(int amt)
+        public ItemClaim ClaimBest(int amt)
         {
             if (lastSearch == null)
                 return null;
 
             Item itemHaul = lastSearch.Dequeue().item;
             if (itemHaul.amtAvailable > 0)
-                return new Work.ItemClaim(itemHaul, HaulAmt(itemHaul, amt));
+                return new ItemClaim(itemHaul, HaulAmt(itemHaul, amt));
 
             return null;
         }
@@ -111,8 +111,8 @@ namespace BB
         public bool HasAvailable(int amt) => query.HasAvailable(amt);
         public void Close() => query.game.UnregisterItemQuery(query);
 
-        public TaskClaim<Work.ItemClaim> TaskClaim(int amt)
-            => new TaskClaim<Work.ItemClaim>(query.game, (work) => query.ClaimBest(amt));
+        public TaskClaimItem TaskClaim(int amt)
+            => new TaskClaimItem(query.game, (work) => query.ClaimBest(amt));
     }
 
     // TODO: this needs a fat re-design

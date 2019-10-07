@@ -56,13 +56,13 @@ namespace BB
                     item => new HaulProvider(build.game, dst, item)).ToList();
             }
 
-            private Work.IClaim ClaimBuild()
+            private IClaim ClaimBuild()
             {
                 if (hasBuilder)
                     return null;
 
                 hasBuilder = true;
-                return new Work.ClaimLambda(() => hasBuilder = false);
+                return new ClaimLambda(() => hasBuilder = false);
             }
 
             public override IEnumerable<Work> QueryWork()
@@ -151,7 +151,7 @@ namespace BB
             private IEnumerable<Task> GetBuildTasks()
             {
                 // TODO: move items out of build area
-                yield return Capture(new TaskClaim<Work.IClaim>(game,
+                yield return Capture(new TaskClaim(game,
                     (work) => ClaimBuild()), out var buildClaim);
 
                 if (!building.conDef.proto.passable)

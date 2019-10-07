@@ -45,15 +45,15 @@ namespace BB
         {
             var itemClaim = query.TaskClaim(haulRemaining);
             yield return itemClaim;
-            var haulClaim = new TaskClaim<Work.IClaim>(game,
+            var haulClaim = new TaskClaim(game,
                 (work) => {
                     BB.AssertNotNull(itemClaim.claim);
-                    Work.ItemClaim item = itemClaim.claim;
+                    ItemClaim item = itemClaim.claim;
                     if (item.amt > haulRemaining)
                         return null;
 
                     amtClaimed += item.amt;
-                    return new Work.ClaimLambda(() => amtClaimed -= item.amt);
+                    return new ClaimLambda(() => amtClaimed -= item.amt);
                 });
             yield return haulClaim;
             yield return new TaskGoTo(game, PathCfg.Point(itemClaim.claim.pos));

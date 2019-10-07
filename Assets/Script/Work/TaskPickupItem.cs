@@ -2,9 +2,9 @@
 {
     public class TaskPickupItem : TaskTimed
     {
-        private readonly TaskClaim<Work.ItemClaim> claim;
+        private readonly TaskClaimItem claim;
 
-        public TaskPickupItem(TaskClaim<Work.ItemClaim> claim)
+        public TaskPickupItem(TaskClaimItem claim)
             : base(claim.game, MinionAnim.Magic, Tool.None, .425f, FaceSame())
         {
             BB.AssertNotNull(claim);
