@@ -8,25 +8,27 @@ namespace BB
         private readonly PathCfg dst;
         private readonly ItemInfo info;
         private readonly ItemQuery query;
+        private readonly string taskDesc;
 
         private int amtStored;
         private int amtClaimed;
         private int amtRemaining => info.amt - amtStored;
         private int haulRemaining => amtRemaining - amtClaimed;
 
-        public HaulProvider(Game game, PathCfg dst, ItemInfo info)
+        public HaulProvider(Game game, PathCfg dst, ItemInfo info, string dstDesc)
         {
             this.game = game;
             this.dst = dst;
             this.info = info;
-            query = game.QueryItems(new ItemQueryCfg(info.def, dst));
+            this.taskDesc = $"Hauling {info.def.name} to {dstDesc}.";
+            query = game.QueryItems(new ItemQueryCfg(info.def, info.amt, dst));
             amtStored = amtClaimed = 0;
         }
 
         public bool HasSomeMaterials() => amtStored > 0;
         public bool HasAllMaterials() => amtStored == info.amt;
         public bool HasAvailableHauls()
-            => haulRemaining > 0 && query.HasAvailable(haulRemaining);
+            => haulRemaining > 0 && query.HasAvailable();
 
         public ItemInfo RemoveStored()
         {
@@ -56,11 +58,10 @@ namespace BB
                     return new ClaimLambda(() => amtClaimed -= item.amt);
                 });
             yield return haulClaim;
-            yield return new TaskGoTo(game, PathCfg.Point(itemClaim.claim.pos));
+            yield return new TaskGoTo(game, taskDesc, PathCfg.Point(itemClaim.claim.pos));
             yield return new TaskPickupItem(itemClaim);
-            yield return new TaskGoTo(game, dst);
-
-            yield return new TaskLambda(game,
+            yield return new TaskGoTo(game, taskDesc, dst);
+            yield return new TaskLambda(game, "dropoff item",
                 (work) =>
                 {
                     if (!work.agent.carryingItem)
@@ -71,25 +72,25 @@ namespace BB
                     Item item = work.agent.RemoveItem();
 
                     // Should never happen
-                    int amt = itemClaim.claim.amt;
-                    if (amt > haulRemaining)
-                        amt = haulRemaining;
+                    int haulAmt = itemClaim.claim.amt;
+                    if (haulAmt > haulRemaining)
+                        haulAmt = haulRemaining;
 
-                    if (item.amt > amt)
+                    if (item.info.amt > haulAmt)
                     {
-                        item.Remove(amt);
-                        game.K_DropItem(game.Tile(work.agent.pos), item);
+                        game.DropItems(
+                            game.Tile(work.agent.pos),
+                            item.info.WithAmount(item.info.amt - haulAmt).Enumerate());
                     }
-                    else
+                    // Also should never happen
+                    else if (item.info.amt < haulAmt)
                     {
-                        // Also should never happen
-                        if (item.amt < amt)
-                            amt = item.amt;
-
-                        item.Destroy();
+                        haulAmt = item.info.amt;
                     }
 
-                    amtStored += amt;
+                    item.Destroy();
+
+                    amtStored += haulAmt;
                     return true;
                 });
         }

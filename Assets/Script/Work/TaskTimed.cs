@@ -19,10 +19,11 @@ namespace BB
         public static Func<Vec2I, Vec2I> FacePt(Vec2I ptTarget) => (pt => ptTarget);
         public static Func<Vec2I, Vec2I> FaceArea(RectInt rect) => (pt => rect.ClosestPt(pt));
 
-        public TaskTimed(Game game,
+        public TaskTimed(
+            Game game, string description,
             MinionAnim anim, Tool tool,
             float workAmt, Func<Vec2I, Vec2I> faceFn)
-            : base(game)
+            : base(game, description)
         {
             this.faceFn = faceFn;
             this.anim = anim;
@@ -67,13 +68,14 @@ namespace BB
         private readonly Action<Work> completeFn;
 
         public TaskTimedLambda(
-            Game game, MinionAnim anim,
+            Game game, string description,
+            MinionAnim anim,
             Tool tool, float workAmt,
             Func<Vec2I, Vec2I> faceFn,
             Func<Work, float> workSpeedFn,
             Action<Work, float> workFn,
             Action<Work> completeFn)
-            : base(game, anim, tool, workAmt, faceFn)
+            : base(game, description, anim, tool, workAmt, faceFn)
         {
             BB.AssertNotNull(workSpeedFn);
             this.workSpeedFn = workSpeedFn;

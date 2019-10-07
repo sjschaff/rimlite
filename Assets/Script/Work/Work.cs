@@ -7,7 +7,13 @@ namespace BB
 #if DEBUG
         private static int D_nextID = 0;
         public readonly int D_uniqueID;
+        public readonly string D_workName;
+        public readonly List<string> D_tasksCompleted
+            = new List<string>();
 #endif
+        [System.Diagnostics.Conditional("DEBUG")]
+        private void D_TrackTaskCompleted(Task task)
+            => D_tasksCompleted.Add(task.description);
 
         private readonly JobHandle job;
         private readonly HashSet<IClaim> claims;
@@ -18,11 +24,12 @@ namespace BB
         public Minion minion { get; private set; }
 
         #region Public API
-        public Work(JobHandle job, IEnumerable<Task> tasks)
+        public Work(JobHandle job, IEnumerable<Task> tasks, string D_workName)
         {
 #if DEBUG
             D_uniqueID = D_nextID;
             ++D_nextID;
+            this.D_workName = D_workName;
 #endif
             BB.AssertNotNull(job);
             BB.AssertNotNull(tasks);
@@ -31,9 +38,6 @@ namespace BB
             this.claims = new HashSet<IClaim>();
             this.tasks = tasks.GetEnumerator();
         }
-
-        public Work(JobHandle job, params Task[] tasks)
-            : this(job, (IEnumerable<Task>)tasks) { }
 
         public void ClaimWork(Agent agent)
         {
@@ -51,7 +55,7 @@ namespace BB
             BB.AssertNotNull(this.agent);
             BB.Assert(this.agent == agent);
             if (activeTask != null)
-                activeTask.EndTask(true);
+                EndActiveTask(true);
             job.AbandonWork(this);
         }
 
@@ -60,6 +64,12 @@ namespace BB
             BB.Assert(this.agent != null);
             ClearClaims();
             agent.AbandonWork();
+        }
+
+        private void EndActiveTask(bool canceled)
+        {
+            D_TrackTaskCompleted(activeTask);
+            activeTask.EndTask(canceled);
         }
 
         public void MakeClaim(IClaim claim) => claims.Add(claim);
@@ -116,7 +126,7 @@ namespace BB
                 var status = activeTask.BeginTask(this);
 
                 if (status == Task.Status.Complete)
-                    activeTask.EndTask(false);
+                    EndActiveTask(false);
                 else
                     return status;
             }
@@ -135,7 +145,7 @@ namespace BB
 
             if (status == Task.Status.Complete)
             {
-                activeTask.EndTask(false);
+                EndActiveTask(false);
                 MoveToNextTask();
             }
             else

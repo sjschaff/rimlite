@@ -3,28 +3,111 @@ using System.Linq;
 
 namespace BB
 {
+    public interface IItemListener
+    {
+        void ItemAdded(TileItem item);
+        void ItemRemoved(TileItem item);
+        void ItemChanged(TileItem item);
+    }
+
+    public class TileItem
+    {
+        public readonly Tile tile;
+        private Item item;
+        private int amtClaimed;
+
+        public ItemInfo info => item.info;
+        public ItemDef def => item.def;
+        public int amtAvailable => info.amt - amtClaimed;
+        public int amt => info.amt;
+
+        public TileItem(Tile tile, Item item)
+        {
+            this.tile = tile;
+            this.item = item;
+            amtClaimed = 0;
+
+            item.ReParent(tile);
+            item.Configure(Item.Config.Ground);
+        }
+
+        public bool TryClaim(int amt)
+        {
+            if (amt > amtAvailable)
+                return false;
+
+            amtClaimed += amt;
+            return true;
+        }
+
+        public void Unclaim(int amt)
+        {
+            BB.Assert(amtClaimed >= amt);
+            amtClaimed -= amt;
+        }
+
+        public void Add(int amt)
+        {
+            BB.Assert(info.amt + amt <= def.maxStack);
+            item.ChangeAmt(info.amt + amt);
+        }
+
+        public void Remove(int amt)
+        {
+            BB.Assert(amt < info.amt);
+            BB.Assert(amt <= amtAvailable);
+            item.ChangeAmt(info.amt - amt);
+        }
+
+        public Item RemoveItemAndInvalidate()
+        {
+            Item ret = item;
+            item = null;
+            return ret;
+        }
+    }
+
     public partial class Game
     {
-        private readonly LinkedList<Item> items = new LinkedList<Item>();
+        private readonly LinkedList<TileItem> items
+            = new LinkedList<TileItem>();
+        private readonly HashSet<IItemListener> itemListeners
+            = new HashSet<IItemListener>();
 
-        // TODO: get rid of
-        public IEnumerable<Item> FindItems(ItemDef def)
+        public void RegisterItemListener(IItemListener listener)
+            => itemListeners.Add(listener);
+
+        public void UnregisterItemListener(IItemListener listener)
+            => itemListeners.Remove(listener);
+
+        // TODO:
+        private void NotifyItemAdded(TileItem item)
         {
-            foreach (Item item in items)
-                if (item.def == def)
-                    yield return item;
+            foreach (var listener in itemListeners)
+                listener.ItemAdded(item);
+        }
+
+        private void NotifyItemRemoved(TileItem item)
+        {
+            foreach (var listener in itemListeners)
+                listener.ItemRemoved(item);
+        }
+
+        private void NotifyItemChanged(TileItem item)
+        {
+            foreach (var listener in itemListeners)
+                listener.ItemChanged(item);
         }
 
         private void DropItem(Tile tile, Item item)
         {
             BB.AssertNotNull(item);
-            BB.AssertNull(item.tile);
             BB.Assert(!tile.hasItems);
 
-            item.ReParent(tile);
-            item.Configure(Item.Config.Ground);
-            items.AddLast(item);
-            map.PlaceItem(tile, item);
+            var tileItem = new TileItem(tile, item);
+            items.AddLast(tileItem);
+            map.PlaceItem(tileItem);
+            NotifyItemAdded(tileItem);
         }
 
         // TODO: make Item ItemVis or something, no one should really be
@@ -61,12 +144,18 @@ namespace BB
                         Item item = new Item(this, new ItemInfo(def, amtToDrop));
                         DropItem(tile, item);
                     }
-                    else if (tile.item.amt < tile.item.def.maxStack &&
-                        itemSet.TryGetValue(tile.item.def, out int amtToDrop))
+                    else
                     {
-                        int stackAvailable = tile.item.def.maxStack - tile.item.amt;
-                        amtToDrop = DropAmt(tile.item.def, amtToDrop, stackAvailable);
-                        tile.item.Add(amtToDrop);
+                        TileItem item = map.GetItem(tile);
+
+                        if (item.amt < item.def.maxStack &&
+                            itemSet.TryGetValue(item.def, out int amtToDrop))
+                        {
+                            int stackAvailable = item.def.maxStack - item.amt;
+                            amtToDrop = DropAmt(item.def, amtToDrop, stackAvailable);
+                            item.Add(amtToDrop);
+                            NotifyItemChanged(item);
+                        }
                     }
 
                     return itemSet.Count == 0;
@@ -89,24 +178,29 @@ namespace BB
 
         public ItemQuery QueryItems(ItemQueryCfg cfg)
         {
-            // TODO: interesting things
-            return new ItemQuery(new QueryUpdater(this, cfg));
+            var query = new ItemQuery(this, cfg, items);
+            RegisterItemListener(query);
+            return query;
         }
 
-        public void UnregisterItemQuery(QueryUpdater query)
+        public bool TryClaim(TileItem item, int amt)
         {
-            // TODO: undo interesting things
+            if (item.TryClaim(amt))
+            {
+                NotifyItemChanged(item);
+                return true;
+            }
+
+            return false;
         }
 
-
-        // TODO: move item claiming here
-        public IClaim ClaimItem(Item item)
+        public void Unclaim(TileItem item, int amt)
         {
-            return null;
+            item.Unclaim(amt);
+            NotifyItemChanged(item);
         }
 
-        // TODO: make this better
-        public Item ResolveClaim(Item item, int amt)
+        public Item ResolveClaim(TileItem item, int amt)
         {
             BB.AssertNotNull(item);
             BB.AssertNotNull(item.tile);
@@ -117,11 +211,14 @@ namespace BB
             {
                 items.Remove(item);
                 map.RemoveItem(item);
-                return item;
+                NotifyItemRemoved(item);
+                return item.RemoveItemAndInvalidate();
             }
             else
             {
-                return item.Split(amt);
+                item.Remove(amt);
+                NotifyItemChanged(item);
+                return new Item(this, item.info.WithAmount(amt));
             }
         }
     }

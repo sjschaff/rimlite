@@ -27,7 +27,7 @@ namespace BB
                 job.CancelJob();
         }
 
-        public bool ApplicableToItem(Item item)
+        public bool ApplicableToItem(TileItem item)
         {
             // TODO: support items
             return false;
@@ -39,9 +39,5 @@ namespace BB
 
         public IOrdersGiver orders => this;
         public IEnumerable<Work> QueryWork() { yield break; }
-        public void CancelJob(JobHandle job)
-            => throw new NotSupportedException();
-        public void WorkAbandoned(JobHandle job, Work work)
-            => throw new NotSupportedException();
     }
 }

@@ -44,9 +44,10 @@ namespace BB
 
             public override IEnumerable<Task> GetTasks()
             {
-                yield return new TaskGoTo(game, PathCfg.Adjacent(building.bounds));
+                string desc = $"Deconstructing {building.def.name}.";
+                yield return new TaskGoTo(game, desc, PathCfg.Adjacent(building.bounds));
                 yield return new TaskTimedLambda(
-                    game, MinionAnim.Slash, Tool.Hammer, 2,
+                    game, desc, MinionAnim.Slash, Tool.Hammer, 2,
                     TaskTimed.FaceArea(building.bounds),
                     _ => 1,
                     null, // TODO: track deconstruct amt

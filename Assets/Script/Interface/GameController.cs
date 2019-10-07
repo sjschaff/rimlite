@@ -155,8 +155,10 @@ namespace BB
             var tile = game.Tile(pos);
             if (tile.hasBuilding)
                 yield return new Selectable(tile.building);
-            if (tile.hasItems)
-                yield return new Selectable(tile.item);
+
+            // TODO: select items
+            //if (tile.hasItems)
+            //    yield return new Selectable(tile.item);
         }
 
         private IEnumerable<Selectable> SelectDrag(Vec2 dragEnd)

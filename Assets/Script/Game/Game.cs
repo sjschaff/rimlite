@@ -78,7 +78,7 @@ namespace BB
 
         public void K_MoveMinion(Vec2I pos)
             => D_minionNoTask.AssignWork(SystemWalkDummy.Create(
-                new TaskGoTo(this, PathCfg.Point(pos))));
+                new TaskGoTo(this, "Debug Walking.", PathCfg.Point(pos))));
 
         public void Update(float dt)
         {

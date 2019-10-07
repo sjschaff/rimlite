@@ -9,7 +9,7 @@ namespace BB
         private readonly Func<Work, TClaim> claimFn;
 
         public TaskClaimT(Game game, Func<Work, TClaim> claimFn)
-            : base(game) => this.claimFn = claimFn;
+            : base(game, $"Claim {typeof(TClaim).Name}") => this.claimFn = claimFn;
 
         protected override Status OnBeginTask()
         {

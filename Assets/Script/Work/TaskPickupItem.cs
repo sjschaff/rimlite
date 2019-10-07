@@ -5,7 +5,7 @@
         private readonly TaskClaimItem claim;
 
         public TaskPickupItem(TaskClaimItem claim)
-            : base(claim.game, MinionAnim.Magic, Tool.None, .425f, FaceSame())
+            : base(claim.game, "Picking up item.", MinionAnim.Magic, Tool.None, .425f, FaceSame())
         {
             BB.AssertNotNull(claim);
             this.claim = claim;
@@ -22,9 +22,7 @@
         protected override void OnEndTask(bool canceled)
         {
             if (!canceled)
-            {
-                agent.PickupItem(claim.claim.ResolveClaim(game, work));
-            }
+                agent.PickupItem(claim.claim.ResolveClaim(work));
 
             base.OnEndTask(canceled);
         }

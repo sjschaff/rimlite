@@ -46,11 +46,25 @@ namespace BB
                 base.Destroy();
             }
 
+            private static string DescForTool(Tool tool)
+            {
+                switch (tool)
+                {
+                    case Tool.Pickaxe: return "Mining";
+                    case Tool.Axe: return "Chopping";
+                    case Tool.Hammer: return "Breaking";
+                    case Tool.None:
+                    default:
+                        return "Intimidating";
+                }
+            }
+
             public override IEnumerable<Task> GetTasks()
             {
-                yield return new TaskGoTo(game, PathCfg.Adjacent(tile.pos));
+                string desc = $"{DescForTool(mineable.tool)} {mineable.def.name}.";
+                yield return new TaskGoTo(game, desc, PathCfg.Adjacent(tile.pos));
                 yield return new TaskTimedLambda(
-                    game, MinionAnim.Slash,
+                    game, desc, MinionAnim.Slash,
                     mineable.tool, mineable.mineAmt,
                     TaskTimed.FacePt(tile.pos),
                     _ => 1,

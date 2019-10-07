@@ -99,7 +99,7 @@ namespace BB
         {
             if (activeWork == null)
                 yield return new Work(this, GetTasks()
-                    .Prepend(new TaskLambda(game,
+                    .Prepend(new TaskLambda(game, "sys base init",
                         (work) =>
                         {
                             if (activeWork != null)
@@ -108,14 +108,14 @@ namespace BB
                             activeWork = work;
                             return true;
                         }))
-                    .Append(new TaskLambda(game,
+                    .Append(new TaskLambda(game, "sys base end",
                         (work) =>
                         {
                             activeWork = null;
                             systemTyped.CancelJob(this);
                             return true;
-                        }))
-                    );
+                        })),
+                    typeof(TSystem).Name + ":Work");
         }
     }
 
@@ -157,7 +157,7 @@ namespace BB
         public string GuiText() => guiText;
         public override IOrdersGiver orders => this;
         public virtual bool ApplicableToBuilding(IBuilding building) => false;
-        public virtual bool ApplicableToItem(Item item) => false;
+        public virtual bool ApplicableToItem(TileItem item) => false;
         public bool HasOrder(Tile tile) => HasJob(tile);
         public void AddOrder(Tile tile) => AddJob(CreateJob(tile));
     }

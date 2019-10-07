@@ -10,10 +10,10 @@ namespace BB
     public struct Selectable
     {
         public readonly IBuilding building;
-        public readonly Item item;
+        public readonly TileItem item;
         // TODO: agents
 
-        private Selectable(IBuilding building, Item item)
+        private Selectable(IBuilding building, TileItem item)
         {
             this.building = building;
             this.item = item;
@@ -22,7 +22,7 @@ namespace BB
         public Selectable(IBuilding building)
             : this(building, null) { }
 
-        public Selectable(Item item)
+        public Selectable(TileItem item)
             : this(null, item) { }
 
         public DefNamed def
@@ -216,7 +216,6 @@ namespace BB
 
                 if (isItem)
                     itemCount += selection.selectable.item.amt;
-
             }
 
             string text;

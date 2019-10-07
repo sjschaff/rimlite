@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using Priority_Queue;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,120 +21,22 @@ namespace BB
         public ItemInfo WithAmount(int amt) => new ItemInfo(def, amt);
     }
 
-    // TODO: query params
-
-    public struct ItemQueryCfg
-    {
-        public readonly ItemDef def;
-        public readonly PathCfg dst;
-
-        public ItemQueryCfg(ItemDef def, PathCfg dst)
-        {
-            this.def = def;
-            this.dst = dst;
-        }
-    }
-
-    public class QueryUpdater
-    {
-        public readonly Game game;
-        private readonly ItemQueryCfg cfg;
-
-        private class ItemPriority : FastPriorityQueueNode
-        {
-            public readonly Item item;
-            public ItemPriority(Item item) => this.item = item;
-        }
-
-        // This is the janky part
-        private FastPriorityQueue<ItemPriority> lastSearch;
-
-        public QueryUpdater(Game game, ItemQueryCfg cfg)
-        {
-            this.game = game;
-            this.cfg = cfg;
-        }
-
-        // TODO: this shouldnt prob need amt? could go either way
-        public bool HasAvailable(int amt)
-        {
-            lastSearch = null;
-            var items = new List<Item>(game.FindItems(cfg.def));
-            if (items.Count == 0)
-                return false;
-
-            // TODO: make this more general, move somewhere useful
-            var queue = new FastPriorityQueue<ItemPriority>(items.Count);
-            foreach (Item item in items)
-            {
-                if (item.amtAvailable > 0)
-                    queue.Enqueue(
-                        new ItemPriority(item),
-                        cfg.dst.hueristicFn(item.tile.pos) / HaulAmt(item, amt));
-            }
-
-            if (queue.Count == 0)
-                return false;
-
-            lastSearch = queue;
-            return true;
-        }
-
-        private int HaulAmt(Item item, int amt) => Math.Min(amt, item.amtAvailable);
-
-        public ItemClaim ClaimBest(int amt)
-        {
-            if (lastSearch == null)
-                return null;
-
-            Item itemHaul = lastSearch.Dequeue().item;
-            if (itemHaul.amtAvailable > 0)
-                return new ItemClaim(itemHaul, HaulAmt(itemHaul, amt));
-
-            return null;
-        }
-    }
-
-
-    public class ItemQuery
-    {
-        private readonly QueryUpdater query;
-
-        public ItemQuery(QueryUpdater query)
-        {
-            BB.AssertNotNull(query);
-            this.query = query;
-        }
-
-        public bool HasAvailable(int amt) => query.HasAvailable(amt);
-        public void Close() => query.game.UnregisterItemQuery(query);
-
-        public TaskClaimItem TaskClaim(int amt)
-            => new TaskClaimItem(query.game, (work) => query.ClaimBest(amt));
-    }
-
-    // TODO: this needs a fat re-design
     public class Item
     {
         public readonly Game game;
         private readonly GameObject gameObject;
         private readonly SpriteRenderer spriteRenderer;
         private readonly Text text;
-        public Tile tile { get; private set; }
 
         public ItemInfo info { get; private set; }
-        private int amtClaimed;
-        public int amtAvailable => info.amt - amtClaimed;
-        public int amt => info.amt;
         public ItemDef def => info.def;
 
         public Item(Game game, ItemInfo info)
         {
-            BB.Assert(info.amt > 0);
             this.game = game;
             this.info = info;
-            this.amtClaimed = 0;
 
+            // TODO: move to item vis
             gameObject = new GameObject("Item:" + info.def.defName);
 
             spriteRenderer = game.assets.CreateSpriteObject(
@@ -185,6 +85,14 @@ namespace BB
             UpdateText();
         }
 
+        public void ChangeAmt(int amt)
+        {
+            info = info.WithAmount(amt);
+            UpdateText();
+        }
+
+
+        // TODO: investigate these
         private void ReParentInternal(Transform parent, Vec2 pos)
         {
             gameObject.transform.parent = parent;
@@ -194,50 +102,17 @@ namespace BB
         public void ReParent(Transform parent, Vec2 pos)
         {
             ReParentInternal(parent, pos);
-            tile = null;
         }
 
         public void ReParent(Tile tile)
         {
             ReParentInternal(game.itemContainer, tile.pos);
-            this.tile = tile;
         }
 
         public void Destroy() => gameObject.Destroy();
 
-        public void Claim(int amt)
-        {
-            BB.Assert(amtClaimed + amt <= info.amt);
-            amtClaimed += amt;
-        }
 
-        public void Unclaim(int amt)
-        {
-            BB.Assert(amtClaimed >= amt);
-            amtClaimed -= amt;
-        }
-
-        public void Add(int amt)
-        {
-            BB.Assert(info.amt + amt <= def.maxStack);
-            info = info.WithAmount(info.amt + amt);
-            UpdateText();
-        }
-
-        public void Remove(int amt)
-        {
-            BB.Assert(amt < info.amt);
-            BB.Assert(amt <= amtAvailable);
-            info = info.WithAmount(info.amt - amt);
-            UpdateText();
-        }
-
-        public Item Split(int amt)
-        {
-            Remove(amt);
-            return new Item(game, new ItemInfo(def, amt));
-        }
-
+        // TODO: investigate merging with reparent stuff
         public enum Config { Ground, PlayerAbove, PlayerBelow }
 
         public void Configure(Config config)

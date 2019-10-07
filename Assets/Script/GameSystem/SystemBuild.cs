@@ -36,6 +36,7 @@ namespace BB
             private readonly HashSet<Work> activeWorks = new HashSet<Work>();
             private readonly BuildingConstruction building;
             private readonly RectInt area;
+            private readonly string name;
 
             // Build State
             private readonly List<HaulProvider> hauls;
@@ -46,6 +47,7 @@ namespace BB
             {
                 building = new BuildingConstruction(def, tile, dir);
                 area = building.bounds;
+                name = building.conDef.proto.buildingDef.name;
 
                 building.jobHandles.Add(this);
                 game.AddBuilding(building);
@@ -53,7 +55,7 @@ namespace BB
                 hauls = new List<HaulProvider>();
                 PathCfg dst = PathCfg.Area(area);
                 hauls = def.proto.GetBuildMaterials().Select(
-                    item => new HaulProvider(build.game, dst, item)).ToList();
+                    item => new HaulProvider(build.game, dst, item, name)).ToList();
             }
 
             private IClaim ClaimBuild()
@@ -73,16 +75,16 @@ namespace BB
 
                 // Ready to build
                 if (HasAllMaterials())
-                    yield return new Work(this, GetBuildWork());
+                    yield return new Work(this, GetBuildWork(), "Build_Build");
 
                 // Ready to haul and build
                 if (AllMaterialsAvailable())
-                    yield return new Work(this, GetHaulAndBuildWork());
+                    yield return new Work(this, GetHaulAndBuildWork(), "Build_HaulAndBuild");
 
                 // Hauls only
                 foreach (var haul in hauls)
                     if (haul.HasAvailableHauls())
-                        yield return new Work(this, GetHaulWork(haul));
+                        yield return new Work(this, GetHaulWork(haul), "Build_Haul");
             }
 
             private bool HasAvailableHauls(out HaulProvider haulAvailable)
@@ -117,9 +119,9 @@ namespace BB
             }
 
             private Task TaskBegin()
-                => new TaskLambda(game, (work) => activeWorks.Add(work));
+                => new TaskLambda(game, "add handle", (work) => activeWorks.Add(work));
             private Task TaskEnd()
-                => new TaskLambda(game, (work) => activeWorks.Remove(work));
+                => new TaskLambda(game, "rem handle", (work) => activeWorks.Remove(work));
 
             private IEnumerable<Task> GetHaulWork(HaulProvider haul)
                 => haul.GetHaulTasks().Append(TaskBegin()).Prepend(TaskEnd());
@@ -155,7 +157,8 @@ namespace BB
                     (work) => ClaimBuild()), out var buildClaim);
 
                 if (!building.conDef.proto.passable)
-                    yield return new TaskLambda(game,
+                    yield return new TaskLambda(
+                        game, "vacate build",
                         (work) =>
                         {
                             game.VacateArea(area);
@@ -168,10 +171,10 @@ namespace BB
 
                             return false;
                         });
-
-                yield return new TaskGoTo(game, PathCfg.Adjacent(area));
+                yield return new TaskGoTo(game, $"Building {name}.", PathCfg.Adjacent(area));
                 yield return new TaskTimedLambda(
-                    game, MinionAnim.Slash, Tool.Hammer, 2,
+                    game, $"Building {name}.",
+                    MinionAnim.Slash, Tool.Hammer, 2,
                     TaskTimed.FaceArea(area),
                     _ => 1,
                     // TODO: track work amount on building

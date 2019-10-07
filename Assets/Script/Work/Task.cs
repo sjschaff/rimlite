@@ -10,8 +10,13 @@ namespace BB
         public readonly Game game;
         public Work work { get; private set; }
         public Agent agent => work.agent;
+        public readonly string description;
 
-        public Task(Game game) => this.game = game;
+        public Task(Game game, string description)
+        {
+            this.game = game;
+            this.description = description;
+        }
 
         public Status BeginTask(Work work)
         {

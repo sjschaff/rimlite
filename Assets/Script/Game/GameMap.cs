@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -108,7 +106,7 @@ namespace BB
             {
                 if (!minion.hasWork && area.Contains(minion.pos))
                     minion.AssignWork(SystemWalkDummy.Create(
-                        new TaskGoTo(this, PathCfg.Vacate(area))));
+                        new TaskGoTo(this, "Vacating the area.", PathCfg.Vacate(area))));
             }
         }
     }

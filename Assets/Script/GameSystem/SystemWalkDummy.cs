@@ -20,6 +20,6 @@ namespace BB
         public IEnumerable<Work> QueryWork() { yield break; }
 
         public static Work Create(TaskGoTo task)
-            => new Work(dummy, task);
+            => new Work(dummy, task.Enumerate(), "WalkDummy");
     }
 }

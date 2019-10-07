@@ -10,8 +10,8 @@ namespace BB
     // Wrapper for aesthetics
     public class TaskGoTo : Agent.InternalTaskGoTo 
     {
-        public TaskGoTo(Game game, PathCfg cfg)
-            : base(game, cfg) { }
+        public TaskGoTo(Game game, string description, PathCfg cfg)
+            : base(game, description, cfg) { }
     }
 
     public partial class Agent
@@ -24,8 +24,9 @@ namespace BB
             private LinkedList<Vec2I> path;
             private Line pathVis;
 
-            protected InternalTaskGoTo(Game game, PathCfg cfg)
-                : base(game)
+            protected InternalTaskGoTo(
+                Game game, string description, PathCfg cfg)
+                : base(game, description)
             {
                 this.cfg = cfg;
                 this.onFallbackPath = false;
