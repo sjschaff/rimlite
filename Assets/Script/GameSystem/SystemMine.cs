@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 
-using Vec2I = UnityEngine.Vector2Int;
-
 namespace BB
 {
     public interface IMineable : IBuilding

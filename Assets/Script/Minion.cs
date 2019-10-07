@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-using Vec2 = UnityEngine.Vector2;
+﻿using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB

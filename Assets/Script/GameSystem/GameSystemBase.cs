@@ -5,27 +5,35 @@ using UnityEngine;
 
 namespace BB
 {
+    public abstract class JobStandard<TSystem, TThis> : JobHandle
+        where TSystem :  GameSystemStandard<TSystem, TThis>
+        where TThis : JobStandard<TSystem, TThis>
+    {
+        public readonly TSystem systemTyped;
+        public readonly Tile tile;
+        public Game game => systemTyped.game;
+
+        public JobStandard(TSystem system, Tile tile)
+            : base(system)
+        {
+            BB.AssertNotNull(system);
+            BB.AssertNotNull(tile);
+            this.systemTyped = system;
+            this.tile = tile;
+        }
+
+        public abstract IEnumerable<Work> QueryWork();
+
+        public override void CancelJob()
+            => systemTyped.CancelJob(this);
+
+        public virtual void Destroy() { }
+    }
+
     public abstract class GameSystemStandard<TThis, TJob> : IGameSystem
-        where TJob : GameSystemStandard<TThis, TJob>.JobStandard
+        where TJob : JobStandard<TThis, TJob>
         where TThis : GameSystemStandard<TThis, TJob>
     {
-        public abstract class JobStandard : JobHandle
-        {
-            public readonly TThis systemTyped;
-            public readonly Tile tile;
-            public Game game => systemTyped.game;
-
-            public JobStandard(TThis system, Tile tile)
-                : base(system)
-            {
-                BB.AssertNotNull(system);
-                BB.AssertNotNull(tile);
-                this.systemTyped = system;
-                this.tile = tile;
-            }
-
-            public virtual void Destroy() { }
-        }
 
         public readonly Game game;
         private readonly Dictionary<Tile, TJob> jobs
@@ -34,13 +42,11 @@ namespace BB
         protected GameSystemStandard(Game game) => this.game = game;
 
         public abstract IOrdersGiver orders { get; }
-        public abstract void WorkAbandoned(JobHandle job, Work work);
-        protected abstract IEnumerable<Work> QueryWorkForJob(TJob job);
 
         public IEnumerable<Work> QueryWork()
         {
             foreach (var job in jobs.Values)
-                foreach (var work in QueryWorkForJob(job))
+                foreach (var work in job.QueryWork())
                     yield return work;
         }
 
@@ -61,72 +67,64 @@ namespace BB
             jobs.Remove(job.tile);
         }
 
-        public void CancelJob(JobHandle handle)
+        public void CancelJob(JobStandard<TThis, TJob> job)
         {
-            TJob job = (TJob)handle;
-            BB.Assert(job.system == this);
-            RemoveJob(job);
+            RemoveJob((TJob)job);
         }
     }
 
-    public abstract class GameSystemBasic<TThis, TJob> : GameSystemStandard<TThis, TJob>
-        where TJob : GameSystemBasic<TThis, TJob>.JobBasic
-        where TThis : GameSystemAsOrders<TThis, TJob>
+    public abstract class JobBasic<TSystem, TJob> : JobStandard<TSystem, TJob>
+        where TSystem : GameSystemStandard<TSystem, TJob>
+        where TJob : JobBasic<TSystem, TJob>
     {
-        public abstract class JobBasic : JobStandard
+        public Work activeWork;
+
+        public JobBasic(TSystem system, Tile tile) : base(system, tile) { }
+
+        public abstract IEnumerable<Task> GetTasks();
+
+        public override void AbandonWork(Work work)
         {
-            public Work activeWork;
-
-            public JobBasic(TThis system, Tile tile) : base(system, tile) { }
-
-            public abstract IEnumerable<Task> GetTasks();
-
-            public override void Destroy()
-            {
-                activeWork?.Cancel();
-                base.Destroy();
-            }
+            BB.Assert(activeWork == work);
+            activeWork = null;
         }
 
-        protected GameSystemBasic(Game game) : base(game) { }
-
-        protected override IEnumerable<Work> QueryWorkForJob(TJob job)
+        public override void Destroy()
         {
-            if (job.activeWork == null)
-                yield return new Work(job, job.GetTasks()
+            activeWork?.Cancel();
+            base.Destroy();
+        }
+
+        public override IEnumerable<Work> QueryWork()
+        {
+            if (activeWork == null)
+                yield return new Work(this, GetTasks()
                     .Prepend(new TaskLambda(game,
                         (work) =>
                         {
-                            if (job.activeWork != null)
+                            if (activeWork != null)
                                 return false;
 
-                            job.activeWork = work;
+                            activeWork = work;
                             return true;
                         }))
                     .Append(new TaskLambda(game,
                         (work) =>
                         {
-                            job.activeWork = null;
-                            RemoveJob(job);
+                            activeWork = null;
+                            systemTyped.CancelJob(this);
                             return true;
                         }))
                     );
         }
-
-        public override void WorkAbandoned(JobHandle handle, Work work)
-        {
-            TJob job = (TJob)handle;
-            BB.Assert(job.system == this);
-            BB.Assert(job.activeWork == work);
-            job.activeWork = null;
-        }
     }
 
-    public abstract class GameSystemAsOrders<TThis, TJob> : GameSystemBasic<TThis, TJob>, IOrdersGiver
-        where TJob : GameSystemBasic<TThis, TJob>.JobBasic
+    public abstract class GameSystemAsOrders<TThis, TJob> 
+        : GameSystemStandard<TThis, TJob>, IOrdersGiver
         where TThis : GameSystemAsOrders<TThis, TJob>
+        where TJob : JobBasic<TThis, TJob>
     {
-        public abstract class JobHandleOrders : JobBasic
+        public abstract class JobHandleOrders : JobBasic<TThis, TJob>
         {
             public readonly Transform overlay;
 
@@ -154,7 +152,6 @@ namespace BB
 
         protected abstract TJob CreateJob(Tile tile);
         public abstract OrdersFlags flags { get; }
-
 
         public SpriteDef GuiSprite() => guiSprite;
         public string GuiText() => guiText;

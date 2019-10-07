@@ -3,7 +3,7 @@ using System;
 
 namespace BB
 {
-    public class JobHandle
+    public abstract class JobHandle
     {
         public readonly IGameSystem system;
 
@@ -13,8 +13,8 @@ namespace BB
             this.system = system;
         }
 
-        public virtual void CancelJob() => system.CancelJob(this);
-        public virtual void AbandonWork(Work work) => system.WorkAbandoned(this, work);
+        public abstract void CancelJob();
+        public abstract void AbandonWork(Work work);
 
         // Utility for task generation
         protected TTask Capture<TTask>(TTask task, out TTask outTask)
@@ -29,8 +29,6 @@ namespace BB
         /*IGameSystem(Game game);*/
         IOrdersGiver orders { get; }
         IEnumerable<Work> QueryWork();
-        void CancelJob(JobHandle job);
-        void WorkAbandoned(JobHandle job, Work work);
     }
 
     [Flags]

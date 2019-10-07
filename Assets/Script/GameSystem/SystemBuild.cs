@@ -34,24 +34,11 @@ namespace BB
         public void CreateBuild(IBuildable proto, Tile tile, Dir dir)
             => AddJob(new JobBuild(this, virtualDefs.Get(proto), tile, dir));
 
-        public override void WorkAbandoned(JobHandle handle, Work work)
+        public class JobBuild : JobStandard<SystemBuild, JobBuild>
         {
-            var job = (JobBuild)handle;
-            job.activeWorks.Remove(work);
-        }
-
-        protected override IEnumerable<Work> QueryWorkForJob(JobBuild job)
-        {
-            if (job.building.HasAvailableHauls() ||
-                (job.building.HasAllMaterials() && !job.building.hasBuilder))
-            yield return new Work(job, job.GetTasks());
-        }
-
-        public class JobBuild : JobStandard
-        {
-            public readonly HashSet<Work> activeWorks = new HashSet<Work>();
-            public readonly BuildingConstruction building;
-            public readonly RectInt area;
+           private readonly HashSet<Work> activeWorks = new HashSet<Work>();
+           private readonly BuildingConstruction building;
+           private readonly RectInt area;
 
             public JobBuild(SystemBuild build, BldgConstructionDef def, Tile tile, Dir dir)
                 : base(build, tile)
@@ -67,6 +54,13 @@ namespace BB
             {
                 public readonly Item item;
                 public ItemPriority(Item item) => this.item = item;
+            }
+
+            public override IEnumerable<Work> QueryWork()
+            {
+                if (building.HasAvailableHauls() ||
+                    (building.HasAllMaterials() && !building.hasBuilder))
+                    yield return new Work(this, GetTasks());
             }
 
             public IEnumerable<Task> GetTasks()
@@ -208,6 +202,12 @@ namespace BB
                 }
             }
 
+            public override void AbandonWork(Work work)
+            {
+                BB.Assert(activeWorks.Contains(work));
+                activeWorks.Remove(work);
+            }
+
             public override void Destroy()
             {
                 var works = activeWorks.ToList();
@@ -221,6 +221,7 @@ namespace BB
                             (building.jobHandles.Count == 1 &&
                             building.jobHandles.Contains(this)));
                     game.RemoveBuilding(building);
+                    // TODO: delete queries
                     game.DropItems(tile, building.materials
                         .Where((mat) => mat.amtStored > 0)
                         .Select((mat) => mat.info.WithAmount(mat.amtStored))
