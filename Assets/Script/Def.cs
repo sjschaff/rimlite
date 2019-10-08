@@ -268,7 +268,19 @@ namespace BB
     // i.e minable, has recipes, tiledrender/sprite render,
     // constructable, terrain gen-able, etc.
 
+    // TODO: who knows
+    public class AgentDef : DefNamed
+    {
+        public AgentDef(string defName, string name)
+            : base("BB:Agent", defName, name) { }
+    }
 
+    public class MinionDef : AgentDef
+    {
+        public MinionDef(string defName, string name)
+            : base(defName, name) { }
+
+    }
 
     public class Defs
     {

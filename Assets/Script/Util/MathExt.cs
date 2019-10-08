@@ -23,6 +23,7 @@ namespace BB
             ret.Scale(mult);
             return ret;
         }
+        public static float DistanceSq(this Vec2 v, Vec2 o) => (v - o).sqrMagnitude;
         public static Vec2 Abs(this Vec2 v) => new Vec2(Mathf.Abs(v.x), Mathf.Abs(v.y));
         public static Vec2I Floor(this Vec2 v) => new Vec2I(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
         public static Vec2I Ceil(this Vec2 v) => new Vec2I(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
@@ -64,20 +65,24 @@ namespace BB
         public static bool InGrid(Vec2I gridSize, Vec2I pt) =>
             pt.x >= 0 && pt.y >= 0 && pt.x < gridSize.x && pt.y < gridSize.y;
 
-        public static RectInt RectInclusive(Vec2 start, Vec2 end)
+        public static Rect RectForPts(Vec2 a, Vec2 b)
         {
-            Vec2 lower = Vec2.Min(start, end);
-            Vec2 upper = Vec2.Max(start, end);
-
-            Vec2I tileStart = lower.Floor();
-            Vec2I tileEnd = upper.Ceil();
-
-            return new RectInt(tileStart, tileEnd - tileStart);
+            Vec2 lower = Vec2.Min(a, b);
+            Vec2 upper = Vec2.Max(a, b);
+            return new Rect(lower, upper - lower);
         }
 
-        public static RectInt Clamp(this RectInt rect, RectInt clamp)
+        public static RectInt RectInclusive(this Rect rect)
         {
-            RectInt rectClamped = rect;
+            Vec2I lower = rect.min.Floor();
+            Vec2I upper = rect.max.Ceil();
+
+            return new RectInt(lower, upper - lower);
+        }
+
+        public static Rect Clamp(this Rect rect, Rect clamp)
+        {
+            Rect rectClamped = rect;
             if (rect.xMin < clamp.xMin)
                 rectClamped.xMin = clamp.xMin;
             if (rect.xMax > clamp.xMax)
@@ -89,5 +94,26 @@ namespace BB
 
             return rectClamped;
         }
+
+        public static Rect Expand(this Rect rect, float amt)
+        {
+            Rect ret = rect;
+            ret.xMin -= amt;
+            ret.yMin -= amt;
+            ret.xMax += amt;
+            ret.yMax += amt;
+            return ret;
+        }
+
+        public static Rect Shift(this Rect rect, Vec2 shift)
+        {
+            Rect ret = rect;
+            ret.min += shift;
+            ret.max += shift;
+            return ret;
+        }
+
+        public static Rect AsRect(this RectInt rect)
+            => new Rect(rect.position, rect.size);
     }
 }

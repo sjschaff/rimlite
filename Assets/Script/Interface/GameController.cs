@@ -29,6 +29,7 @@ namespace BB
         private readonly ToolOrdersSelect orders;
         private readonly ToolSelection selection;
         private readonly Stack<UITool> activeTools = new Stack<UITool>();
+        private UITool baseTool;
         private UITool activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
         private bool mouseOver;
@@ -58,7 +59,11 @@ namespace BB
         public void PushTool(UITool tool)
         {
             // TODO: handle case where we are currently dragging
-            activeTool?.OnSuspend();
+            if (activeTools.Count == 0)
+                baseTool = tool;
+            else
+                activeTool.OnSuspend();
+
             activeTools.Push(tool);
             tool.OnActivate();
         }
@@ -69,7 +74,11 @@ namespace BB
             BB.Assert(activeTools.Count > 0);
             activeTool.OnDeactivate();
             activeTools.Pop();
-            activeTool?.OnUnsuspend();
+
+            if (activeTools.Count == 0)
+                baseTool = null;
+            else
+                activeTool.OnUnsuspend();
         }
 
         public void PopAll()
@@ -130,9 +139,14 @@ namespace BB
         public Vec2 MousePos()
             => ScreenToWorld(Input.mousePosition);
 
+        private bool IsShift()
+            => Input.GetKey(KeyCode.LeftShift) ||
+               Input.GetKey(KeyCode.RightShift);
+
         public void OnClick(Vec2 scPos, InputButton button)
         {
-            Vec2I pos = ScreenToWorld(scPos).Floor();
+            Vec2 realPos = ScreenToWorld(scPos);
+            Vec2I pos = realPos.Floor();
             if (button == InputButton.Left)
             {
                 if (game.ValidTile(pos))
@@ -140,7 +154,7 @@ namespace BB
                     if (activeTool != null && activeTool.IsClickable())
                         activeTool.OnClick(pos);
                     else
-                        selection.SetSelection(SelectTile(pos).ToList());
+                        SelectClick(realPos);
                 }
             }
             else if (button == InputButton.Right)
@@ -149,33 +163,64 @@ namespace BB
             }
         }
 
-        private IEnumerable<Selectable> SelectTile(Vec2I pos)
+        private void SetSelection(Selection sel)
         {
-            // TODO: select minions
-            var tile = game.Tile(pos);
-            if (tile.hasBuilding)
-                yield return new Selectable(tile.building);
-
-            // TODO: select items
-            //if (tile.hasItems)
-            //    yield return new Selectable(tile.item);
-        }
-
-        private IEnumerable<Selectable> SelectDrag(Vec2 dragEnd)
-        {
-            var area = DragRect(dragEnd);
-            foreach (var pos in area.allPositionsWithin)
+            sel.FilterType();
+            if (sel.Empty())
+                PopAll();
+            else
             {
-                foreach (var selectable in SelectTile(pos))
-                    yield return selectable;
+                if (!IsShift() || baseTool != selection)
+                    selection.SetSelection(sel);
+                else
+                    selection.AddSelection(sel);
             }
         }
 
-        private RectInt DragRect(Vec2 pos)
+        private void SelectClick(Vec2 pos)
         {
-            RectInt rect = MathExt.RectInclusive(dragStart, pos);
-            return rect.Clamp(new RectInt(Vec2I.zero, game.size));
+            Selection selection = new Selection();
+            var minion = game.GUISelectMinion(pos);
+            if (minion != null)
+                selection.minions.Add(minion);
+
+            var tile = game.Tile(pos.Floor());
+            if (tile.hasItems)
+                selection.items.Add(game.GUISelectItemsOnTile(tile).First());
+
+            if (tile.hasBuilding)
+                selection.buildings.Add(tile.building);
+
+            SetSelection(selection);
         }
+
+        private void SelectDrag(Vec2 dragEnd)
+        {
+            var area = DragRect(dragEnd);
+            Selection selection = new Selection();
+            foreach (var minion in game.GUISelectMinions(area))
+                selection.minions.Add(minion);
+
+            if (selection.minions.Count == 0)
+            {
+                RectInt areaInc = area.RectInclusive();
+                foreach (var pos in areaInc.allPositionsWithin)
+                {
+                    var tile = game.Tile(pos);
+                    if (tile.hasItems)
+                        selection.items.AddRange(game.GUISelectItemsOnTile(tile));
+                }
+            }
+
+            SetSelection(selection);
+        }
+
+        private Rect DragRect(Vec2 pos) 
+            => MathExt.RectForPts(dragStart, pos)
+                      .Clamp(new Rect(Vec2.zero, game.size));
+
+        private RectInt DragRectInt(Vec2 pos)
+            => DragRect(pos).RectInclusive();
 
         public void OnDragStart(Vec2 scStart, Vec2 scPos, InputButton button)
         {
@@ -186,7 +231,7 @@ namespace BB
                 dragStart = start;
                 if (activeTool != null && activeTool.IsDragable())
                 {
-                    activeTool.OnDragStart(DragRect(pos));
+                    activeTool.OnDragStart(DragRectInt(pos));
                 }
                 else
                 {
@@ -210,7 +255,7 @@ namespace BB
             {
                 if (activeTool != null && activeTool.IsDragable())
                 {
-                    activeTool.OnDrag(DragRect(pos));
+                    activeTool.OnDrag(DragRectInt(pos));
                 }
                 else
                 {
@@ -233,9 +278,9 @@ namespace BB
             if (button == InputButton.Left)
             {
                 if (activeTool != null && activeTool.IsDragable())
-                    activeTool.OnDragEnd(DragRect(pos));
+                    activeTool.OnDragEnd(DragRectInt(pos));
                 else
-                    selection.SetSelection(SelectDrag(pos).ToList());
+                    SelectDrag(pos);
 
                 gui.dragOutline.enabled = false;
             }

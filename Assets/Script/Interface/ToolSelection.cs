@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,54 +8,46 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public struct Selectable
+    public class Selection
     {
-        public readonly IBuilding building;
-        public readonly TileItem item;
-        // TODO: agents
+        public readonly List<Minion> minions
+            = new List<Minion>();
+        // TODO: other humans
+        public readonly List<TileItem> items
+            = new List<TileItem>();
+        public readonly List<IBuilding> buildings
+            = new List<IBuilding>();
+        // TODO: animals
 
-        private Selectable(IBuilding building, TileItem item)
+        public void FilterType()
         {
-            this.building = building;
-            this.item = item;
-        }
-
-        public Selectable(IBuilding building)
-            : this(building, null) { }
-
-        public Selectable(TileItem item)
-            : this(null, item) { }
-
-        public DefNamed def
-        {
-            get
+            if (minions.Count > 0)
             {
-                if (building != null)
-                    return building.def;
-                else
-                    return item.def;
+                items.Clear();
+                buildings.Clear();
+            }
+            else if (items.Count > 0)
+            {
+                buildings.Clear();
             }
         }
 
-        public RectInt rect
+        public bool Empty()
         {
-            get
-            {
-                if (building != null)
-                    return building.bounds;
-                else
-                    return new RectInt(item.tile.pos, Vec2I.one);
-            }
+            return
+                minions.Count == 0 &&
+                items.Count == 0 &&
+                buildings.Count == 0;
         }
 
-        public bool Applicable(IOrdersGiver orders)
+        public void Add(Selection sel)
         {
-            if (building != null)
-                return orders.ApplicableToBuilding(building);
-            else
-                return orders.ApplicableToItem(item);
+            minions.AddRange(sel.minions);
+            items.AddRange(sel.items);
+            buildings.AddRange(sel.buildings);
         }
     }
+
 
     public class ToolSelection : UITool
     {
@@ -76,6 +69,8 @@ namespace BB
             private static readonly Vec2[] ptsTL =
                 ptsBL.Select(pt => new Vec2(pt.x, -pt.y)).ToArray();
 
+            private readonly Transform parent;
+            private readonly Transform container;
             private readonly Line bl, br, tl, tr;
 
             private static Line CreateLine(AssetSrc assets, Transform parent, Vec2[] pts)
@@ -90,7 +85,8 @@ namespace BB
 
             public Highlight(AssetSrc assets, Transform parent)
             {
-                var container = new GameObject("<highlight>").transform;
+                this.parent = parent;
+                this.container = new GameObject("<highlight>").transform;
                 container.SetParent(parent, false);
 
                 bl = CreateLine(assets, container, ptsBL);
@@ -99,7 +95,15 @@ namespace BB
                 tr = CreateLine(assets, container, ptsTR);
             }
 
-            public void Enable(RectInt rect)
+            public void Enable(Agent agent)
+            {
+                agent.AttachSelectionHighlight(container);
+                SetRect(new Rect(Vec2.zero, Vec2.one));
+            }
+
+            public void Enable(Rect rect) => SetRect(rect);
+
+            private void SetRect(Rect rect)
             {
                 bl.position = rect.min;
                 br.position = new Vec2(rect.xMax, rect.yMin);
@@ -109,41 +113,122 @@ namespace BB
             }
 
             public void Disable()
-                => bl.enabled = br.enabled = tr.enabled = tl.enabled = false;
+            {
+                bl.enabled = br.enabled = tr.enabled = tl.enabled = false;
+                container.SetParent(parent, false);
+            }
         }
         #endregion
 
-        private class Selection
+        private class Selectable : IEquatable<Selectable>
         {
-            public readonly Selectable selectable;
             public Highlight highlight;
+            public readonly Agent agent;
+            public readonly TileItem item;
+            public readonly IBuilding building;
 
-            public Selection(Selectable selectable)
+            private Selectable(Agent agent, TileItem item, IBuilding building)
             {
-                this.selectable = selectable;
+                this.agent = agent;
+                this.item = item;
+                this.building = building;
                 this.highlight = null;
             }
+            public Selectable(Agent agent)
+                : this(agent, null, null) { }
+
+            public Selectable(TileItem item)
+                : this(null, item, null) { }
+
+            public Selectable(IBuilding building)
+                : this(null, null, building) { }
+
+            public DefNamed def
+            {
+                get
+                {
+                    if (agent != null)
+                        return agent.def;
+                    else if (item != null)
+                        return item.def;
+                    else
+                        return building.def;
+                }
+            }
+
+            public void AddHighlight(Highlight highlight)
+            {
+                // TODO: animate
+                this.highlight = highlight;
+
+                if (agent != null)
+                    highlight.Enable(agent);
+                else if (building != null)
+                    highlight.Enable(building.bounds.AsRect());
+                else
+                    highlight.Enable(new Rect(item.tile.pos, Vec2.one));
+            }
+
+            public bool Applicable(IOrdersGiver orders)
+            {
+                if (item != null)
+                    return orders.ApplicableToItem(item);
+                else if (building != null)
+                    return orders.ApplicableToBuilding(building);
+
+                return false;
+            }
+
+            #region Equality
+            public override bool Equals(object obj)
+            {
+                return obj is Selectable selectable && Equals(selectable);
+            }
+
+            public bool Equals(Selectable other)
+            {
+                return EqualityComparer<Agent>.Default.Equals(agent, other.agent) &&
+                       EqualityComparer<TileItem>.Default.Equals(item, other.item) &&
+                       EqualityComparer<IBuilding>.Default.Equals(building, other.building);
+            }
+
+            public override int GetHashCode()
+            {
+                var hashCode = 1264995022;
+                hashCode = hashCode * -1521134295 + EqualityComparer<Agent>.Default.GetHashCode(agent);
+                hashCode = hashCode * -1521134295 + EqualityComparer<TileItem>.Default.GetHashCode(item);
+                hashCode = hashCode * -1521134295 + EqualityComparer<IBuilding>.Default.GetHashCode(building);
+                return hashCode;
+            }
+
+            public static bool operator ==(Selectable left, Selectable right)
+            {
+                return left.Equals(right);
+            }
+
+            public static bool operator !=(Selectable left, Selectable right)
+            {
+                return !(left == right);
+            }
+            #endregion
         }
 
-        private readonly List<IOrdersGiver> orders;
+        private readonly List<IOrdersGiver> orders = new List<IOrdersGiver>();
         private readonly Transform poolRoot;
         private readonly Pool<Highlight> highlights;
 
-        private readonly List<Selection> selections;
-        private readonly List<IOrdersGiver> ordersCurrent;
+        private readonly HashSet<Selectable> selectables = new HashSet<Selectable>();
+        private readonly List<IOrdersGiver> ordersCurrent = new List<IOrdersGiver>();
 
         public ToolSelection(GameController ctrl)
             : base(ctrl)
         {
-            selections = new List<Selection>();
             poolRoot = new GameObject("Selection Highlights").transform;
             poolRoot.SetParent(ctrl.gui.root, false);
 
             highlights = new Pool<Highlight>(
                 () => new Highlight(ctrl.assets, poolRoot));
 
-            orders = new List<IOrdersGiver>();
-            ordersCurrent = new List<IOrdersGiver>();
             foreach (var system in ctrl.registry.systems)
             {
                 if (system.orders != null)
@@ -154,68 +239,87 @@ namespace BB
         public override void OnButton(int button)
         {
             IOrdersGiver orders = ordersCurrent[button];
-            foreach (var selection in selections)
+            foreach (var selectable in selectables)
             {
-                // TODO: MEGA Kludge
-                if (selection.selectable.building == null)
-                    return;
+                if (selectable.item != null)
+                {
+                    TileItem item = selectable.item;
+                    if (orders.ApplicableToItem(item) &&
+                        !orders.HasOrder(item.tile))
+                        orders.AddOrder(item.tile);
+                }
+                else if (selectable.building != null)
+                {
+                    IBuilding building = selectable.building;
+                    if (orders.ApplicableToBuilding(building) &&
+                        !orders.HasOrder(building.tile))
+                        orders.AddOrder(building.tile);
+                }
 
-                if (selection.selectable.Applicable(orders) &&
-                    !orders.HasOrder(selection.selectable.building.tile))
-                    orders.AddOrder(selection.selectable.building.tile);
+                // TODO: agents
             }
         }
 
-        public void SetSelection(Selectable selectable)
+        private static IEnumerable<Selectable> ToSelectables(Selection selection)
+        {
+            // TODO: other humans, animals
+            foreach (var minion in selection.minions)
+                yield return new Selectable(minion);
+            foreach (var item in selection.items)
+                yield return new Selectable(item);
+            foreach (var building in selection.buildings)
+                yield return new Selectable(building);
+        }
+
+        public void SetSelection(Selection selection)
         {
             ClearHighlights();
-            selections.Clear();
-            selections.Add(new Selection(selectable));
+            selectables.Clear();
+            foreach (var sel in ToSelectables(selection))
+                selectables.Add(sel);
+
             ctrl.ReplaceTool(this);
         }
 
-        public void SetSelection(List<Selectable> selectables)
+        public void AddSelection(Selection selection)
         {
-            if (selectables.Count == 0)
-                return;
+            foreach (var sel in ToSelectables(selection))
+                if (!selectables.Contains(sel))
+                    selectables.Add(sel);
 
-            ClearHighlights();
-            selections.Clear();
-            foreach (var selectable in selectables)
-                selections.Add(new Selection(selectable));
             ctrl.ReplaceTool(this);
         }
 
         private void ClearHighlights()
         {
-            foreach (var selection in selections)
+            foreach (var selectable in selectables)
             {
-                if (selection.highlight != null)
+                if (selectable.highlight != null)
                 {
-                    selection.highlight.Disable();
-                    highlights.Return(selection.highlight);
-                    selection.highlight = null;
+                    selectable.highlight.Disable();
+                    highlights.Return(selectable.highlight);
+                    selectable.highlight = null;
                 }
             }
         }
 
         private void ConfigureInfoPane()
         {
-            var first = selections[0].selectable;
+            var first = selectables.First();
             DefNamed def = first.def;
             bool isItem = first.item != null;
             bool allSame = true;
             int itemCount = 0;
-            foreach (Selection selection in selections)
+            foreach (var selectable in selectables)
             {
-                if (selection.selectable.def != def)
+                if (selectable.def != def)
                 {
                     allSame = false;
                     break;
                 }
 
                 if (isItem)
-                    itemCount += selection.selectable.item.amt;
+                    itemCount += selectable.item.amt;
             }
 
             string text;
@@ -226,28 +330,28 @@ namespace BB
             else
             {
                 text = allSame ? def.name : "Various";
-                if (selections.Count > 1)
-                    text += $" x{selections.Count}";
+                if (selectables.Count > 1)
+                    text += $" x{selectables.Count}";
             }
             ctrl.gui.infoPane.header.text = text;
         }
 
         public override void OnActivate()
         {
-            BB.Assert(selections.Count > 0);
-            foreach (var selection in selections)
+            BB.Assert(selectables.Count > 0);
+            foreach (var selectable in selectables)
             {
-                selection.highlight = highlights.Get();
-                selection.highlight.Enable(selection.selectable.rect);
+                if (selectable.highlight == null)
+                    selectable.AddHighlight(highlights.Get());
             }
 
             ConfigureInfoPane();
 
             foreach (IOrdersGiver orders in orders)
             {
-                foreach (var selection in selections)
+                foreach (var selectable in selectables)
                 {
-                    if (selection.selectable.Applicable(orders))
+                    if (selectable.Applicable(orders))
                     {
                         ordersCurrent.Add(orders);
                         break;

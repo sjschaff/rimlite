@@ -13,6 +13,7 @@ namespace BB
 #endif
 
         public readonly Game game;
+        public readonly DefNamed def;
         protected readonly Transform transform;
 
         public Work currentWork { get; private set; }
@@ -28,13 +29,14 @@ namespace BB
         protected abstract void ReconfigureItem(); // Jank AF
 
 
-        public Agent(Game game, Vec2I pos, string nodeName)
+        public Agent(Game game, DefNamed def, Vec2I pos, string nodeName)
         {
 #if DEBUG
             D_uniqueID = D_nextID;
             ++D_nextID;
 #endif
             this.game = game;
+            this.def = def;
             transform = new GameObject(nodeName).transform;
             transform.SetParent(game.agentContainer, false);
             realPos = pos;
@@ -42,10 +44,10 @@ namespace BB
 
         public float speed => 2;
 
-        private Vec2 realPos
+        public Vec2 realPos
         {
             get => transform.position.xy();
-            set => transform.position = value;
+            private set => transform.position = value;
         }
 
         public Vec2I pos { get { BB.Assert(GridAligned()); return realPos.Floor(); } }
@@ -69,6 +71,9 @@ namespace BB
                 dist.x < (halfSize.x - invThresh) &&
                 dist.y < (halfSize.y - invThresh);
         }
+
+        public void AttachSelectionHighlight(Transform highlight)
+            => highlight.SetParent(transform, false);
 
         public void PickupItem(Item item)
         {

@@ -99,6 +99,12 @@ namespace BB
                 listener.ItemChanged(item);
         }
 
+        public IEnumerable<TileItem> GUISelectItemsOnTile(Tile tile)
+        {
+            if (tile.hasItems)
+                yield return map.GetItem(tile);
+        }
+
         private void DropItem(Tile tile, Item item)
         {
             BB.AssertNotNull(item);

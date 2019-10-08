@@ -11,7 +11,7 @@ namespace BB
         public MinionSkin skin { get; }
 
         public Minion(Game game, Vec2I pos)
-            : base(game, pos, "Minion")
+            : base(game, new MinionDef("BB:Minion", "Minion"), pos, "Minion")
         {
             skin = transform.gameObject.AddComponent<MinionSkin>();
             skin.Init(game.assets, nextRenderLayer);

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 /* Ideas/concepts *
@@ -74,6 +75,28 @@ namespace BB
             var container = new GameObject(name).transform;
             container.SetParent(gameContainer, false);
             return container;
+        }
+
+        const float minionSelectThreshold = .4f;
+        public Minion GUISelectMinion(Vec2 pos)
+        {
+            float threshSq = minionSelectThreshold * minionSelectThreshold;
+            pos += new Vec2(-.5f, -.5f);
+            foreach (var minion in minions)
+                if (pos.DistanceSq(minion.realPos) <= threshSq)
+                    return minion;
+
+            return null;
+        }
+
+        public IEnumerable<Minion> GUISelectMinions(Rect area)
+        {
+            Rect rectThresh =
+                area.Expand(minionSelectThreshold)
+                    .Shift(new Vec2(-.5f, -.5f));
+            foreach (var minion in minions)
+                if (rectThresh.Contains(minion.realPos))
+                    yield return minion;
         }
 
         public void K_MoveMinion(Vec2I pos)
