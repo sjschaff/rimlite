@@ -288,7 +288,7 @@ namespace BB
         public void OnPointerClick(PointerEventData evt)
         {
             if (!isDragging.GetOrDefault(evt.button, false))
-                ctrl.OnClick(evt.position, evt.button);
+                ctrl.OnClick(evt.position, evt.button, evt.clickCount);
         }
 
         public void OnBeginDrag(PointerEventData evt)

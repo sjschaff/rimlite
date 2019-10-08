@@ -46,6 +46,7 @@ namespace BB
             }
         }
 
+        // Game State
         public readonly Registry registry;
         public readonly AssetSrc assets;
 
@@ -53,6 +54,9 @@ namespace BB
         public readonly Game game;
         public readonly GameUI gui;
 
+        private PlaySpeed speed;
+
+        // Tool State
         private readonly ToolBuildSelect builds;
         private readonly ToolOrdersSelect orders;
         private readonly ToolSelection selection;
@@ -60,12 +64,12 @@ namespace BB
         private UITool baseTool;
         private UITool activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
 
-        private PlaySpeed speed;
-
+        // Interaction State
         private bool mouseOver;
         private Vec2 dragStart;
         private Vec2 dragStartCam;
         private Vec3 camPosInitial;
+        private Selection lastSingleClickSelection;
 
         public GameController()
         {
@@ -198,7 +202,7 @@ namespace BB
             => Input.GetKey(KeyCode.LeftShift) ||
                Input.GetKey(KeyCode.RightShift);
 
-        public void OnClick(Vec2 scPos, InputButton button)
+        public void OnClick(Vec2 scPos, InputButton button, int clickCount)
         {
             Vec2 realPos = ScreenToWorld(scPos);
             Vec2I pos = realPos.Floor();
@@ -209,7 +213,7 @@ namespace BB
                     if (activeTool != null && activeTool.IsClickable())
                         activeTool.OnClick(pos);
                     else
-                        SelectClick(realPos);
+                        SelectClick(realPos, clickCount % 2);
                 }
             }
             else if (button == InputButton.Right)
@@ -233,6 +237,37 @@ namespace BB
             }
         }
 
+        private void SelectClick(Vec2 pos, int clickCount)
+        {
+            if (clickCount == 1 || lastSingleClickSelection == null)
+                SelectClick(pos);
+            else
+            {
+                Rect area = ClampToMap(cam.WorldRect());
+
+                Selection selection = new Selection();
+                if (lastSingleClickSelection.minions.Count > 0)
+                    selection.minions.AddRange(game.GUISelectMinions(area));
+                else if (lastSingleClickSelection.items.Count > 0)
+                {
+                    var item = lastSingleClickSelection.items[0];
+                    selection.items.AddRange(GetItems(area).Where(i => i.def == item.def));
+                }
+                else if (lastSingleClickSelection.buildings.Count > 0)
+                {
+                    var building = lastSingleClickSelection.buildings[0];
+                    foreach (var t in area.RectInclusive().allPositionsWithin)
+                    {
+                        var tile = game.Tile(t);
+                        if (tile.hasBuilding && tile.building.def == building.def)
+                            selection.buildings.Add(tile.building);
+                    }
+                }
+
+                SetSelection(selection);
+            }
+        }
+
         private void SelectClick(Vec2 pos)
         {
             Selection selection = new Selection();
@@ -247,6 +282,11 @@ namespace BB
             if (tile.hasBuilding)
                 selection.buildings.Add(tile.building);
 
+            if (selection.Empty())
+                lastSingleClickSelection = null;
+            else
+                lastSingleClickSelection = selection;
+
             SetSelection(selection);
         }
 
@@ -258,22 +298,28 @@ namespace BB
                 selection.minions.Add(minion);
 
             if (selection.minions.Count == 0)
-            {
-                RectInt areaInc = area.RectInclusive();
-                foreach (var pos in areaInc.allPositionsWithin)
-                {
-                    var tile = game.Tile(pos);
-                    if (tile.hasItems)
-                        selection.items.AddRange(game.GUISelectItemsOnTile(tile));
-                }
-            }
+                selection.items.AddRange(GetItems(area));
 
             SetSelection(selection);
         }
 
-        private Rect DragRect(Vec2 pos) 
-            => MathExt.RectForPts(dragStart, pos)
-                      .Clamp(new Rect(Vec2.zero, game.size));
+        private IEnumerable<TileItem> GetItems(Rect area)
+        {
+            RectInt areaInc = area.RectInclusive();
+            foreach (var pos in areaInc.allPositionsWithin)
+            {
+                var tile = game.Tile(pos);
+                if (tile.hasItems)
+                    foreach (var item in game.GUISelectItemsOnTile(tile))
+                        yield return item;
+            }
+        }
+
+        private Rect ClampToMap(Rect rect)
+            => rect.Clamp(new Rect(Vec2.zero, game.size));
+
+        private Rect DragRect(Vec2 pos)
+            => ClampToMap(MathExt.RectForPts(dragStart, pos));
 
         private RectInt DragRectInt(Vec2 pos)
             => DragRect(pos).RectInclusive();

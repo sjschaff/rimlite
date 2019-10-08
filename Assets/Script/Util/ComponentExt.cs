@@ -18,6 +18,13 @@ namespace BB
             return new Vec2(w, h);
         }
 
+        public static Rect WorldRect(this Camera c)
+        {
+            Vec2 size = c.OrthoSize();
+            Vec2 pos = c.transform.position.xy();
+            return new Rect(pos - size * .5f, size);
+        }
+
         public static void SetLayer(this Renderer renderer, RenderLayer layer)
             => layer.Apply(renderer);
 
