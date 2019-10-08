@@ -20,22 +20,22 @@ namespace BB
 
         public ToolbarButton(
             Transform parent, string name,
-            Vec2 pos, Vec2 size, Font font,
-            UnityAction fn)
+            Anchor anchor, Vec2 pos, Vec2 size,
+            float margin, Font font,UnityAction fn)
         {
             pane = Gui.CreatePane(
                 parent, name, offColor,
-                size, Anchor.BottomLeft, pos);
+                size, anchor, pos);
 
             img = Gui.CreateImage(pane.rectTransform, "<image>", null);
-            img.rectTransform.SetFill();
+            img.rectTransform.SetFillWithMargin(margin);
             Gui.AddButton(img.gameObject, fn);
 
             TextCfg cfg = new TextCfg
             {
                 font = font,
-                fontSizeMin = 10,
-                fontSizeMax = 27,
+                fontSizeMin = 5,
+                fontSizeMax = 14,
                 autoResize = true,
                 style = FontStyle.Bold,
                 anchor = TextAnchor.LowerCenter,
@@ -64,9 +64,9 @@ namespace BB
             img.color = sprite == null ? offColor : Color.white;
             img.sprite = sprite;
             if (bigText)
-                this.text.resizeTextMaxSize = 40;
+                this.text.resizeTextMaxSize = 20;
             else
-                this.text.resizeTextMaxSize = 27;
+                this.text.resizeTextMaxSize = 14;
         }
 
         public void Configure(AssetSrc assets, IOrdersGiver orders)
@@ -90,7 +90,7 @@ namespace BB
             TextCfg cfg = new TextCfg()
             {
                 font = font,
-                fontSize = 60,
+                fontSize = 30,
                 autoResize = false,
                 style = FontStyle.Bold,
                 anchor = TextAnchor.UpperCenter,
@@ -118,12 +118,17 @@ namespace BB
         public readonly List<ToolbarButton> buttons
             = new List<ToolbarButton>();
 
+        ToolbarButton pauseButton;
+        ToolbarButton playButton;
+        ToolbarButton playFFButton;
+        ToolbarButton playSFFButton;
+
         public GameUI(GameController ctrl)
         {
             this.ctrl = ctrl;
 
             root = new GameObject("GUI").transform;
-            canvas = CreateCanvas(root.transform, new Vec2I(4096, 2160));
+            canvas = CreateCanvas(root.transform, new Vec2I(1920, 1080));
             CreateInputSink();
 
             dragOutline = ctrl.assets.CreateLine(
@@ -134,32 +139,53 @@ namespace BB
 
             Color color = new Color(.19f, .19f, .19f);
 
-            Sprite spriteBuild = ctrl.assets.sprites.Get(
-                    ctrl.registry.defs.Get<SpriteDef>("BB:BuildIcon"));
             buildButton = CreateToolbarButton(
-                "Build Button", new Vec2(840, 0),
+                "Build Button", new Vec2(420, 0),
                 () => ctrl.OnBuildMenu());
-            buildButton.Configure(spriteBuild, "Build", true);
+            buildButton.Configure(GetSprite("BB:BuildIcon"), "Build", true);
 
-            Sprite spriteOrders = ctrl.assets.sprites.Get(
-                    ctrl.registry.defs.Get<SpriteDef>("BB:MineIcon"));
             orderButton = CreateToolbarButton(
-                "Orders Button", new Vec2(840, 220),
+                "Orders Button", new Vec2(420, 110),
                 () => ctrl.OnOrdersMenu());
-            orderButton.Configure(spriteOrders, "Orders", true);
+            orderButton.Configure(GetSprite("BB:MineIcon"), "Orders", true);
 
-            infoPane = new InfoPane(canvas, new Vec2(800, 400),
-                ctrl.assets.fonts.Get("Arial.ttf"));
+            Font font = ctrl.assets.fonts.Get("Arial.ttf");
+            infoPane = new InfoPane(canvas, new Vec2(400, 200), font);
 
-            /*CreatePane(canvas, "bl", Color.blue, new Vec2(200, 200), Anchor.BottomLeft, new Vec2(40, 40));
-            CreatePane(canvas, "bc", Color.blue, new Vec2(200, 200), Anchor.Bottom, new Vec2(40, 40));
-            CreatePane(canvas, "br", Color.blue, new Vec2(200, 200), Anchor.BottomRight, new Vec2(40, 40));
-            CreatePane(canvas, "cl", Color.blue, new Vec2(200, 200), Anchor.Left, new Vec2(40, 40));
-            CreatePane(canvas, "cc", Color.blue, new Vec2(200, 200), Anchor.Center, new Vec2(40, 40));
-            CreatePane(canvas, "cr", Color.blue, new Vec2(200, 200), Anchor.Right, new Vec2(40, 40));
-            CreatePane(canvas, "tl", Color.blue, new Vec2(200, 200), Anchor.TopLeft, new Vec2(40, 40));
-            CreatePane(canvas, "tc", Color.blue, new Vec2(200, 200), Anchor.Top, new Vec2(40, 40));
-            CreatePane(canvas, "tr", Color.blue, new Vec2(200, 200), Anchor.TopRight, new Vec2(40, 40));*/
+            pauseButton = new ToolbarButton(
+                canvas, "Pause", Anchor.TopLeft,
+                new Vec2(10, 10), new Vec2(38, 38), 4,
+                font, () => ctrl.OnSpeedChange(PlaySpeed.Paused));
+            pauseButton.Configure(GetSprite("BB:PauseIcon"));
+
+            playButton = new ToolbarButton(
+                canvas, "Play", Anchor.TopLeft,
+                new Vec2(52, 10), new Vec2(38, 38), 6,
+                font, () => ctrl.OnSpeedChange(PlaySpeed.Normal));
+            playButton.Configure(GetSprite("BB:PlayIcon"));
+
+            playFFButton = new ToolbarButton(
+                canvas, "Fast", Anchor.TopLeft,
+                new Vec2(94, 10), new Vec2(51, 38), 6,
+                font, () => ctrl.OnSpeedChange(PlaySpeed.Fast));
+            playFFButton.Configure(GetSprite("BB:PlayFFIcon"));
+
+            playSFFButton = new ToolbarButton(
+                canvas, "Super Fast", Anchor.TopLeft,
+                new Vec2(149, 10), new Vec2(77, 38), 6,
+                font, () => ctrl.OnSpeedChange(PlaySpeed.SuperFast));
+            playSFFButton.Configure(GetSprite("BB:PlaySFFIcon"));
+
+            /*
+            CreatePane(canvas, "bl", Color.blue, new Vec2(100, 100), Anchor.BottomLeft, new Vec2(20, 20));
+            CreatePane(canvas, "bc", Color.blue, new Vec2(100, 100), Anchor.Bottom, new Vec2(20, 20));
+            CreatePane(canvas, "br", Color.blue, new Vec2(100, 100), Anchor.BottomRight, new Vec2(20, 20));
+            CreatePane(canvas, "cl", Color.blue, new Vec2(100, 100), Anchor.Left, new Vec2(20, 20));
+            CreatePane(canvas, "cc", Color.blue, new Vec2(100, 100), Anchor.Center, new Vec2(20, 20));
+            CreatePane(canvas, "cr", Color.blue, new Vec2(100, 100), Anchor.Right, new Vec2(20, 20));
+            CreatePane(canvas, "tl", Color.blue, new Vec2(100, 100), Anchor.TopLeft, new Vec2(20, 20));
+            CreatePane(canvas, "tc", Color.blue, new Vec2(100, 100), Anchor.Top, new Vec2(20, 20));
+            CreatePane(canvas, "tr", Color.blue, new Vec2(100, 100), Anchor.TopRight, new Vec2(20, 20));*/
         }
 
         public void HideToolbarButtons()
@@ -187,15 +213,31 @@ namespace BB
         private ToolbarButton CreateToolbarButton(int pos)
             => CreateToolbarButton(
                 $"Toolbar {pos}",
-                new Vec2(840 + (180 + 40) * (pos + 1), 0),
+                new Vec2(420 + (90 + 20) * (pos + 1), 0),
                 () => ctrl.OnToolbar(pos));
 
         private ToolbarButton CreateToolbarButton(string name, Vec2 pos, UnityAction fn)
         {
             return new ToolbarButton(
-                canvas, name, pos, new Vec2(180, 180),
+                canvas, name, Anchor.BottomLeft,
+                pos, new Vec2(90, 90), 0,
                 ctrl.assets.fonts.Get("Arial.ttf"), fn);
         }
+
+        public ToolbarButton ButtonForSpeed(PlaySpeed speed)
+        {
+            switch (speed)
+            {
+                case PlaySpeed.Paused: return pauseButton;
+                case PlaySpeed.Normal: return playButton;
+                case PlaySpeed.Fast: return playFFButton;
+                case PlaySpeed.SuperFast: return playSFFButton;
+                default: return null;
+            }
+        }
+
+        private Sprite GetSprite(string name)
+            => ctrl.assets.sprites.Get(ctrl.registry.defs.Get<SpriteDef>(name));
 
         private void CreateInputSink()
         {

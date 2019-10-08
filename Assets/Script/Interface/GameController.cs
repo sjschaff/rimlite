@@ -10,6 +10,11 @@ using Vec3 = UnityEngine.Vector3;
 
 namespace BB
 {
+    public enum PlaySpeed
+    {
+        Paused, Normal, Fast, SuperFast
+    }
+
     public class GameController
     {
         public bool lockToMap = false;
@@ -17,11 +22,6 @@ namespace BB
         private const float zoomZpeed = .5f;
         private const float minZoom = 2;
         private const float maxZoom = 20;
-
-        enum PlaySpeed
-        {
-            Paused, Normal, Fast, SuperFast
-        }
 
         private static float Speed(PlaySpeed speed)
         {
@@ -80,6 +80,7 @@ namespace BB
             selection = new ToolSelection(this);
 
             speed = PlaySpeed.Normal;
+            OnSpeedChange(speed);
         }
 
         public void ReplaceTool(UITool tool)
@@ -124,12 +125,15 @@ namespace BB
             Vec2 mouse = MousePos();
 
             // Speed
-            // TODO: update animations to reflect the speed
             if (Input.GetKeyDown(KeyCode.Tab))
-                speed = NextPlaySpeed(speed);
+                OnSpeedChange(NextPlaySpeed(speed));
             if (Input.GetKeyDown(KeyCode.Space))
-                speed = PlaySpeed.Paused;
-
+            {
+                if (speed == PlaySpeed.Paused)
+                    OnSpeedChange(PlaySpeed.Normal);
+                else
+                    OnSpeedChange(PlaySpeed.Paused);
+            }
 
             // Panning
             Vec2 panDir = new Vec2(0, 0);
@@ -159,6 +163,14 @@ namespace BB
 
         public void OnBuildMenu() => ReplaceTool(builds);
         public void OnOrdersMenu() => ReplaceTool(orders);
+
+        public void OnSpeedChange(PlaySpeed speed)
+        {
+            gui.ButtonForSpeed(this.speed).SetSelected(false);
+            gui.ButtonForSpeed(speed).SetSelected(true);
+            this.speed = speed;
+            // TODO: change animation speed
+        }
 
         public void OnToolbar(int button)
         {

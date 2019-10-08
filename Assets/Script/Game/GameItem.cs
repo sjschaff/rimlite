@@ -105,6 +105,9 @@ namespace BB
                 }
             }
 
+            if (itemSet.Count == 0)
+                return;
+
             map.FloodFill(tileDrop, (tile) => tile.passable,
                 (tile) =>
                 {

@@ -316,6 +316,10 @@ namespace BB
             Register(new SpriteDef("BB:MineIcon", sprites32, new Vec2I(0, 62), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BuildIcon", sprites64, new Vec2I(0, 30), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:CancelIcon", sprites64, new Vec2I(2, 30), new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:PlayIcon", sprites64, new Vec2I(8, 28), new Vec2I(4, 4), Vec2I.zero));
+            Register(new SpriteDef("BB:PauseIcon", sprites64, new Vec2I(12, 28), new Vec2I(4, 4), Vec2I.zero));
+            Register(new SpriteDef("BB:PlayFFIcon", sprites64, new Vec2I(16, 28), new Vec2I(6, 4), Vec2I.zero));
+            Register(new SpriteDef("BB:PlaySFFIcon", sprites64, new Vec2I(22, 28), new Vec2I(10, 4), Vec2I.zero));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone"), 5));
             Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood"), 5));
