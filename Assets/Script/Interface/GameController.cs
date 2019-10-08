@@ -18,6 +18,34 @@ namespace BB
         private const float minZoom = 2;
         private const float maxZoom = 20;
 
+        enum PlaySpeed
+        {
+            Paused, Normal, Fast, SuperFast
+        }
+
+        private static float Speed(PlaySpeed speed)
+        {
+            switch (speed)
+            {
+                case PlaySpeed.SuperFast: return 3;
+                case PlaySpeed.Fast: return 1.5f;
+                default: return 1;
+            }
+        }
+
+        private static PlaySpeed NextPlaySpeed(PlaySpeed speed)
+        {
+            switch (speed)
+            {
+                case PlaySpeed.Paused: return PlaySpeed.Normal;
+                case PlaySpeed.Normal: return PlaySpeed.Fast;
+                case PlaySpeed.Fast: return PlaySpeed.SuperFast;
+                case PlaySpeed.SuperFast:
+                default:
+                    return PlaySpeed.Paused;
+            }
+        }
+
         public readonly Registry registry;
         public readonly AssetSrc assets;
 
@@ -31,6 +59,8 @@ namespace BB
         private readonly Stack<UITool> activeTools = new Stack<UITool>();
         private UITool baseTool;
         private UITool activeTool => activeTools.Count > 0 ? activeTools.Peek() : null;
+
+        private PlaySpeed speed;
 
         private bool mouseOver;
         private Vec2 dragStart;
@@ -48,6 +78,8 @@ namespace BB
             builds = new ToolBuildSelect(this);
             orders = new ToolOrdersSelect(this);
             selection = new ToolSelection(this);
+
+            speed = PlaySpeed.Normal;
         }
 
         public void ReplaceTool(UITool tool)
@@ -91,11 +123,18 @@ namespace BB
         {
             Vec2 mouse = MousePos();
 
+            // Speed
+            // TODO: update animations to reflect the speed
+            if (Input.GetKeyDown(KeyCode.Tab))
+                speed = NextPlaySpeed(speed);
+            if (Input.GetKeyDown(KeyCode.Space))
+                speed = PlaySpeed.Paused;
+
             // Tool
             if (mouseOver)
                 activeTool?.OnUpdate(mouse.Floor());
-
-            if (Input.GetKeyDown(KeyCode.Tab))
+            
+            if (Input.GetKeyDown(KeyCode.E))
                 activeTool?.K_OnTab();
             if (Input.GetKeyDown(KeyCode.Escape))
                 if (activeTools.Count > 0)
@@ -111,7 +150,8 @@ namespace BB
                 cam.transform.localPosition += (panDir * panSpeed * cam.orthographicSize * Time.deltaTime).Vec3();
 
             // Game
-            game.Update(dt);
+            if (speed != PlaySpeed.Paused)
+                game.Update(dt * Speed(speed));
         }
 
         public void OnBuildMenu() => ReplaceTool(builds);
@@ -160,6 +200,7 @@ namespace BB
             else if (button == InputButton.Right)
             {
                 // TODO: context menu?
+                game.K_MoveMinion(pos);
             }
         }
 
