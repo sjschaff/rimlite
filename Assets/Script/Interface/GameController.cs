@@ -158,7 +158,7 @@ namespace BB
                 if (activeTools.Count > 0)
                     PopTool();
 
-            activeTool?.OnUpdate();
+            activeTool?.OnUpdate(dt);
 
             // Game
             if (speed != PlaySpeed.Paused)

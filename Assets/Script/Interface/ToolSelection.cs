@@ -53,77 +53,12 @@ namespace BB
         IBuildingListener
     {
         #region Vis
-        private class Highlight
-        {
-            private static readonly Vec2[] ptsBL = new Vec2[]
-            {
-                new Vec2(0, .25f),
-                new Vec2(0, .1f),
-                new Vec2(.1f, 0),
-                new Vec2(.25f, 0)
-            };
 
-            private static readonly Vec2[] ptsBR =
-                ptsBL.Select(pt => new Vec2(-pt.x, pt.y)).ToArray();
-            private static readonly Vec2[] ptsTR =
-                ptsBL.Select(pt => new Vec2(-pt.x, -pt.y)).ToArray();
-            private static readonly Vec2[] ptsTL =
-                ptsBL.Select(pt => new Vec2(pt.x, -pt.y)).ToArray();
-
-            private readonly Transform parent;
-            private readonly Transform container;
-            private readonly Line bl, br, tl, tr;
-
-            private static Line CreateLine(AssetSrc assets, Transform parent, Vec2[] pts)
-            {
-                var line = assets.CreateLine(
-                    parent, "<corner>",
-                    RenderLayer.Default.Layer(10000),
-                    Color.white, 1 / 32f, false, false);
-                line.SetPts(pts);
-                return line;
-            }
-
-            public Highlight(AssetSrc assets, Transform parent)
-            {
-                this.parent = parent;
-                this.container = new GameObject("<highlight>").transform;
-                container.SetParent(parent, false);
-
-                bl = CreateLine(assets, container, ptsBL);
-                br = CreateLine(assets, container, ptsBR);
-                tl = CreateLine(assets, container, ptsTL);
-                tr = CreateLine(assets, container, ptsTR);
-            }
-
-            public void Enable(Agent agent)
-            {
-                agent.AttachSelectionHighlight(container);
-                SetRect(new Rect(Vec2.zero, Vec2.one));
-            }
-
-            public void Enable(Rect rect) => SetRect(rect);
-
-            private void SetRect(Rect rect)
-            {
-                bl.position = rect.min;
-                br.position = new Vec2(rect.xMax, rect.yMin);
-                tr.position = rect.max;
-                tl.position = new Vec2(rect.xMin, rect.yMax);
-                bl.enabled = br.enabled = tr.enabled = tl.enabled = true; 
-            }
-
-            public void Disable()
-            {
-                bl.enabled = br.enabled = tr.enabled = tl.enabled = false;
-                container.SetParent(parent, false);
-            }
-        }
         #endregion
 
         private class Selectable : IEquatable<Selectable>
         {
-            public Highlight highlight;
+            public SelectionHighlight highlight;
             public readonly Agent agent;
             public readonly TileItem item;
             public readonly IBuilding building;
@@ -156,7 +91,7 @@ namespace BB
                 }
             }
 
-            public void AddHighlight(Highlight highlight)
+            public void AddHighlight(SelectionHighlight highlight)
             {
                 // TODO: animate
                 this.highlight = highlight;
@@ -215,7 +150,7 @@ namespace BB
 
         private readonly List<IOrdersGiver> orders = new List<IOrdersGiver>();
         private readonly Transform poolRoot;
-        private readonly Pool<Highlight> highlights;
+        private readonly Pool<SelectionHighlight> highlights;
 
         private readonly HashSet<Selectable> selectables = new HashSet<Selectable>();
         private readonly List<IOrdersGiver> ordersCurrent = new List<IOrdersGiver>();
@@ -226,8 +161,8 @@ namespace BB
             poolRoot = new GameObject("Selection Highlights").transform;
             poolRoot.SetParent(ctrl.gui.root, false);
 
-            highlights = new Pool<Highlight>(
-                () => new Highlight(ctrl.assets, poolRoot));
+            highlights = new Pool<SelectionHighlight>(
+                () => new SelectionHighlight(ctrl.assets, poolRoot));
 
             foreach (var system in ctrl.registry.systems)
             {
@@ -306,8 +241,10 @@ namespace BB
                 DeactiveHighlight(selectable);
         }
 
-        public override void OnUpdate()
+        public override void OnUpdate(float dt)
         {
+            foreach (var selectable in selectables)
+                selectable.highlight.Update(dt);
         }
 
         private void InvalidateUI()

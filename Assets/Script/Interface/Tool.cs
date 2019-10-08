@@ -13,7 +13,7 @@ namespace BB
         public virtual void OnDeactivate() { }
         public virtual void OnSuspend() { }
         public virtual void OnUnsuspend() { }
-        public virtual void OnUpdate() { }
+        public virtual void OnUpdate(float dt) { }
 
         public virtual bool IsClickable() => false;
         public virtual bool IsDragable() => false;
