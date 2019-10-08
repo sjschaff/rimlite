@@ -10,8 +10,7 @@ namespace BB
         public SystemDeconstruct(Game game)
             : base(game, game.defs.Get<SpriteDef>("BB:BuildIcon"), "Deconstruct") { }
 
-        public override OrdersFlags flags =>
-            OrdersFlags.AppliesGlobally;
+        public override bool SelectionOnly() => false;
 
         public override bool ApplicableToBuilding(IBuilding building)
             => building.prototype is IBuildable;

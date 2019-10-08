@@ -13,7 +13,7 @@ namespace BB
 #endif
 
         public readonly Game game;
-        public readonly DefNamed def;
+        public readonly AgentDef def;
         protected readonly Transform transform;
 
         public Work currentWork { get; private set; }
@@ -28,8 +28,7 @@ namespace BB
         public abstract void SetFacing(Vec2 dir);
         protected abstract void ReconfigureItem(); // Jank AF
 
-
-        public Agent(Game game, DefNamed def, Vec2I pos, string nodeName)
+        public Agent(Game game, AgentDef def, Vec2I pos, string nodeName)
         {
 #if DEBUG
             D_uniqueID = D_nextID;

@@ -16,8 +16,10 @@ namespace BB
             public override void CancelJob() { }
         }
 
-        public IOrdersGiver orders => null;
+        public IEnumerable<IOrdersGiver> GetOrders() { yield break; }
+        public IEnumerable<ICommandsGiver> GetCommands() { yield break; }
         public IEnumerable<Work> QueryWork() { yield break; }
+        public void Update(float dt) { }
 
         public static Work Create(TaskGoTo task)
             => new Work(dummy, task.Enumerate(), "WalkDummy");

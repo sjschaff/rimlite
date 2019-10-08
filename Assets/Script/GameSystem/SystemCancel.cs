@@ -11,9 +11,7 @@ namespace BB
         public SystemCancel(Game game)
             => sprite = game.defs.Get<SpriteDef>("BB:CancelIcon");
 
-        public OrdersFlags flags =>
-            OrdersFlags.AppliesGlobally;
-
+        public bool SelectionOnly() => false;
         public SpriteDef GuiSprite() => sprite;
         public string GuiText() => "Cancel";
 
@@ -27,6 +25,12 @@ namespace BB
                 job.CancelJob();
         }
 
+        public bool ApplicableToAgent(Agent agent)
+        {
+            // TODO: support agents (i.e cancel hunt)
+            return false;
+        }
+
         public bool ApplicableToItem(TileItem item)
         {
             // TODO: support items
@@ -37,7 +41,9 @@ namespace BB
             => building.jobHandles.Count > 0;
 
 
-        public IOrdersGiver orders => this;
+        public IEnumerable<IOrdersGiver> GetOrders() { yield return this; }
+        public IEnumerable<ICommandsGiver> GetCommands() { yield break; }
         public IEnumerable<Work> QueryWork() { yield break; }
+        public void Update(float dt) { }
     }
 }

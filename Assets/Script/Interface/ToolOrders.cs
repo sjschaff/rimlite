@@ -12,8 +12,9 @@ namespace BB
         {
             foreach (var system in ctrl.registry.systems)
             {
-                if (system.orders != null && system.orders.flags.HasFlag(OrdersFlags.AppliesGlobally))
-                    selectables.Add(system.orders);
+                foreach (var orders in system.GetOrders())
+                    if (!orders.SelectionOnly())
+                        selectables.Add(orders);
             }
         }
 

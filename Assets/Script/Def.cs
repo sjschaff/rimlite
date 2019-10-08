@@ -269,24 +269,29 @@ namespace BB
     // constructable, terrain gen-able, etc.
 
     // TODO: who knows
-    public class AgentDef : DefNamed
+    public class AgentTypeDef : Def
     {
-        public AgentDef(string defName, string name)
-            : base("BB:Agent", defName, name) { }
+        public AgentTypeDef(string defName)
+            : base("BB:AgentType", defName) {}
     }
 
-    public class MinionDef : AgentDef
+    public class AgentDef : DefNamed
     {
-        public MinionDef(string defName, string name)
-            : base(defName, name) { }
+        public readonly AgentTypeDef type;
 
+        public AgentDef(string defName, string name, AgentTypeDef type)
+            : base("BB:Agent", defName, name)
+            => this.type = type;
     }
 
     public class Defs
     {
+        public readonly AgentTypeDef agentMinion;
         public Defs()
         {
             // TODO: something neat where these are loaded dynamically
+            agentMinion = new AgentTypeDef("BB:Minion");
+
             var tileset32 = Register(new AtlasDef("BB:tileset32", "tileset32", 16, 32));
             var tileset64 = Register(new AtlasDef("BB:tileset64", "tileset64", 32, 64));
             var sprites32 = Register(new AtlasDef("BB:sprites32", "sprites32", 8, 32));

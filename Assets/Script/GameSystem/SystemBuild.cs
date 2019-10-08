@@ -26,8 +26,6 @@ namespace BB
                 (buildable) => new BldgConstructionDef(buildable));
         }
 
-        public override IOrdersGiver orders => null;
-
         public void CreateBuild(IBuildable proto, Tile tile, Dir dir)
             => AddJob(new JobBuild(this, virtualDefs.Get(proto), tile, dir));
 

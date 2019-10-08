@@ -166,8 +166,8 @@ namespace BB
 
             foreach (var system in ctrl.registry.systems)
             {
-                if (system.orders != null)
-                    orders.Add(system.orders);
+                foreach (var o in system.GetOrders())
+                    orders.Add(o);
             }
         }
 

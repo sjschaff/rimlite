@@ -17,7 +17,7 @@ namespace BB
         public SystemMine(Game game)
             : base(game, game.defs.Get<SpriteDef>("BB:MineIcon"), "Mine") { }
 
-        public override OrdersFlags flags => OrdersFlags.AppliesGlobally;
+        public override bool SelectionOnly() => false;
 
         public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
 

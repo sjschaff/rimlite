@@ -27,26 +27,31 @@ namespace BB
     public interface IGameSystem
     {
         /*IGameSystem(Game game);*/
-        IOrdersGiver orders { get; }
+        IEnumerable<IOrdersGiver> GetOrders();
+        IEnumerable<ICommandsGiver> GetCommands(); 
         IEnumerable<Work> QueryWork();
+        void Update(float dt);
     }
 
-    [Flags]
-    public enum OrdersFlags
-    {
-        None = 0,
-        AppliesGlobally = 1,
-    }
-
-    public interface IOrdersGiver
+    public interface IToolbarButton
     {
         SpriteDef GuiSprite();
         string GuiText();
+    }
 
+    public interface IOrdersGiver : IToolbarButton
+    {
         bool HasOrder(Tile tile);
         void AddOrder(Tile tile);
-        OrdersFlags flags { get; }
+        bool SelectionOnly();
+        bool ApplicableToAgent(Agent agent);
         bool ApplicableToItem(TileItem item);
         bool ApplicableToBuilding(IBuilding building);
+    }
+
+    public interface ICommandsGiver : IToolbarButton
+    {
+        bool ApplicableToMinion(Minion agent);
+        bool IssueCommand(Agent agent);
     }
 }

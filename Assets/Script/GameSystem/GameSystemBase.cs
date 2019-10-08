@@ -40,7 +40,9 @@ namespace BB
 
         protected GameSystemStandard(Game game) => this.game = game;
 
-        public abstract IOrdersGiver orders { get; }
+        public virtual IEnumerable<IOrdersGiver> GetOrders() { yield break; }
+        public virtual IEnumerable<ICommandsGiver> GetCommands() { yield break; }
+        public virtual void Update(float dt) { }
 
         public IEnumerable<Work> QueryWork()
         {
@@ -150,14 +152,17 @@ namespace BB
         }
 
         protected abstract TJob CreateJob(Tile tile);
-        public abstract OrdersFlags flags { get; }
+        public abstract bool SelectionOnly();
 
         public SpriteDef GuiSprite() => guiSprite;
         public string GuiText() => guiText;
-        public override IOrdersGiver orders => this;
-        public virtual bool ApplicableToBuilding(IBuilding building) => false;
+        public override IEnumerable<IOrdersGiver> GetOrders() { yield return this; }
+        public override IEnumerable<ICommandsGiver> GetCommands() { yield break; }
+        public virtual bool ApplicableToAgent(Agent agent) => false;
         public virtual bool ApplicableToItem(TileItem item) => false;
+        public virtual bool ApplicableToBuilding(IBuilding building) => false;
         public bool HasOrder(Tile tile) => HasJob(tile);
         public void AddOrder(Tile tile) => AddJob(CreateJob(tile));
+        public override void Update(float dt) { }
     }
 }
