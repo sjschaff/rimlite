@@ -336,6 +336,10 @@ namespace BB
             ctrl.gui.infoPane.header.text = text;
         }
 
+        public override void OnUpdate()
+        {
+        }
+
         public override void OnActivate()
         {
             BB.Assert(selectables.Count > 0);

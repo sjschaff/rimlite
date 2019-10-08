@@ -130,15 +130,6 @@ namespace BB
             if (Input.GetKeyDown(KeyCode.Space))
                 speed = PlaySpeed.Paused;
 
-            // Tool
-            if (mouseOver)
-                activeTool?.OnUpdate(mouse.Floor());
-            
-            if (Input.GetKeyDown(KeyCode.E))
-                activeTool?.K_OnTab();
-            if (Input.GetKeyDown(KeyCode.Escape))
-                if (activeTools.Count > 0)
-                    PopTool();
 
             // Panning
             Vec2 panDir = new Vec2(0, 0);
@@ -148,6 +139,18 @@ namespace BB
             if (Input.GetKey("d")) panDir += new Vec2(1, 0);
             if (panDir != Vec2.zero)
                 cam.transform.localPosition += (panDir * panSpeed * cam.orthographicSize * Time.deltaTime).Vec3();
+
+            // Tool
+            if (mouseOver)
+                activeTool?.OnUpdate(mouse.Floor());
+
+            if (Input.GetKeyDown(KeyCode.E))
+                activeTool?.K_OnTab();
+            if (Input.GetKeyDown(KeyCode.Escape))
+                if (activeTools.Count > 0)
+                    PopTool();
+
+            activeTool?.OnUpdate();
 
             // Game
             if (speed != PlaySpeed.Paused)
