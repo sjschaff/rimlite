@@ -58,6 +58,21 @@ namespace BB
             return dict.TryGetValue(key, out TV val) ? val : defaultVal;
         }
 
+        public static bool TryGetValue<T>(this HashSet<T> set, T key, out T val)
+        {
+            foreach (var t in set)
+            {
+                if (t.Equals(key))
+                {
+                    val = t;
+                    return true;
+                }
+            }
+
+            val = default;
+            return false;
+        }
+
         public static IEnumerable<T> Enumerate<T>(this T t)
         {
             yield return t;

@@ -3,13 +3,6 @@ using System.Linq;
 
 namespace BB
 {
-    public interface IItemListener
-    {
-        void ItemAdded(TileItem item);
-        void ItemRemoved(TileItem item);
-        void ItemChanged(TileItem item);
-    }
-
     public class TileItem
     {
         public readonly Tile tile;
@@ -71,33 +64,6 @@ namespace BB
     {
         private readonly LinkedList<TileItem> items
             = new LinkedList<TileItem>();
-        private readonly HashSet<IItemListener> itemListeners
-            = new HashSet<IItemListener>();
-
-        public void RegisterItemListener(IItemListener listener)
-            => itemListeners.Add(listener);
-
-        public void UnregisterItemListener(IItemListener listener)
-            => itemListeners.Remove(listener);
-
-        // TODO:
-        private void NotifyItemAdded(TileItem item)
-        {
-            foreach (var listener in itemListeners)
-                listener.ItemAdded(item);
-        }
-
-        private void NotifyItemRemoved(TileItem item)
-        {
-            foreach (var listener in itemListeners)
-                listener.ItemRemoved(item);
-        }
-
-        private void NotifyItemChanged(TileItem item)
-        {
-            foreach (var listener in itemListeners)
-                listener.ItemChanged(item);
-        }
 
         public IEnumerable<TileItem> GUISelectItemsOnTile(Tile tile)
         {

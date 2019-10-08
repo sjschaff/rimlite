@@ -7,8 +7,8 @@ namespace BB
     public partial class Game
     {
         private readonly Map map;
-        public Vec2I size => map.size;
 
+        public Vec2I size => map.size;
         public bool ValidTile(Vec2I pos) => map.ValidTile(pos);
         public Tile Tile(Vec2I pos) => map.GetTile(pos);
 
@@ -45,6 +45,7 @@ namespace BB
             bool passable = tile.passable;
             var bounds = building.bounds;
             map.RemoveBuilding(tile);
+            NotifyBuildingRemoved(building);
             RerouteMinions(bounds, passable, tile.passable);
         }
 
@@ -64,6 +65,7 @@ namespace BB
             var tile = building.tile;
             bool passable = tile.passable;
             map.AddBuilding(building);
+            NotifyBuildingAdded(building);
             RerouteMinions(building.bounds, passable, tile.passable);
         }
 
@@ -72,9 +74,12 @@ namespace BB
             // TODO: cancel outstanding job handles
             var tile = building.tile;
             BB.Assert(tile.hasBuilding);
+            var buildingPrev = tile.building;
 
             bool passable = tile.passable;
             map.ReplaceBuilding(building);
+            NotifyBuildingRemoved(buildingPrev);
+            NotifyBuildingAdded(building);
             RerouteMinions(building.bounds, passable, tile.passable);
         }
 

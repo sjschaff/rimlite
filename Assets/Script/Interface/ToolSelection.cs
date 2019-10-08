@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
-using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
@@ -48,8 +47,10 @@ namespace BB
         }
     }
 
-
-    public class ToolSelection : UITool
+    public class ToolSelection : UITool,
+        IAgentListener,
+        IItemListener,
+        IBuildingListener
     {
         #region Vis
         private class Highlight
@@ -134,12 +135,11 @@ namespace BB
                 this.building = building;
                 this.highlight = null;
             }
+
             public Selectable(Agent agent)
                 : this(agent, null, null) { }
-
             public Selectable(TileItem item)
                 : this(null, item, null) { }
-
             public Selectable(IBuilding building)
                 : this(null, null, building) { }
 
@@ -290,17 +290,89 @@ namespace BB
             ctrl.ReplaceTool(this);
         }
 
+        private void DeactiveHighlight(Selectable selectable)
+        {
+            if (selectable.highlight != null)
+            {
+                selectable.highlight.Disable();
+                highlights.Return(selectable.highlight);
+                selectable.highlight = null;
+            }
+        }
+
         private void ClearHighlights()
         {
             foreach (var selectable in selectables)
+                DeactiveHighlight(selectable);
+        }
+
+        public override void OnUpdate()
+        {
+        }
+
+        private void InvalidateUI()
+        {
+            if (selectables.Count == 0)
             {
-                if (selectable.highlight != null)
+                ctrl.PopAll();
+                return;
+            }
+
+            ClearUI();
+            InitUI();
+        }
+
+        private void ClearUI()
+        {
+            ctrl.gui.HideToolbarButtons();
+            ordersCurrent.Clear();
+        }
+
+        private void InitUI()
+        {
+            ConfigureInfoPane();
+
+            foreach (IOrdersGiver orders in orders)
+            {
+                foreach (var selectable in selectables)
                 {
-                    selectable.highlight.Disable();
-                    highlights.Return(selectable.highlight);
-                    selectable.highlight = null;
+                    if (selectable.Applicable(orders))
+                    {
+                        ordersCurrent.Add(orders);
+                        break;
+                    }
                 }
             }
+
+            ctrl.gui.ShowToolbarButtons(ordersCurrent.Count);
+            for (int i = 0; i < ordersCurrent.Count; ++i)
+                ctrl.gui.buttons[i].Configure(ctrl.assets, ordersCurrent[i]);
+        }
+
+        public override void OnActivate()
+        {
+            BB.Assert(selectables.Count > 0);
+            foreach (var selectable in selectables)
+            {
+                if (selectable.highlight == null)
+                    selectable.AddHighlight(highlights.Get());
+            }
+
+            InitUI();
+            ctrl.game.RegisterAgentListener(this);
+            ctrl.game.RegisterItemListener(this);
+            ctrl.game.RegisterBuildingListener(this);
+            base.OnActivate();
+        }
+
+        public override void OnDeactivate()
+        {
+            ClearUI();
+            ClearHighlights();
+            ctrl.game.UnregisterAgentListener(this);
+            ctrl.game.UnregisterItemListener(this);
+            ctrl.game.UnregisterBuildingListener(this);
+            base.OnDeactivate();
         }
 
         private void ConfigureInfoPane()
@@ -336,46 +408,39 @@ namespace BB
             ctrl.gui.infoPane.header.text = text;
         }
 
-        public override void OnUpdate()
+        #region Invalidation
+        private void SelectableRemoved(Selectable selectable)
         {
-        }
-
-        public override void OnActivate()
-        {
-            BB.Assert(selectables.Count > 0);
-            foreach (var selectable in selectables)
+            // TODO: handle this tool not being on top of the stack
+            if (selectables.TryGetValue(selectable, out var selActual))
             {
-                if (selectable.highlight == null)
-                    selectable.AddHighlight(highlights.Get());
+                DeactiveHighlight(selActual);
+                selectables.Remove(selectable);
+                InvalidateUI();
             }
-
-            ConfigureInfoPane();
-
-            foreach (IOrdersGiver orders in orders)
-            {
-                foreach (var selectable in selectables)
-                {
-                    if (selectable.Applicable(orders))
-                    {
-                        ordersCurrent.Add(orders);
-                        break;
-                    }
-                }
-            }
-
-            ctrl.gui.ShowToolbarButtons(ordersCurrent.Count);
-            for (int i = 0; i < ordersCurrent.Count; ++i)
-                ctrl.gui.buttons[i].Configure(ctrl.assets, ordersCurrent[i]);
-
-            base.OnActivate();
         }
 
-        public override void OnDeactivate()
+        private void SelectableChanged(Selectable selectable)
         {
-            ctrl.gui.HideToolbarButtons();
-            ordersCurrent.Clear();
-            ClearHighlights();
-            base.OnDeactivate();
+            if (selectables.Contains(selectable))
+                InvalidateUI();
         }
+
+        public void AgentRemoved(Agent agent)
+            => SelectableRemoved(new Selectable(agent));
+        public void ItemRemoved(TileItem item)
+            => SelectableRemoved(new Selectable(item));
+        public void BuildingRemoved(IBuilding building)
+            => SelectableRemoved(new Selectable(building));
+
+        public void AgentChanged(Agent agent)
+            => SelectableChanged(new Selectable(agent));
+        public void ItemChanged(TileItem item)
+            => SelectableChanged(new Selectable(item));
+
+        public void AgentAdded(Agent agent) { }
+        public void ItemAdded(TileItem item) { }
+        public void BuildingAdded(IBuilding building) { }
+        #endregion
     }
 }
