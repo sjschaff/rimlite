@@ -57,12 +57,12 @@ namespace BB
             if (activeTask != null)
                 EndActiveTask(true);
             job.AbandonWork(this);
+            ClearClaims();
         }
 
         public void Cancel()
         {
             BB.Assert(this.agent != null);
-            ClearClaims();
             agent.AbandonWork();
         }
 

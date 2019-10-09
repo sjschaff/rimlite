@@ -105,6 +105,8 @@ namespace BB
 
         public void Update(float dt)
         {
+            D_DebugUpdate();
+
             foreach (Minion minion in minions)
             {
                 if (minion == D_minionNoTask)
@@ -113,11 +115,16 @@ namespace BB
                 if (!minion.hasWork)
                 {
                     foreach (var system in registry.systems)
+                    {
                         foreach (var work in system.QueryWork())
                         {
                             if (minion.AssignWork(work))
                                 break;
                         }
+
+                        if (minion.hasWork)
+                            break;
+                    }
                 }
             }
 
