@@ -8,6 +8,7 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    #region Atlas
     public class MetaAtlas
     {
         private struct AnimKey
@@ -96,6 +97,7 @@ namespace BB
             return atlases.Get(path).GetSprite(keys.Get(new AnimKey(anim, dir, frame)));
         }
     }
+    #endregion
 
     public enum MinionAnim
     {
@@ -107,8 +109,10 @@ namespace BB
         private static MetaAtlas atlas;
         private Dictionary<string, SpriteRenderer> spriteLayers;
 
+        private Camera cam;
         private SpriteRenderer animDummy;
         private Animator animator;
+        private Transform spriteContainer;
 
         private Dictionary<string, string> equipped;
         public Dir dir { get; private set; } = Dir.Down;
@@ -117,15 +121,17 @@ namespace BB
 
         private void DirtySprite() => lastSprite = null;
 
-        public void Init(AssetSrc assets, int renderLayer)
+        public void Init(AssetSrc assets)
         {
             if (atlas == null)
                 atlas = new MetaAtlas();
 
+            cam = Camera.main;
             animDummy = assets.CreateSpriteObject(
                 transform, new Vec2(.5f, 0), "AnimDummy", null, Color.white, RenderLayer.Highlight);
             animDummy.transform.localScale = Vec3.one * 1.75f;
             animDummy.enabled = false;
+            spriteContainer = animDummy.transform;
             animator = animDummy.gameObject.AddComponent<Animator>();
             animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("anim/MinionAnimController");
 
@@ -134,18 +140,17 @@ namespace BB
             int subLayer = 0;
             foreach (string layer in layers)
             {
-                spriteLayers.Add(layer, assets.CreateSpriteObject(
+                var sprite = assets.CreateSpriteObject(
                     animDummy.transform, Vec2.zero,
-                    name, null, Color.white,
-                    RenderLayer.Minion.Layer(renderLayer*layers.Length + subLayer)));
+                    layer, null, Color.white, RenderLayer.Minion);
+                //sprite
+                sprite.transform.localPosition -= new Vec3(0, 0, .001f * subLayer);
+                spriteLayers.Add(layer, sprite);
                 ++subLayer;
             }
 
             K_SetOutfit(0);
         }
-
-        void Awake() { }
-        void Start() { }
 
         private string NameForTool(Tool tool)
         {
@@ -265,6 +270,18 @@ namespace BB
 
         void Update()
         {
+            // Manipulate z coord. to sort sprites tr -> bl
+            Rect bounds = cam.WorldRect().Expand(2f); 
+            float maxZ = cam.farClipPlane * .95f;
+            float horizontalStride = maxZ / bounds.size.y;
+
+            Vec2 position = spriteContainer.position.xy();
+            Vec2 posNormalized = (position - bounds.min) / bounds.size;
+            posNormalized = posNormalized.Clamp(0, 1);
+
+            float z = posNormalized.y * maxZ + posNormalized.x * horizontalStride;
+            spriteContainer.position = new Vec3(position.x, position.y, z);
+
             if (Input.GetKeyDown("z"))
                 K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
         }

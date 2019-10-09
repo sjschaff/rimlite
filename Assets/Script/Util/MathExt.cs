@@ -10,7 +10,6 @@ namespace BB
 {
     public static class MathExt
     {
-
 #pragma warning disable IDE1006 // Naming Styles
         public static Vec2 xy(this Vec3 v) => new Vec2(v.x, v.y);
         public static Vec2I xy(this Vec3I v) => new Vec2I(v.x, v.y);
@@ -25,6 +24,7 @@ namespace BB
         }
         public static float DistanceSq(this Vec2 v, Vec2 o) => (v - o).sqrMagnitude;
         public static Vec2 Abs(this Vec2 v) => new Vec2(Mathf.Abs(v.x), Mathf.Abs(v.y));
+        public static Vec2 Clamp(this Vec2 v, float min, float max) => new Vec2(Mathf.Clamp(v.x, min, max), Mathf.Clamp(v.y, min, max));
         public static Vec2I Floor(this Vec2 v) => new Vec2I(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
         public static Vec2I Ceil(this Vec2 v) => new Vec2I(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
         public static bool Adjacent(this Vec2I vA, Vec2I vB)
