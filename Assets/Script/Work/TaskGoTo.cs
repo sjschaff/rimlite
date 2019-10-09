@@ -93,6 +93,7 @@ namespace BB
                 if (path == null)
                     return;
 
+                // TODO: move fallback code to somewhere it can be used anytime work is abandoned
                 bool intersectsPath = false;
                 foreach (var pos in path)
                 {

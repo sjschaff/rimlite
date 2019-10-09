@@ -183,6 +183,9 @@ namespace BB
         private readonly HashSet<Selectable> selectables = new HashSet<Selectable>();
         private readonly List<OrdersCommands> ordersCurrent = new List<OrdersCommands>();
 
+        private readonly List<Selectable> selectablesRemoved = new List<Selectable>();
+        private bool isIssuing;
+
         public ToolSelection(GameController ctrl)
             : base(ctrl)
         {
@@ -199,14 +202,23 @@ namespace BB
             foreach (var system in ctrl.registry.systems)
                 foreach (var o in system.GetOrders())
                     orders.Add(new OrdersCommands(o));
+
+            isIssuing = false;
         }
 
         public override void OnButton(int button)
         {
+            isIssuing = true;
             var orders = ordersCurrent[button];
             foreach (var selectable in selectables)
                 if (orders.Applicable(selectable))
                     orders.Issue(selectable);
+
+            isIssuing = false;
+            foreach (var selectable in selectablesRemoved)
+                RemoveSelectable(selectable);
+            selectablesRemoved.Clear();
+            InvalidateUI();
         }
 
         private static IEnumerable<Selectable> ToSelectables(Selection selection)
@@ -363,20 +375,36 @@ namespace BB
         }
 
         #region Invalidation
-        private void SelectableRemoved(Selectable selectable)
+        private bool RemoveSelectable(Selectable selectable)
         {
-            // TODO: handle this tool not being on top of the stack
             if (selectables.TryGetValue(selectable, out var selActual))
             {
                 DeactiveHighlight(selActual);
                 selectables.Remove(selectable);
-                InvalidateUI();
+                return true;
+            }
+
+            return false;
+        }
+
+        private void SelectableRemoved(Selectable selectable)
+        {
+            if (isIssuing)
+            {
+                if (selectables.Contains(selectable))
+                    selectablesRemoved.Add(selectable);
+            }
+            else
+            {
+                // TODO: handle this tool not being on top of the stack
+                if (RemoveSelectable(selectable))
+                    InvalidateUI();
             }
         }
 
         private void SelectableChanged(Selectable selectable)
         {
-            if (selectables.Contains(selectable))
+            if (!isIssuing && selectables.Contains(selectable))
                 InvalidateUI();
         }
 

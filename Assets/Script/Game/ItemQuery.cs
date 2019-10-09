@@ -78,29 +78,35 @@ namespace BB
 
         public void ItemRemoved(TileItem item)
         {
-            if (item.amtAvailable > 0)
-                queue.Remove(item);
-            else
-                unavailable.Remove(item);
+            if (cfg.filter.Applies(item.def))
+            {
+                if (item.amtAvailable > 0)
+                    queue.Remove(item);
+                else
+                    unavailable.Remove(item);
+            }
         }
 
         public void ItemChanged(TileItem item)
         {
-            if (unavailable.Remove(item))
+            if (cfg.filter.Applies(item.def))
             {
-                if (item.amtAvailable > 0)
-                    queue.Enqueue(item, Priority(item));
-                else
-                    unavailable.Add(item);
-            }
-            else
-            {
-                if (item.amtAvailable > 0)
-                    queue.UpdatePriority(item, Priority(item));
+                if (unavailable.Remove(item))
+                {
+                    if (item.amtAvailable > 0)
+                        queue.Enqueue(item, Priority(item));
+                    else
+                        unavailable.Add(item);
+                }
                 else
                 {
-                    queue.Remove(item);
-                    unavailable.Add(item);
+                    if (item.amtAvailable > 0)
+                        queue.UpdatePriority(item, Priority(item));
+                    else
+                    {
+                        queue.Remove(item);
+                        unavailable.Add(item);
+                    }
                 }
             }
         }

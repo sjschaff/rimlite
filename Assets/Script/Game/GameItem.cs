@@ -5,6 +5,11 @@ namespace BB
 {
     public class TileItem
     {
+#if DEBUG
+        private static int D_nextID = 0;
+        public readonly int D_uniqueID;
+#endif
+
         public readonly Tile tile;
         private Item item;
         private int amtClaimed;
@@ -16,6 +21,10 @@ namespace BB
 
         public TileItem(Tile tile, Item item)
         {
+#if DEBUG
+            D_uniqueID = D_nextID;
+            ++D_nextID;
+#endif
             this.tile = tile;
             this.item = item;
             amtClaimed = 0;
