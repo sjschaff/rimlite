@@ -29,14 +29,6 @@ namespace BB
                 BB.AssertNotNull(building);
                 buildable = (IBuildable)building.prototype;
                 BB.Assert(buildable != null);
-
-                building.jobHandles.Add(this);
-            }
-
-            public override void Destroy()
-            {
-                building.jobHandles.Remove(this);
-                base.Destroy();
             }
 
             public override IEnumerable<Task> GetTasks()

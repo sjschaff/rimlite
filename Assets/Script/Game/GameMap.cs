@@ -37,13 +37,13 @@ namespace BB
 
         public void RemoveBuilding(IBuilding building)
         {
-            // TODO: cancel outstanding job handles
             var tile = building.tile;
             BB.Assert(tile.hasBuilding);
             BB.Assert(building.tile.building == building);
 
             bool passable = tile.passable;
             var bounds = building.bounds;
+            building.CancelAllJobs();
             map.RemoveBuilding(tile);
             NotifyBuildingRemoved(building);
             RerouteMinions(bounds, passable, tile.passable);
@@ -71,12 +71,12 @@ namespace BB
 
         public void ReplaceBuilding(IBuilding building)
         {
-            // TODO: cancel outstanding job handles
             var tile = building.tile;
             BB.Assert(tile.hasBuilding);
             var buildingPrev = tile.building;
 
             bool passable = tile.passable;
+            tile.building.CancelAllJobs();
             map.ReplaceBuilding(building);
             NotifyBuildingRemoved(buildingPrev);
             NotifyBuildingAdded(building);

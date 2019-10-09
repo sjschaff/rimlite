@@ -77,20 +77,41 @@ namespace BB
         public readonly Agent agent;
         public readonly TileItem item;
         public readonly IBuilding building;
+
         private JobBasicKey(Agent agent, TileItem item, IBuilding building)
         {
             this.building = building;
             this.item = item;
             this.agent = agent;
         }
+
         public JobBasicKey(Agent agent)
             : this(agent, null, null) { }
         public JobBasicKey(TileItem item)
             : this(null, item, null) { }
         public JobBasicKey(IBuilding building)
             : this(null, null, building) { }
+
         public static implicit operator JobBasicKey(Agent agent) => new JobBasicKey(agent);
         public static implicit operator JobBasicKey(TileItem item) => new JobBasicKey(item);
+
+        public void AddJobHandle(JobHandle job)
+        {
+            if (building != null)
+                building.jobHandles.Add(job);
+            else
+                throw new NotImplementedException("No Job Handles on items/agents");
+        }
+
+        public void RemoveJobHandle(JobHandle job)
+        {
+            if (building != null)
+                building.jobHandles.Remove(job);
+            else
+                throw new NotImplementedException("No Job Handles on items/agents");
+        }
+
+        #region Equality
         public override bool Equals(object obj) => Equals(obj as JobBasicKey);
         public bool Equals(JobBasicKey other)
         {
@@ -107,6 +128,7 @@ namespace BB
             hashCode = hashCode * -1521134295 + EqualityComparer<Agent>.Default.GetHashCode(agent);
             return hashCode;
         }
+        #endregion
     }
     #endregion
 
@@ -116,9 +138,11 @@ namespace BB
     {
         public Work activeWork;
 
-        public JobBasic(TSystem system, JobBasicKey key) : base(system, key) { }
+        public JobBasic(TSystem system, JobBasicKey key)
+            : base(system, key)
+            => key.AddJobHandle(this);
         public JobBasic(TSystem system, IBuilding building)
-            : base(system, new JobBasicKey(building)) { }
+            : this(system, new JobBasicKey(building)) { }
 
         public abstract IEnumerable<Task> GetTasks();
 
@@ -130,6 +154,7 @@ namespace BB
 
         public override void Destroy()
         {
+            key.RemoveJobHandle(this);
             activeWork?.Cancel();
             base.Destroy();
         }
@@ -181,6 +206,7 @@ namespace BB
                     pos = key.item.tile.pos;
                 else
                     pos = key.building.tile.pos;
+
                 overlay = game.assets.CreateJobOverlay(parent, pos, orders.guiSprite).transform;
             }
 

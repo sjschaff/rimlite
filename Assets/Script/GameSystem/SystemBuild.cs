@@ -213,6 +213,7 @@ namespace BB
                         building.jobHandles.Count == 0 ||
                             (building.jobHandles.Count == 1 &&
                             building.jobHandles.Contains(this)));
+                    building.jobHandles.Remove(this);
                     game.RemoveBuilding(building);
 
                     game.DropItems(tile, hauls

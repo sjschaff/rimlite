@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System;
 
 namespace BB
 {
@@ -26,11 +24,7 @@ namespace BB
         }
 
         public void AddOrder(IBuilding building)
-        {
-            var jobs = building.jobHandles.ToList();
-            foreach (var job in jobs)
-                job.CancelJob();
-        }
+            => building.CancelAllJobs();
 
         public bool ApplicableToAgent(Agent agent)
         {

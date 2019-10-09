@@ -34,17 +34,6 @@ namespace BB
                 BB.AssertNotNull(building);
                 mineable = (IMineable)building;
                 BB.AssertNotNull(mineable);
-
-                // TODO: move this more general?
-                // would probably require some kind of HasJobHandles
-                // style interface
-                mineable.jobHandles.Add(this);
-            }
-
-            public override void Destroy()
-            {
-                mineable.jobHandles.Remove(this);
-                base.Destroy();
             }
 
             private static string DescForTool(Tool tool)
@@ -79,6 +68,7 @@ namespace BB
                         BB.Assert(work == activeWork);
                         BB.Assert(mineable.mineAmt <= 0);
 
+                        mineable.jobHandles.Remove(this);
                         game.RemoveBuilding(mineable);
                         game.DropItems(tile, mineable.GetMinedMaterials());
                     }

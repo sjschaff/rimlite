@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System;
 using UnityEngine;
 
@@ -103,6 +104,13 @@ namespace BB
             => bldg.renderFlags.HasFlag(RenderFlags.Tiled);
         public static bool Oversized(this IBuilding bldg)
             => bldg.renderFlags.HasFlag(RenderFlags.Oversized);
+
+        public static void CancelAllJobs(this IBuilding bldg)
+        {
+            var jobs = bldg.jobHandles.ToList();
+            foreach (var job in jobs)
+                job.CancelJob();
+        }
     }
 
     public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingProto
