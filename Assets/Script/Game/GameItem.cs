@@ -102,16 +102,13 @@ namespace BB
         public void DropItems(Tile tileDrop, IEnumerable<ItemInfo> itemList)
         {
             Dictionary<ItemDef, int> itemSet = new Dictionary<ItemDef, int>();
-            foreach (ItemInfo info in itemList)
+            foreach (ItemInfo item in itemList)
             {
-                foreach (var item in itemList)
-                {
-                    int amt = item.amt;
-                    if (itemSet.TryGetValue(info.def, out var prevAmt))
-                        amt += prevAmt;
+                int amt = item.amt;
+                if (itemSet.TryGetValue(item.def, out var prevAmt))
+                    amt += prevAmt;
 
-                    itemSet.Add(item.def, amt);
-                }
+                itemSet[item.def] = amt;
             }
 
             if (itemSet.Count == 0)
