@@ -14,7 +14,7 @@ namespace BB
 
         public readonly Game game;
         public readonly AgentDef def;
-        protected readonly Transform transform;
+        public Transform transform { get; private set; }
 
         public Work currentWork { get; private set; }
         public bool hasWork => currentWork != null;
@@ -70,9 +70,6 @@ namespace BB
                 dist.x < (halfSize.x - invThresh) &&
                 dist.y < (halfSize.y - invThresh);
         }
-
-        public void AttachSelectionHighlight(Transform highlight)
-            => highlight.SetParent(transform, false);
 
         public void PickupItem(Item item)
         {

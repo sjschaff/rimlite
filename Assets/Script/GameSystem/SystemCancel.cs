@@ -15,12 +15,19 @@ namespace BB
         public SpriteDef GuiSprite() => sprite;
         public string GuiText() => "Cancel";
 
-        public bool HasOrder(Tile tile) => false;
+        public void AddOrder(Agent agent)
+        {
+            // TODO: support agents
+        }
 
-        public void AddOrder(Tile tile)
+        public void AddOrder(TileItem item)
         {
             // TODO: support items
-            var jobs = tile.building.jobHandles.ToList();
+        }
+
+        public void AddOrder(IBuilding building)
+        {
+            var jobs = building.jobHandles.ToList();
             foreach (var job in jobs)
                 job.CancelJob();
         }

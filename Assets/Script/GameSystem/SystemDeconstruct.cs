@@ -12,32 +12,30 @@ namespace BB
 
         public override bool SelectionOnly() => false;
 
-        public override bool ApplicableToBuilding(IBuilding building)
+        public override bool AppliesToBuilding(IBuilding building)
             => building.prototype is IBuildable;
 
-        protected override JobDeconstruct CreateJob(Tile tile)
-            => new JobDeconstruct(this, tile);
+        protected override JobDeconstruct CreateJob(IBuilding building)
+            => new JobDeconstruct(this, building);
 
         public class JobDeconstruct : JobHandleOrders
         {
-            public readonly IBuilding building;
+            private IBuilding building => key.building;
             public readonly IBuildable buildable;
 
-            public JobDeconstruct(SystemDeconstruct orders, Tile tile)
-                : base(orders, tile)
+            public JobDeconstruct(SystemDeconstruct orders, IBuilding building)
+                : base(orders, building)
             {
-                BB.Assert(tile.hasBuilding);
-                building = tile.building;
+                BB.AssertNotNull(building);
                 buildable = (IBuildable)building.prototype;
                 BB.Assert(buildable != null);
 
-                tile.building.jobHandles.Add(this);
+                building.jobHandles.Add(this);
             }
 
             public override void Destroy()
             {
-                if (tile.hasBuilding && tile.building == building)
-                    building.jobHandles.Remove(this);
+                building.jobHandles.Remove(this);
                 base.Destroy();
             }
 
@@ -52,10 +50,10 @@ namespace BB
                     null, // TODO: track deconstruct amt
                     (work) =>
                     {
-                        BB.Assert(tile.building == building);
+                        BB.Assert(building.tile.building == building);
                         building.jobHandles.Remove(this);
                         game.RemoveBuilding(building);
-                        game.DropItems(tile, buildable.GetBuildMaterials());
+                        game.DropItems(building.tile, buildable.GetBuildMaterials());
                     });
             }
         }

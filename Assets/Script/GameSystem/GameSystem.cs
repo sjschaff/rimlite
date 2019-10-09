@@ -41,9 +41,10 @@ namespace BB
 
     public interface IOrdersGiver : IToolbarButton
     {
-        bool HasOrder(Tile tile);
-        void AddOrder(Tile tile);
         bool SelectionOnly();
+        void AddOrder(Agent agent);
+        void AddOrder(TileItem item);
+        void AddOrder(IBuilding building);
         bool ApplicableToAgent(Agent agent);
         bool ApplicableToItem(TileItem item);
         bool ApplicableToBuilding(IBuilding building);

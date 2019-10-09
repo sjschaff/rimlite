@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -60,8 +61,9 @@ namespace BB
             outlineDisallow.enabled = false;
         }
 
-        public override void OnUpdate(Vec2I mouse)
+        public override void OnUpdate(Vec2 realMouse)
         {
+            Vec2I mouse = realMouse.Floor();
             var bounds = selection.Bounds(curDir);
             bool valid =
                 ctrl.game.ValidTile(mouse) && 
@@ -88,8 +90,9 @@ namespace BB
             } while (!selection.AllowedOrientations().Contains(curDir));
         }
 
-        public override void OnClick(Vec2I pos)
+        public override void OnClick(Vec2 realPos)
         {
+            Vec2I pos = realPos.Floor();
             if (ctrl.game.CanPlaceBuilding(selection.Bounds(curDir).AsRect(pos)))
             {
                 var tile = ctrl.game.Tile(pos);

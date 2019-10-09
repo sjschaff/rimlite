@@ -11,7 +11,7 @@ namespace BB
         IBuilding CreateBuilding(Tile tile, Dir dir);
     }
 
-    public class SystemBuild : GameSystemStandard<SystemBuild, SystemBuild.JobBuild>
+    public class SystemBuild : GameSystemStandard<SystemBuild, Tile, SystemBuild.JobBuild>
     {
         // TODO: kludge
         public static SystemBuild K_instance;
@@ -29,12 +29,13 @@ namespace BB
         public void CreateBuild(IBuildable proto, Tile tile, Dir dir)
             => AddJob(new JobBuild(this, virtualDefs.Get(proto), tile, dir));
 
-        public class JobBuild : JobStandard<SystemBuild, JobBuild>
+        public class JobBuild : JobStandard<SystemBuild, Tile, JobBuild>
         {
             private readonly HashSet<Work> activeWorks = new HashSet<Work>();
             private readonly BuildingConstruction building;
             private readonly RectInt area;
             private readonly string name;
+            private Tile tile => key;
 
             // Build State
             private readonly List<HaulProvider> hauls;

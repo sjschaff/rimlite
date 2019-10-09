@@ -69,8 +69,8 @@ namespace BB
                 this.text.resizeTextMaxSize = 14;
         }
 
-        public void Configure(AssetSrc assets, IOrdersGiver orders)
-            => Configure(assets.sprites.Get(orders.GuiSprite()), orders.GuiText());
+        public void Configure(AssetSrc assets, IToolbarButton btn)
+            => Configure(assets.sprites.Get(btn.GuiSprite()), btn.GuiText());
 
         public void Reset() => SetSelected(false);
     }
@@ -118,10 +118,10 @@ namespace BB
         public readonly List<ToolbarButton> buttons
             = new List<ToolbarButton>();
 
-        ToolbarButton pauseButton;
-        ToolbarButton playButton;
-        ToolbarButton playFFButton;
-        ToolbarButton playSFFButton;
+        private readonly ToolbarButton pauseButton;
+        private readonly ToolbarButton playButton;
+        private readonly ToolbarButton playFFButton;
+        private readonly ToolbarButton playSFFButton;
 
         public GameUI(GameController ctrl)
         {

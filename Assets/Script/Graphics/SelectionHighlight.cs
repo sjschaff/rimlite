@@ -60,7 +60,7 @@ namespace BB
 
         public void Enable(Agent agent)
         {
-            agent.AttachSelectionHighlight(container);
+            container.SetParent(agent.transform, false);
             SetRect(new Rect(Vec2.zero, Vec2.one));
         }
 

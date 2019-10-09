@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -41,14 +42,25 @@ namespace BB
 
         public ToolOrders(GameController ctrl) : base(ctrl) {}
 
-        public override void OnClick(Vec2I pos)
+        public override void OnClick(Vec2 realPos)
         {
-            // TODO: handle items
+            var pos = realPos.Floor();
             var tile = ctrl.game.Tile(pos);
-            if (tile.hasBuilding &&
-                selection.ApplicableToBuilding(tile.building) &&
-                !selection.HasOrder(tile))
-                selection.AddOrder(tile);
+            if (tile.hasBuilding && selection.ApplicableToBuilding(tile.building))
+                selection.AddOrder(tile.building);
+
+            if (tile.hasItems)
+            {
+                foreach (var item in ctrl.game.GUISelectItemsOnTile(tile))
+                {
+                    if (selection.ApplicableToItem(item))
+                        selection.AddOrder(item);
+                }
+            }
+
+            var agent = ctrl.game.GUISelectMinion(pos);
+            if (agent != null && selection.ApplicableToAgent(agent))
+                selection.AddOrder(agent);
         }
 
         public override void OnDragStart(RectInt rect)
@@ -69,6 +81,7 @@ namespace BB
             foreach (var v in toRemove)
                 dragOverlays.Remove(v);
 
+            // TODO: handle agents
             foreach (var v in rect.allPositionsWithin)
             {
                 if (!dragOverlays.ContainsKey(v))
@@ -77,12 +90,25 @@ namespace BB
                     // TODO: overlays will be a bit wierd for large buildings
                     // but it should work out
                     var tile = ctrl.game.Tile(v);
-                    if (tile.hasBuilding && selection.ApplicableToBuilding(tile.building) &&
-                        !selection.HasOrder(tile))
+                    if (tile.hasBuilding && selection.ApplicableToBuilding(tile.building))
                     {
                         var overlay = ctrl.assets.CreateJobOverlay(
                             ctrl.game.workOverlays, v, selection.GuiSprite());
                         dragOverlays.Add(v, overlay.transform);
+                    }
+
+                    if (tile.hasItems)
+                    {
+                        foreach (var item in ctrl.game.GUISelectItemsOnTile(tile))
+                        {
+                            if (selection.ApplicableToItem(item))
+                            {
+                                var overlay = ctrl.assets.CreateJobOverlay(
+                                    ctrl.game.workOverlays, v, selection.GuiSprite());
+                                dragOverlays.Add(v, overlay.transform);
+                                break;
+                            }
+                        }
                     }
                 }
             }

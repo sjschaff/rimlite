@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-using Vec2I = UnityEngine.Vector2Int;
+using Vec2 = UnityEngine.Vector2;
 
 namespace BB
 {
@@ -18,8 +18,8 @@ namespace BB
         public virtual bool IsClickable() => false;
         public virtual bool IsDragable() => false;
 
-        public virtual void OnUpdate(Vec2I mouse) { }
-        public virtual void OnClick(Vec2I pos) { }
+        public virtual void OnUpdate(Vec2 mouse) { }
+        public virtual void OnClick(Vec2 pos) { }
         public virtual void OnDragStart(RectInt rect) { }
         public virtual void OnDrag(RectInt rect) { }
         public virtual void OnDragEnd(RectInt rect) { }

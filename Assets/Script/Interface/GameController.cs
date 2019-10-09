@@ -150,7 +150,7 @@ namespace BB
 
             // Tool
             if (mouseOver)
-                activeTool?.OnUpdate(mouse.Floor());
+                activeTool?.OnUpdate(mouse);
 
             if (Input.GetKeyDown(KeyCode.E))
                 activeTool?.K_OnTab();
@@ -211,7 +211,7 @@ namespace BB
                 if (game.ValidTile(pos))
                 {
                     if (activeTool != null && activeTool.IsClickable())
-                        activeTool.OnClick(pos);
+                        activeTool.OnClick(realPos);
                     else
                         SelectClick(realPos, clickCount % 2);
                 }

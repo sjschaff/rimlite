@@ -19,20 +19,21 @@ namespace BB
 
         public override bool SelectionOnly() => false;
 
-        public override bool ApplicableToBuilding(IBuilding building) => building is IMineable;
+        public override bool AppliesToBuilding(IBuilding building) => building is IMineable;
 
-        protected override JobMine CreateJob(Tile tile)
-            => new JobMine(this, tile);
+        protected override JobMine CreateJob(IBuilding building)
+            => new JobMine(this, building);
 
         public class JobMine : JobHandleOrders
         {
-            public readonly IMineable mineable;
+            private readonly IMineable mineable;
+            private Tile tile => mineable.tile;
 
-            public JobMine(SystemMine system, Tile tile) : base(system, tile)
+            public JobMine(SystemMine system, IBuilding building) : base(system, building)
             {
-                BB.Assert(tile.hasBuilding);
-                mineable = (IMineable)tile.building;
-                BB.Assert(mineable != null);
+                BB.AssertNotNull(building);
+                mineable = (IMineable)building;
+                BB.AssertNotNull(mineable);
 
                 // TODO: move this more general?
                 // would probably require some kind of HasJobHandles
