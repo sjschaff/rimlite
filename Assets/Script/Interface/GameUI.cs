@@ -198,7 +198,6 @@ namespace BB
         {
             for (int i = 0; i < count; ++i)
             {
-                // TODO: reset button state
                 if (i < buttons.Count)
                 {
                     ToolbarButton button = buttons[i];

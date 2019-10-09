@@ -6,9 +6,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    // TODO: rename BBTile -> MapTile (or maybe inner class),
-    // rename ITile-> Tile, make class, store pos, can be used as
-    // a handle for everyone
     public class Tile
     {
         private readonly Map.BBTile tile;

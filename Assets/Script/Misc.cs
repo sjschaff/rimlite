@@ -1,8 +1,6 @@
 ﻿// A dumping ground for things I don't yet know where to put
 using System;
 
-using Vec2I = UnityEngine.Vector2Int;
-
 namespace BB
 {
     public enum Tool { None, Hammer, Pickaxe, Axe };
