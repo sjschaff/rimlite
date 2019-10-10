@@ -4,9 +4,90 @@ using System;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
+using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public class ToolContextMenu : UITool
+    {
+        private readonly GoToContextProvider goTo;
+        private readonly List<IContextMenuProvider> providers
+            = new List<IContextMenuProvider>();
+
+        private List<Minion> minions;
+        private Vec2I targetPos;
+        private Vec2 menuPos;
+        private Selection selection;
+
+        public ToolContextMenu(GameController ctrl) : base(ctrl)
+        {
+            goTo = new GoToContextProvider(ctrl.game);
+            providers = ctrl.registry.contextProviders.Prepend(goTo).ToList();
+        }
+
+        public void Init(Vec2 worldPos, Vec2 scPos, IEnumerable<Minion> minions)
+        {
+            this.minions = minions.ToList();
+            BB.Assert(this.minions.Count > 0);
+
+            this.targetPos = worldPos.Floor();
+            this.menuPos = scPos;
+            this.selection = ctrl.SelectAll(worldPos);
+        }
+
+        public override void OnActivate()
+        {
+            bool single = minions.Count == 1;
+            Minion solo = minions[0];
+            List<IContextCommand> commands = new List<IContextCommand>(
+                providers.SelectMany(p => p.CommandsForTarget(targetPos, selection, minions)));
+
+            if (commands.Count == 0)
+            {
+                ctrl.PopTool();
+            }
+            // Special case goto
+            else if (commands.Count == 1 && commands[0] == goTo && commands[0].Enabled())
+            {
+                IssueCmd(commands[0]);
+            }
+            else
+            {
+                // TODO: launch ctx menu
+                ctrl.gui.ctxtMenu.Show(menuPos, commands.Count);
+                for (int i = 0; i < commands.Count; ++i)
+                {
+                    var cmd = commands[i];
+                    ctrl.gui.ctxtMenu.ConfigureButton(
+                        i, cmd.GuiText(), () => IssueCmd(cmd), cmd.Enabled());
+                }
+            }
+        }
+
+        private void IssueCmd(IContextCommand cmd)
+        {
+            cmd.IssueCommand();
+            ctrl.PopTool();
+        }
+
+        public override void OnDeactivate()
+            => ctrl.gui.ctxtMenu.Hide();
+
+        public override bool IsClickable() => true;
+        public override bool IsDragable() => true;
+        public override void OnClick(Vec2 pos) => Close();
+        public override void OnRightClick(Vec2 pos, Vec2 scPos) => Close();
+        public override void OnDragStart(RectInt rect) => Close();
+        public override void OnDrag(RectInt rect) => Close();
+        public override void OnDragEnd(RectInt rect) => Close();
+        public override void OnUpdate(Vec2 mouse)
+        {
+            // Close menu if mouse has strayed too far away
+        }
+
+        private void Close() => ctrl.PopTool();
+    }
+
     public class ToolSelection : UITool,
         IAgentListener,
         IItemListener,
@@ -99,6 +180,7 @@ namespace BB
         private readonly List<ICommandsGiver> commands = new List<ICommandsGiver>();
         private readonly Transform poolRoot;
         private readonly Pool<SelectionHighlight> highlights;
+        private readonly ToolContextMenu ctxtTool;
 
         private readonly HashSet<Selectable> selectables = new HashSet<Selectable>();
         private readonly HashSet<SelMinion> minions = new HashSet<SelMinion>();
@@ -109,6 +191,7 @@ namespace BB
         public ToolSelection(GameController ctrl)
             : base(ctrl)
         {
+            ctxtTool = new ToolContextMenu(ctrl);
             poolRoot = new GameObject("Selection Highlights").transform;
             poolRoot.SetParent(ctrl.gui.root, false);
 
@@ -124,6 +207,15 @@ namespace BB
                     orders.Add(o);
 
             isIssuing = false;
+        }
+
+        public override void OnRightClick(Vec2 pos, Vec2 scPos)
+        {
+            if (minions.Count > 0)
+            {
+                ctxtTool.Init(pos, scPos, minions.Select(minion => minion.minion));
+                ctrl.PushTool(ctxtTool);
+            }
         }
 
         private void OnButton(IOrdersGiver order)

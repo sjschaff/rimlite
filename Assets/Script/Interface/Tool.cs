@@ -20,7 +20,7 @@ namespace BB
 
         public virtual void OnUpdate(Vec2 mouse) { }
         public virtual void OnClick(Vec2 pos) { }
-        public virtual void OnRightClick(Vec2 pos) { }
+        public virtual void OnRightClick(Vec2 pos, Vec2 scPos) { }
         public virtual void OnDragStart(RectInt rect) { }
         public virtual void OnDrag(RectInt rect) { }
         public virtual void OnDragEnd(RectInt rect) { }

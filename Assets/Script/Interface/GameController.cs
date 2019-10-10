@@ -213,22 +213,7 @@ namespace BB
             }
             else if (button == InputButton.Right)
             {
-                // TODO: context menu?
-                BB.LogInfo("Right Click:");
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(gui.canvas, scPos, null, out var guiPos);
-                BB.LogInfo($"   {scPos}");
-                BB.LogInfo($"   {guiPos}");
-                BB.LogInfo($"   {gui.canvas.sizeDelta}");
-                activeTool?.OnRightClick(realPos);
-
-                Vec2 guiNorm = new Vec2(.5f, .5f) + guiPos / gui.canvas.sizeDelta;
-                var r = gui.contextMenu.rectTransform;
-                r.anchorMin = r.anchorMax = guiNorm;
-                Vec2 pivot;
-                pivot.x = guiNorm.x < .5f ? 0 : 1;
-                pivot.y = guiNorm.y < .5f ? 0 : 1;
-                r.pivot = pivot;
-                //game.K_MoveMinion(pos);
+                activeTool?.OnRightClick(realPos, scPos);
             }
         }
 

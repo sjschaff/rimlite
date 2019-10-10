@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+using Vec2I = UnityEngine.Vector2Int;
+
 namespace BB
 {
     public abstract class JobHandle
@@ -53,5 +55,17 @@ namespace BB
     {
         bool ApplicableToMinion(Minion minion);
         void IssueCommand(Minion minion);
+    }
+
+    public interface IContextCommand
+    {
+        void IssueCommand();
+        bool Enabled();
+        string GuiText();
+    }
+
+    public interface IContextMenuProvider
+    {
+        IEnumerable<IContextCommand> CommandsForTarget(Vec2I pos, Selection sel, List<Minion> minions);
     }
 }

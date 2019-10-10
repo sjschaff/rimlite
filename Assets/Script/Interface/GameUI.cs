@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using UnityEngine;
 
@@ -11,8 +12,8 @@ namespace BB
 {
     public class ToolbarButton
     {
-        private static readonly Color onColor = new Color(.4f, .4f, .4f);
-        private static readonly Color offColor = new Color(.19f, .19f, .19f);
+        public static readonly Color onColor = new Color(.4f, .4f, .4f);
+        public static readonly Color offColor = new Color(.19f, .19f, .19f);
 
         private readonly Image pane;
         private readonly Image img;
@@ -108,6 +109,151 @@ namespace BB
         }
     }
 
+    public class ContextMenu
+    {
+        private readonly RectTransform canvas;
+        private readonly RectTransform pane;
+        private readonly RectTransform container;
+        private readonly HorizontalLayoutGroup horiLayout;
+        private readonly Font font;
+        private readonly List<Btn> buttons =
+            new List<Btn>();
+        private int numShown;
+
+        private struct Btn
+        {
+            public readonly GameObject obj;
+            public readonly Button button;
+            public readonly Text text;
+            public Btn(GameObject obj, Button button, Text text)
+            {
+                this.obj = obj;
+                this.button = button;
+                this.text = text;
+            }
+        }
+
+        public ContextMenu(RectTransform canvas, Font font)
+        {
+            this.canvas = canvas;
+            this.font = font;
+
+            pane = Gui.CreateObject(canvas, "Context Menu");
+            pane.anchorMin = pane.anchorMax = new Vec2(.5f, .5f);
+            pane.pivot = new Vec2(0, 1);
+            pane.offsetMin = Vec2.zero;
+            pane.offsetMax = Vec2.zero;
+            pane.sizeDelta = new Vec2(300, 0);
+
+            var sizeFitter = pane.gameObject.AddComponent<ContentSizeFitter>();
+            sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            horiLayout = pane.gameObject.AddComponent<HorizontalLayoutGroup>();
+            horiLayout.childAlignment = TextAnchor.UpperLeft;
+            horiLayout.childControlWidth = true;
+            horiLayout.childControlHeight = true;
+            horiLayout.childForceExpandWidth = false;
+            horiLayout.childForceExpandHeight = false;
+
+            var bg = Gui.CreateColor(pane, "<background>", ToolbarButton.onColor);
+            container = bg.rectTransform;
+            container.pivot = new Vec2(0, 1);
+            bg.gameObject.AddComponent<LayoutElement>();
+            var vertLayout = bg.gameObject.AddComponent<VerticalLayoutGroup>();
+            vertLayout.childAlignment = TextAnchor.UpperLeft;
+            vertLayout.childControlWidth = true;
+            vertLayout.childControlHeight = true;
+            vertLayout.childForceExpandWidth = false;
+            vertLayout.childForceExpandHeight = false;
+            vertLayout.spacing = 2;
+            vertLayout.padding = new RectOffset(2, 2, 2, 2);
+
+            Hide();
+        }
+
+        private Btn CreateButton()
+        {
+            var img = Gui.CreateColor(container, "<button>", ToolbarButton.offColor);
+            img.rectTransform.pivot = new Vec2(0, 1);
+            var btn = Gui.AddButton(img.gameObject, () => { });
+            var layout = img.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.padding = new RectOffset(8, 8, 8, 8);
+
+            TextCfg cfg = new TextCfg
+            {
+                font = font,
+                fontSize = 20,
+                autoResize = false,
+                style = FontStyle.Normal,// Bold,
+                anchor = TextAnchor.UpperLeft,
+                horiWrap = HorizontalWrapMode.Wrap,
+                vertWrap = VerticalWrapMode.Overflow
+            };
+
+            var text = Gui.CreateText(img.transform, "<text>", cfg);
+            text.rectTransform.pivot = new Vec2(0, 1);
+            text.text = "Foobar manchu monskder sdf";
+
+            return new Btn(img.gameObject, btn, text);
+        }
+
+        public void Show(Vec2 scPos, int numButtons)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvas, scPos, null, out var guiPos);
+
+            Vec2 guiNorm = new Vec2(.5f, .5f) + guiPos / canvas.sizeDelta;
+            pane.anchorMin = pane.anchorMax = guiNorm;
+            Vec2 pivot;
+            pivot.x = guiNorm.x < .5f ? 0 : 1;
+            pivot.y = guiNorm.y < .5f ? 0 : 1;
+            pane.pivot = pivot;
+
+            if (pivot.x == 0)
+                horiLayout.childAlignment = TextAnchor.UpperLeft;
+            else
+                horiLayout.childAlignment = TextAnchor.UpperRight;
+            if (pivot.y == 0)
+                numShown = numButtons;
+            else
+                numShown = -1;
+
+            pane.gameObject.SetActive(true);
+
+            for (int i = 0; i < numButtons; ++i)
+            {
+                if (i < buttons.Count)
+                    buttons[i].obj.SetActive(true);
+                else
+                    buttons.Add(CreateButton());
+            }
+        }
+
+        public void Hide()
+        {
+            pane.gameObject.SetActive(false);
+            foreach (var button in buttons)
+                button.obj.SetActive(false);
+        }
+
+        public void ConfigureButton(int i, string text, UnityAction fn, bool enabled)
+        {
+            // TODO: enabling
+            if (numShown > 0)
+                i = (numShown - 1) - i;
+            var btn = buttons[i];
+            btn.text.text = text;
+            btn.button.onClick.RemoveAllListeners();
+            btn.button.onClick.AddListener(fn);
+        }
+    }
+
     public class GameUI
     {
         public readonly GameController ctrl;
@@ -130,7 +276,7 @@ namespace BB
         private readonly ToolbarButton playFFButton;
         private readonly ToolbarButton playSFFButton;
 
-        public readonly Image contextMenu;
+        public readonly ContextMenu ctxtMenu;
 
         public GameUI(GameController ctrl)
         {
@@ -146,7 +292,7 @@ namespace BB
                 Color.white, 1, true, true);
             dragOutline.enabled = false;
 
-            Color color = new Color(.19f, .19f, .19f);
+            Color color = ToolbarButton.offColor;
 
             buildButton = CreateToolbarButton(
                 "Build Button", new Vec2(420, 0));
@@ -193,14 +339,7 @@ namespace BB
                 () => ctrl.OnSpeedChange(PlaySpeed.SuperFast),
                 GetSprite("BB:PlaySFFIcon"));
 
-            contextMenu = Gui.CreateColor(canvas, "Context Menu", color);
-            var r = contextMenu.rectTransform;
-
-            r.anchorMin = r.anchorMax = new Vec2(.5f, .5f);
-            r.pivot = new Vec2(0, 1);
-            r.offsetMin = Vec2.zero;
-            r.offsetMax = Vec2.zero;
-            r.sizeDelta = new Vec2(150, 300);
+            ctxtMenu = new ContextMenu(canvas, font);
             /*
             CreatePane(canvas, "bl", Color.blue, new Vec2(100, 100), Anchor.BottomLeft, new Vec2(20, 20));
             CreatePane(canvas, "bc", Color.blue, new Vec2(100, 100), Anchor.Bottom, new Vec2(20, 20));

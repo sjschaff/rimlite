@@ -56,7 +56,6 @@ namespace BB
         public readonly Transform workOverlays;
 
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
-        private readonly Minion D_minionNoTask;
 
         public Game(Registry registry, AssetSrc assets)
         {
@@ -75,7 +74,6 @@ namespace BB
 
             for (int i = 0; i < 10; ++i)
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
-            D_minionNoTask = minions.First.Value;
         }
 
         private Transform CreateContainer(string name)
@@ -106,8 +104,8 @@ namespace BB
                     yield return minion;
         }
 
-        public void K_MoveMinion(Vec2I pos)
-            => D_minionNoTask.AssignWork(SystemWalkDummy.Create(
+        public void GoTo(Minion minion, Vec2I pos)
+            => minion.AssignWork(SystemWalkDummy.Create(
                 new TaskGoTo(this, "Debug Walking.", PathCfg.Point(pos))));
 
         public void Update(float dt)
@@ -116,9 +114,6 @@ namespace BB
 
             foreach (Minion minion in minions)
             {
-                if (minion == D_minionNoTask)
-                    continue;
-
                 if (!minion.hasWork && !minion.isDrafted)
                 {
                     foreach (var system in registry.systems)
