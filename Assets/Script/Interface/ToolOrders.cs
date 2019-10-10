@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System;
+
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
@@ -19,8 +21,9 @@ namespace BB
             }
         }
 
-        public override void ConfigureButton(ToolbarButton button, IOrdersGiver orders)
-            => button.Configure(ctrl.assets, orders);
+        public override void ConfigureButton(
+            ToolbarButton button, IOrdersGiver orders, Action fn)
+            => button.Configure(fn, ctrl.assets, orders);
 
         public override void OnActivate()
         {
@@ -58,7 +61,7 @@ namespace BB
                 }
             }
 
-            var agent = ctrl.game.GUISelectMinion(pos);
+            var agent = ctrl.game.GUISelectMinions(pos).FirstOrDefault();
             if (agent != null && selection.ApplicableToAgent(agent))
                 selection.AddOrder(agent);
         }

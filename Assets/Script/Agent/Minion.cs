@@ -6,6 +6,7 @@ namespace BB
     public class Minion : Agent
     {
         public MinionSkin skin { get; }
+        public bool isDrafted { get; private set; }
 
         public Minion(Game game, Vec2I pos)
             : base(game, new AgentDef("BB:Minion", "Minion", game.defs.agentMinion),
@@ -13,6 +14,22 @@ namespace BB
         {
             skin = transform.gameObject.AddComponent<MinionSkin>();
             skin.Init(game.assets);
+        }
+
+        public void Draft()
+        {
+            BB.Assert(!isDrafted);
+            isDrafted = true;
+            if (hasWork)
+                AbandonWork();
+        }
+
+        public void Undraft()
+        {
+            BB.Assert(isDrafted);
+            isDrafted = false;
+            if (hasWork)
+                AbandonWork();
         }
 
         public override void SetTool(Tool tool)

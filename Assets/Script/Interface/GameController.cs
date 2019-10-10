@@ -176,11 +176,6 @@ namespace BB
             // TODO: change animation speed
         }
 
-        public void OnToolbar(int button)
-        {
-            activeTool?.OnButton(button);
-        }
-
         private void UpdateDragOutline(Vec2 end)
         {
             float units = cam.orthographicSize * 2;
@@ -219,7 +214,21 @@ namespace BB
             else if (button == InputButton.Right)
             {
                 // TODO: context menu?
-                game.K_MoveMinion(pos);
+                BB.LogInfo("Right Click:");
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(gui.canvas, scPos, null, out var guiPos);
+                BB.LogInfo($"   {scPos}");
+                BB.LogInfo($"   {guiPos}");
+                BB.LogInfo($"   {gui.canvas.sizeDelta}");
+                activeTool?.OnRightClick(realPos);
+
+                Vec2 guiNorm = new Vec2(.5f, .5f) + guiPos / gui.canvas.sizeDelta;
+                var r = gui.contextMenu.rectTransform;
+                r.anchorMin = r.anchorMax = guiNorm;
+                Vec2 pivot;
+                pivot.x = guiNorm.x < .5f ? 0 : 1;
+                pivot.y = guiNorm.y < .5f ? 0 : 1;
+                r.pivot = pivot;
+                //game.K_MoveMinion(pos);
             }
         }
 
@@ -268,25 +277,32 @@ namespace BB
             }
         }
 
-        private void SelectClick(Vec2 pos)
+        public Selection SelectAll(Vec2 pos)
         {
             Selection selection = new Selection();
-            var minion = game.GUISelectMinion(pos);
-            if (minion != null)
+            foreach (var minion in game.GUISelectMinions(pos))
                 selection.minions.Add(minion);
+
+            // TODO:agents
 
             var tile = game.Tile(pos.Floor());
             if (tile.hasItems)
-                selection.items.Add(game.GUISelectItemsOnTile(tile).First());
+                selection.items.AddRange(game.GUISelectItemsOnTile(tile));
 
             if (tile.hasBuilding)
                 selection.buildings.Add(tile.building);
 
+            return selection;
+        }
+
+        private void SelectClick(Vec2 pos)
+        {
+            var selection = SelectAll(pos);
+            selection.SelectSingle();
             if (selection.Empty())
                 lastSingleClickSelection = null;
             else
                 lastSingleClickSelection = selection;
-
             SetSelection(selection);
         }
 

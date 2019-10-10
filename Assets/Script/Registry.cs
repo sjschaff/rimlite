@@ -13,6 +13,8 @@ namespace BB
              = new Dictionary<BldgDef, IBuildingProto>();
         public readonly List<IGameSystem> systems
             = new List<IGameSystem>();
+        public readonly List<IContextMenuProvider> contextProviders
+            = new List<IContextMenuProvider>();
 
         public IBuildingProto D_GetProto<TDef>(string name) where TDef : BldgDef
             => buildings[defs.Get<TDef>(name)];
@@ -21,21 +23,10 @@ namespace BB
 
         public void LoadTypes(Game game)
         {
-            foreach (var workSystem in GetTypesForInterface<IGameSystem>())
-            {
-                if (!workSystem.GetCustomAttributes(typeof(AttributeDontInstantiate), false).Any())
-                {
-                    var system = TryInstantiate<IGameSystem>("work system", workSystem, game);
-                    if (system != null)
-                        systems.Add(system);
-                }
-            }
+            InstantiateTypes(game, systems, "game system");
+            InstantiateTypes(game, contextProviders, "context provider");
 
-            BB.LogInfo("Found " + systems.Count + " work systems:");
-            foreach (var system in systems)
-                BB.LogInfo($"    {system.GetType().FullName}");
-
-
+            // TODO: more evidence that these suck
             foreach (var def in defs.GetDefs<BldgDef>())
             {
                 BldgProtoDef protoDef = def.proto;
@@ -57,7 +48,26 @@ namespace BB
                 BB.LogInfo($"    {def}");
         }
 
-        private T TryInstantiate<T>(string failName, Type type, params object[] args) where T : class
+        private static void InstantiateTypes<T>(Game game, List<T> list, string debugName)
+            where T : class
+        {
+            foreach (var t in GetTypesForInterface<T>())
+            {
+                if (!t.GetCustomAttributes(typeof(AttributeDontInstantiate), false).Any())
+                {
+                    var instance = TryInstantiate<T>(debugName, t, game);
+                    if (instance != null)
+                        list.Add(instance);
+                }
+            }
+
+            BB.LogInfo($"Found {list.Count} {debugName}s:");
+            foreach (var t in list)
+                BB.LogInfo($"    {t.GetType().FullName}");
+        }
+
+        private static T TryInstantiate<T>(string failName, Type type, params object[] args)
+            where T : class
         {
             // TODO: use reflection to check first so we dont have to deal with exceptions
             try
@@ -78,7 +88,7 @@ namespace BB
             return null;
         }
 
-        private IEnumerable<Type> GetTypesForInterface<TInterface>()
+        private static IEnumerable<Type> GetTypesForInterface<TInterface>()
             => AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
                 .Where(x => typeof(TInterface).IsAssignableFrom(x) && !x.IsInterface && ! x.IsAbstract);
     }

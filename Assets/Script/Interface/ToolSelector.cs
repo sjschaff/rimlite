@@ -1,24 +1,18 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace BB
 {
     public abstract class ToolSelectorManipulator<TSelectable, TManipulator> : UITool
         where TManipulator : ToolSelectorManipulator<TSelectable, TManipulator>
     {
-        private ToolSelector<TSelectable, TManipulator> selector;
         protected TSelectable selection;
 
         protected ToolSelectorManipulator(GameController ctrl)
             : base(ctrl) { }
 
-        public void Init(ToolSelector<TSelectable, TManipulator> selector)
-            => this.selector = selector;
-
         public void Configure(TSelectable selection)
             => this.selection = selection;
-
-        public override void OnButton(int button)
-            => selector.OnButton(button);
     }
 
     public abstract class ToolSelector<TSelectable, TManip> : UITool
@@ -33,10 +27,9 @@ namespace BB
         {
             this.selectables = new List<TSelectable>();
             this.manipulator = manipulator;
-            manipulator.Init(this);
         }
 
-        public override void OnButton(int button)
+        private void OnButton(int button)
         {
             bool wasSelected = button == selection;
             if (selection >= 0)
@@ -64,8 +57,11 @@ namespace BB
         {
             ctrl.gui.ShowToolbarButtons(selectables.Count);
             for (int i = 0; i < selectables.Count; ++i)
-                ConfigureButton(ctrl.gui.buttons[i], selectables[i]);
+                ConfigureButton(ctrl.gui.buttons[i], selectables[i],
+                    ToolbarAction(i));
         }
+
+        private Action ToolbarAction(int i) => () => OnButton(i);
 
         public override void OnDeactivate()
         {
@@ -73,6 +69,7 @@ namespace BB
             ctrl.gui.HideToolbarButtons();
         }
 
-        public abstract void ConfigureButton(ToolbarButton button, TSelectable selectable);
+        public abstract void ConfigureButton(
+            ToolbarButton button, TSelectable selectable, Action fn);
     }
 }

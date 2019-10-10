@@ -1,52 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 
 namespace BB
 {
-    public class Selection
-    {
-        public readonly List<Minion> minions
-            = new List<Minion>();
-        // TODO: other humans
-        public readonly List<TileItem> items
-            = new List<TileItem>();
-        public readonly List<IBuilding> buildings
-            = new List<IBuilding>();
-        // TODO: animals
-
-        public void FilterType()
-        {
-            if (minions.Count > 0)
-            {
-                items.Clear();
-                buildings.Clear();
-            }
-            else if (items.Count > 0)
-            {
-                buildings.Clear();
-            }
-        }
-
-        public bool Empty()
-        {
-            return
-                minions.Count == 0 &&
-                items.Count == 0 &&
-                buildings.Count == 0;
-        }
-
-        public void Add(Selection sel)
-        {
-            minions.AddRange(sel.minions);
-            items.AddRange(sel.items);
-            buildings.AddRange(sel.buildings);
-        }
-    }
-
     public class ToolSelection : UITool,
         IAgentListener,
         IItemListener,
@@ -68,10 +28,7 @@ namespace BB
 
             protected abstract void ConfigureHighlight();
             public abstract bool Applicable(IOrdersGiver orders);
-            public virtual bool Applicable(ICommandsGiver commands) => false;
             public abstract void Issue(IOrdersGiver orders);
-            public virtual void Issue(ICommandsGiver commands) { }
-
             public abstract bool Equals(Selectable other);
             public override bool Equals(object obj)
                 => obj is Selectable selectable && Equals(selectable);
@@ -100,10 +57,6 @@ namespace BB
             public readonly Minion minion;
             public SelMinion(Minion minion) : base(minion)
                 => this.minion = minion;
-            public override bool Applicable(ICommandsGiver commands)
-                => commands.ApplicableToMinion(minion);
-            public override void Issue(ICommandsGiver commands)
-                => commands.IssueCommand(minion);
         }
 
         private class SelItem : Selectable
@@ -142,46 +95,13 @@ namespace BB
         }
         #endregion
 
-        private class OrdersCommands
-        {
-            public readonly IOrdersGiver orders;
-            public readonly ICommandsGiver commands;
-            private OrdersCommands(IOrdersGiver orders, ICommandsGiver commands)
-            {
-                this.orders = orders;
-                this.commands = commands;
-            }
-
-            public OrdersCommands(ICommandsGiver commands) : this(null, commands) { }
-            public OrdersCommands(IOrdersGiver orders) : this(orders, null) { }
-
-            private bool isOrders => orders != null;
-
-            public bool Applicable(Selectable selectable)
-                => isOrders ? 
-                    selectable.Applicable(orders) :
-                    selectable.Applicable(commands);
-
-            public void Issue(Selectable selectable)
-            {
-                if (isOrders)
-                    selectable.Issue(orders);
-                else
-                    selectable.Issue(commands);
-            }
-
-            public IToolbarButton Button()
-                => isOrders ?
-                    (IToolbarButton)orders :
-                    (IToolbarButton)commands;
-        }
-
-        private readonly List<OrdersCommands> orders = new List<OrdersCommands>();
+        private readonly List<IOrdersGiver> orders = new List<IOrdersGiver>();
+        private readonly List<ICommandsGiver> commands = new List<ICommandsGiver>();
         private readonly Transform poolRoot;
         private readonly Pool<SelectionHighlight> highlights;
 
         private readonly HashSet<Selectable> selectables = new HashSet<Selectable>();
-        private readonly List<OrdersCommands> ordersCurrent = new List<OrdersCommands>();
+        private readonly HashSet<SelMinion> minions = new HashSet<SelMinion>();
 
         private readonly List<Selectable> selectablesRemoved = new List<Selectable>();
         private bool isIssuing;
@@ -197,24 +117,37 @@ namespace BB
 
             foreach (var system in ctrl.registry.systems)
                 foreach (var c in system.GetCommands())
-                    orders.Add(new OrdersCommands(c));
+                    commands.Add(c);
 
             foreach (var system in ctrl.registry.systems)
                 foreach (var o in system.GetOrders())
-                    orders.Add(new OrdersCommands(o));
+                    orders.Add(o);
 
             isIssuing = false;
         }
 
-        public override void OnButton(int button)
+        private void OnButton(IOrdersGiver order)
         {
             isIssuing = true;
-            var orders = ordersCurrent[button];
             foreach (var selectable in selectables)
-                if (orders.Applicable(selectable))
-                    orders.Issue(selectable);
-
+                if (selectable.Applicable(order))
+                    selectable.Issue(order);
             isIssuing = false;
+            OnFinishIssuing();
+        }
+
+        private void OnButton(ICommandsGiver command)
+        {
+            isIssuing = true;
+            foreach (var minion in minions)
+                if (command.ApplicableToMinion(minion.minion))
+                    command.IssueCommand(minion.minion);
+            isIssuing = false;
+            OnFinishIssuing();
+        }
+
+        private void OnFinishIssuing()
+        {
             foreach (var selectable in selectablesRemoved)
                 RemoveSelectable(selectable);
             selectablesRemoved.Clear();
@@ -236,17 +169,19 @@ namespace BB
         {
             ClearHighlights();
             selectables.Clear();
-            foreach (var sel in ToSelectables(selection))
-                selectables.Add(sel);
-
-            ctrl.ReplaceTool(this);
+            minions.Clear();
+            AddSelection(selection);
         }
 
         public void AddSelection(Selection selection)
         {
             foreach (var sel in ToSelectables(selection))
                 if (!selectables.Contains(sel))
+                {
                     selectables.Add(sel);
+                    if (sel is SelMinion minion)
+                        minions.Add(minion);
+                }
 
             ctrl.ReplaceTool(this);
         }
@@ -288,28 +223,44 @@ namespace BB
         private void ClearUI()
         {
             ctrl.gui.HideToolbarButtons();
-            ordersCurrent.Clear();
         }
 
         private void InitUI()
         {
             ConfigureInfoPane();
 
-            foreach (var orders in orders)
+            List<KeyValuePair<IToolbarButton, Action>> buttons
+                = new List<KeyValuePair<IToolbarButton, Action>>();
+
+            foreach (var command in commands)
             {
-                foreach (var selectable in selectables)
+                foreach (var minion in minions)
                 {
-                    if (orders.Applicable(selectable))
+                    if (command.ApplicableToMinion(minion.minion))
                     {
-                        ordersCurrent.Add(orders);
+                        buttons.Add(new KeyValuePair<IToolbarButton, Action>(
+                            command, () => OnButton(command)));
                         break;
                     }
                 }
             }
 
-            ctrl.gui.ShowToolbarButtons(ordersCurrent.Count);
-            for (int i = 0; i < ordersCurrent.Count; ++i)
-                ctrl.gui.buttons[i].Configure(ctrl.assets, ordersCurrent[i].Button());
+            foreach (var order in orders)
+            {
+                foreach (var selectable in selectables)
+                {
+                    if (selectable.Applicable(order))
+                    {
+                        buttons.Add(new KeyValuePair<IToolbarButton, Action>(
+                            order, () => OnButton(order)));
+                        break;
+                    }
+                }
+            }
+
+            ctrl.gui.ShowToolbarButtons(buttons.Count);
+            for (int i = 0; i < buttons.Count; ++i)
+                ctrl.gui.buttons[i].Configure(buttons[i].Value, ctrl.assets, buttons[i].Key);
         }
 
         public override void OnActivate()
@@ -381,6 +332,9 @@ namespace BB
             {
                 DeactiveHighlight(selActual);
                 selectables.Remove(selectable);
+                if (selectable is SelMinion minion)
+                    minions.Remove(minion);
+
                 return true;
             }
 

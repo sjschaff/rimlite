@@ -78,6 +78,12 @@ namespace BB
             yield return t;
         }
 
+        public static T FirstOrDefault<T>(this IEnumerable<T> en)
+        {
+            var et = en.GetEnumerator();
+            return et.MoveNext() ? et.Current : default;
+        }
+
         private static void Log(string msg, string level)
         {
             // Something (probably unity) is injecting an extra

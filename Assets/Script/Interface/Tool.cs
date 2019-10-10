@@ -20,13 +20,13 @@ namespace BB
 
         public virtual void OnUpdate(Vec2 mouse) { }
         public virtual void OnClick(Vec2 pos) { }
+        public virtual void OnRightClick(Vec2 pos) { }
         public virtual void OnDragStart(RectInt rect) { }
         public virtual void OnDrag(RectInt rect) { }
         public virtual void OnDragEnd(RectInt rect) { }
         public virtual void OnMouseEnter() { }
         public virtual void OnMouseExit() { }
 
-        public virtual void OnButton(int button) { }
         public virtual void K_OnTab() { }
     }
 }

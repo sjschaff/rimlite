@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
@@ -18,8 +19,9 @@ namespace BB
             }
         }
 
-        public override void ConfigureButton(ToolbarButton button, IBuildable buildable)
-            => button.Configure(null, buildable.buildingDef.name);
+        public override void ConfigureButton(
+            ToolbarButton button, IBuildable buildable, Action fn)
+            => button.Configure(fn, null, buildable.buildingDef.name);
 
         public override void OnActivate()
         {

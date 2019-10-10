@@ -120,7 +120,7 @@ namespace BB
             return img;
         }
 
-        public static Transform CreateCanvas(Transform parent, Vec2I refSize)
+        public static RectTransform CreateCanvas(Transform parent, Vec2I refSize)
         {
             var node = CreateObject(parent, "<canvas>");
             var obj = node.gameObject;

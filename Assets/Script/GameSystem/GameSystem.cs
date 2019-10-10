@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System;
 
 namespace BB
 {
@@ -52,7 +51,7 @@ namespace BB
 
     public interface ICommandsGiver : IToolbarButton
     {
-        bool ApplicableToMinion(Minion agent);
-        bool IssueCommand(Agent agent);
+        bool ApplicableToMinion(Minion minion);
+        void IssueCommand(Minion minion);
     }
 }

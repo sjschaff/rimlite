@@ -31,6 +31,14 @@ using Vec2I = UnityEngine.Vector2Int;
         attack via tele. circle.
         cave ins
         later game magical beasts attack, eventually dragons
+    managers for assiging work
+        maybe they speed up underlings
+        maybe as a req. for directly prioritizing tasks
+        or certain recipe types i.e. make until x
+    apprenticeship needed to learn a new skill (or smart+books? workaround with magic perhaps)
+        slows down mentor, consumes materials without producing anything
+    workspeed logarithmic with skill level
+    architecture drawings as an alternative style of research, needed to make new buildings/benches
 */
 
 namespace BB
@@ -78,19 +86,18 @@ namespace BB
         }
 
         const float minionSelectThreshold = .4f;
-        public Minion GUISelectMinion(Vec2 pos)
+        public IEnumerable<Minion> GUISelectMinions(Vec2 pos)
         {
             float threshSq = minionSelectThreshold * minionSelectThreshold;
             pos += new Vec2(-.5f, -.5f);
             foreach (var minion in minions)
                 if (pos.DistanceSq(minion.realPos) <= threshSq)
-                    return minion;
-
-            return null;
+                    yield return minion;
         }
 
         public IEnumerable<Minion> GUISelectMinions(Rect area)
         {
+            // TODO: make distance to rect method, can be used for pathfinding too
             Rect rectThresh =
                 area.Expand(minionSelectThreshold)
                     .Shift(new Vec2(-.5f, -.5f));
@@ -112,7 +119,7 @@ namespace BB
                 if (minion == D_minionNoTask)
                     continue;
 
-                if (!minion.hasWork)
+                if (!minion.hasWork && !minion.isDrafted)
                 {
                     foreach (var system in registry.systems)
                     {
