@@ -319,6 +319,8 @@ namespace BB
         private void ClearUI()
         {
             ctrl.gui.HideToolbarButtons();
+            ctrl.gui.infoPane.header.text = null;
+            ctrl.gui.infoPane.info.text = null;
         }
 
         private void InitUI()
@@ -414,17 +416,17 @@ namespace BB
             if (sel is SelBuilding b)
             {
                 IBuilding building = b.building;
-                ctrl.gui.infoPane.header.text =
+                ctrl.gui.infoPane.info.text =
                     $"{building.jobHandles.Count} handles.";
             }
             if (selectables.Count == 1 && sel is SelMinion m)
             {
                 Minion minion = m.minion;
                 if (minion.hasWork)
-                    ctrl.gui.infoPane.header.text =
-                    $"Active Work: {minion.currentWork.D_workName}, task: {minion.currentWork.activeTask.description}";
+                    ctrl.gui.infoPane.info.text =
+                    $"Active Work: {minion.currentWork.D_workName}\n{minion.currentWork.activeTask.description}";
                 else
-                    ctrl.gui.infoPane.header.text = "No work.";
+                    ctrl.gui.infoPane.info.text = "No work.";
             }
         }
 

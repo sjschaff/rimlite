@@ -84,15 +84,18 @@ namespace BB
         public override void CancelJob() { }
         public override void AbandonWork(Work work) { }
 
-        public Work GetWork() => new Work(this, GetTasks(), "JobFireAt");
+        public void AssignTo(Minion minion)
+            => minion.AssignWork(new Work(this, GetTasks(minion), "JobFireAt"));
 
-        public IEnumerable<Task> GetTasks()
+        public IEnumerable<Task> GetTasks(Minion minion)
         {
             while (true)
             {
-                yield return new TaskWaitLambda(
-                    game, "Waiting for line of sight.",
-                    (task, dt) => task.work.minion.HasLineOfSight(target));
+                if (!minion.HasLineOfSight(target))
+                    yield return new TaskWaitLambda(
+                        game, "Waiting for line of sight.",
+                        (task, dt) => task.work.minion.HasLineOfSight(target));
+
                 bool canceled = false;
                 yield return new TaskTimedLambda(
                     game, "Firing at ground.", MinionAnim.Shoot,
@@ -156,7 +159,7 @@ namespace BB
                 if (minion.isDrafted)
                 {
                     if (minion.HasLineOfSight(target))
-                        minion.AssignWork(job.GetWork());
+                        job.AssignTo(minion);
                 }
             }
         }

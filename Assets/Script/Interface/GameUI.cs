@@ -86,9 +86,11 @@ namespace BB
     {
         public readonly Image pane;
         public readonly Text header;
+        public readonly Text info;
 
-        public InfoPane(Transform parent, Vec2 size, Font font)
+        public InfoPane(Transform parent, Font font)
         {
+            Vec2 size = new Vec2(400, 200);
             pane = Gui.CreatePane(
                 parent, "Info Panel", new Color(.19f, .19f, .19f),
                 size, Anchor.BottomLeft, Vec2.zero);
@@ -96,16 +98,30 @@ namespace BB
             TextCfg cfg = new TextCfg()
             {
                 font = font,
-                fontSize = 30,
+                fontSize = 24,
                 autoResize = false,
                 style = FontStyle.Bold,
-                anchor = TextAnchor.UpperCenter,
-                horiWrap = HorizontalWrapMode.Wrap,
+                anchor = TextAnchor.UpperLeft,
+                horiWrap = HorizontalWrapMode.Overflow,
                 vertWrap = VerticalWrapMode.Truncate
             };
 
             header = Gui.CreateText(pane.rectTransform, "<header>", cfg);
-            header.rectTransform.SetFillWithMargin(40);
+            header.rectTransform.SetSizePivotAnchor(
+                new Vec2(360, 27), new Vec2(0, 1), new Vec2(0, 1));
+            header.rectTransform.offsetMin = new Vec2(20, 0);
+            header.rectTransform.offsetMax = new Vec2(0, -14);
+            header.rectTransform.sizeDelta = new Vec2(360, 27);
+
+            cfg.fontSize = 18;
+            cfg.style = FontStyle.Normal;
+            cfg.horiWrap = HorizontalWrapMode.Wrap;
+            info = Gui.CreateText(pane.rectTransform, "<info>", cfg);
+            info.rectTransform.SetSizePivotAnchor(
+                new Vec2(360, 144), new Vec2(0, 1), new Vec2(0, 1));
+            info.rectTransform.offsetMin = new Vec2(20, 0);
+            info.rectTransform.offsetMax = new Vec2(0, -46);
+            info.rectTransform.sizeDelta = new Vec2(360, 144);
         }
     }
 
@@ -262,19 +278,21 @@ namespace BB
         private readonly RectTransform canvas;
 
         public readonly Line dragOutline;
-
+        public readonly ContextMenu ctxtMenu;
         public InfoPane infoPane;
+
+        public readonly RectTransform toolbarContainer;
         public readonly ToolbarButton buildButton;
         public readonly ToolbarButton orderButton;
         public readonly List<ToolbarButton> buttons
             = new List<ToolbarButton>();
 
+        public readonly RectTransform playButtonContainer;
         private readonly ToolbarButton pauseButton;
         private readonly ToolbarButton playButton;
         private readonly ToolbarButton playFFButton;
         private readonly ToolbarButton playSFFButton;
 
-        public readonly ContextMenu ctxtMenu;
 
         public GameUI(GameController ctrl)
         {
@@ -292,6 +310,9 @@ namespace BB
 
             Color color = ToolbarButton.offColor;
 
+            toolbarContainer = Gui.CreateObject(canvas, "Toolbar");
+            toolbarContainer.SetFill();
+
             buildButton = CreateToolbarButton(
                 "Build Button", new Vec2(420, 0));
             buildButton.Configure(
@@ -307,31 +328,34 @@ namespace BB
                 "Orders", true);
 
             Font font = ctrl.assets.fonts.Get("Arial.ttf");
-            infoPane = new InfoPane(canvas, new Vec2(400, 200), font);
+            infoPane = new InfoPane(canvas, font);
+
+            playButtonContainer = Gui.CreateObject(canvas, "Speed Controls");
+            playButtonContainer.SetFill();
 
             pauseButton = new ToolbarButton(
-                canvas, "Pause", Anchor.TopLeft,
+                playButtonContainer, "Pause", Anchor.TopLeft,
                 new Vec2(10, 10), new Vec2(38, 38), 4, font);
             pauseButton.Configure(
                 () => ctrl.OnSpeedChange(PlaySpeed.Paused),
                 GetSprite("BB:PauseIcon"));
 
             playButton = new ToolbarButton(
-                canvas, "Play", Anchor.TopLeft,
+                playButtonContainer, "Play", Anchor.TopLeft,
                 new Vec2(52, 10), new Vec2(38, 38), 6, font);
             playButton.Configure(
                 () => ctrl.OnSpeedChange(PlaySpeed.Normal),
                 GetSprite("BB:PlayIcon"));
 
             playFFButton = new ToolbarButton(
-                canvas, "Fast", Anchor.TopLeft,
+                playButtonContainer, "Fast", Anchor.TopLeft,
                 new Vec2(94, 10), new Vec2(51, 38), 6, font);
             playFFButton.Configure(
                 () => ctrl.OnSpeedChange(PlaySpeed.Fast),
                 GetSprite("BB:PlayFFIcon"));
 
             playSFFButton = new ToolbarButton(
-                canvas, "Super Fast", Anchor.TopLeft,
+                playButtonContainer, "Super Fast", Anchor.TopLeft,
                 new Vec2(149, 10), new Vec2(77, 38), 6, font);
             playSFFButton.Configure(
                 () => ctrl.OnSpeedChange(PlaySpeed.SuperFast),
@@ -379,7 +403,7 @@ namespace BB
         private ToolbarButton CreateToolbarButton(string name, Vec2 pos)
         {
             return new ToolbarButton(
-                canvas, name, Anchor.BottomLeft,
+                toolbarContainer, name, Anchor.BottomLeft,
                 pos, new Vec2(90, 90), 0,
                 ctrl.assets.fonts.Get("Arial.ttf"));
         }
