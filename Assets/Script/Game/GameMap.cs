@@ -110,8 +110,8 @@ namespace BB
             foreach (Minion minion in minions)
             {
                 if (!minion.hasWork && area.Contains(minion.pos))
-                    minion.AssignWork(JobWalk.Create(
-                        new TaskGoTo(this, "Vacating the area.", PathCfg.Vacate(area))));
+                    JobTransient.AssignWork(minion, "MapVacate",
+                        new TaskGoTo(this, "Vacating the area.", PathCfg.Vacate(area)));
             }
         }
     }

@@ -232,7 +232,8 @@ namespace BB
             {
                 // TODO: make them all go to different spots
                 if (minion.isDrafted)
-                    game.GoTo(minion, target);
+                    JobTransient.AssignWork(minion, "WalkCmd", 
+                    new TaskGoTo(game, "Walking.", PathCfg.Point(target)));
             }
         }
     }

@@ -1,11 +1,15 @@
-﻿namespace BB
+﻿using System.Collections.Generic;
+
+namespace BB
 {
-    public class JobWalk : JobHandle
+    public class JobTransient : JobHandle
     {
-        private static readonly JobWalk job = new JobWalk();
+        private static readonly JobTransient job = new JobTransient();
         public override void AbandonWork(Work work) { }
         public override void CancelJob() { }
-        public static Work Create(TaskGoTo task)
-            => new Work(job, task.Enumerate(), "WalkDummy");
+        public static bool AssignWork(Minion minion, string D_workName, Task task)
+            => AssignWork(minion, D_workName, task.Enumerate());
+        public static bool AssignWork(Minion minion, string D_workName, IEnumerable<Task> tasks)
+            => minion.AssignWork(new Work(job, tasks, D_workName));
     }
 }

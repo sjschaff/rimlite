@@ -129,10 +129,6 @@ namespace BB
             yield break;
         }
 
-        public void GoTo(Minion minion, Vec2I pos)
-            => minion.AssignWork(JobWalk.Create(
-                new TaskGoTo(this, "Walking.", PathCfg.Point(pos))));
-
         public void Update(float dt)
         {
             D_DebugUpdate();
