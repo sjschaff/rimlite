@@ -24,7 +24,7 @@ namespace BB
             public readonly IBuildable buildable;
 
             public JobDeconstruct(SystemDeconstruct orders, IBuilding building)
-                : base(orders, building)
+                : base(orders, building, $"Deconstruct {building.def.name}.")
             {
                 BB.AssertNotNull(building);
                 buildable = (IBuildable)building.prototype;

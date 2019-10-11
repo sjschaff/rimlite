@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
@@ -72,23 +73,11 @@ namespace BB
     }
 
     // TODO: allow for other targets
-    public class JobFireAtTarget : JobHandle
+    public static class CombatProvider
     {
-        public readonly Game game;
-        public readonly Vec2I target;
-        public JobFireAtTarget(Game game, Vec2I target)
-        {
-            this.game = game;
-            this.target = target;
-        }
-
-        public override void CancelJob() { }
-        public override void AbandonWork(Work work) { }
-
-        public void AssignTo(Minion minion)
-            => minion.AssignWork(new Work(this, GetTasks(minion), "JobFireAt"));
-
-        public IEnumerable<Task> GetTasks(Minion minion)
+        public static void AssignFireAtRepeating(Game game, Minion minion, Vec2I target)
+            => JobTransient.AssignWork(minion, "FireAtRepeat", GetTasks(game, minion, target));
+        public static IEnumerable<Task> GetTasks(Game game, Minion minion, Vec2I target)
         {
             while (true)
             {
@@ -172,13 +161,12 @@ namespace BB
 
         public void IssueCommand()
         {
-            var job = new JobFireAtTarget(game, target);
             foreach (var minion in minions)
             {
                 if (minion.isDrafted)
                 {
                     if (minion.HasLineOfSight(target))
-                        job.AssignTo(minion);
+                        CombatProvider.AssignFireAtRepeating(game, minion, target);
                 }
             }
         }
@@ -186,6 +174,68 @@ namespace BB
         public bool Enabled() => enabled;
         // TODO: name target if not ground, actually fire at target if not ground
         public string GuiText() => enabled ? $"Fire at target." : "Cannot fire at target (No line of sight)";
+    }
+
+    public class PrioritizeWorkContextProvider : IContextMenuProvider
+    {
+        public readonly Game game;
+        public PrioritizeWorkContextProvider(Game game) => this.game = game;
+
+        public IEnumerable<IContextCommand> CommandsForTarget(
+            Vec2I pos, Selection sel, List<Minion> minions)
+        {
+            if (minions.Count > 1)
+                yield break;
+
+            // TODO: agents, items
+            if (sel.buildings.Count > 0)
+            {
+                IBuilding building = sel.buildings[0];
+                foreach (var desc in building.jobHandles.SelectMany(j => j.AvailableWorks()))
+                    yield return new WorkPriorty(minions[0], desc);
+            }
+        }
+
+        private class WorkPriorty : IContextCommand
+        {
+            private readonly Minion minion;
+            private readonly WorkDesc work;
+            private readonly bool canDoWork;
+            public WorkPriorty(Minion minion, WorkDesc work)
+            {
+                this.minion = minion;
+                this.work = work;
+                this.canDoWork = minion.CanDoWork(work);
+            }
+
+            public void IssueCommand()
+            {
+                BB.Assert(Enabled());
+                work.job.ReassignWork(work, minion);
+            }
+
+            public bool Enabled() => !work.disabled && canDoWork;
+
+            public string GuiText()
+            {
+                if (!Enabled())
+                {
+                    string desc = $"Cannot '{work.description}' ";
+                    if (!canDoWork)
+                        desc += $"(<unknown>)";
+                    else
+                        desc += $"({work.disabledReason})";
+                    return desc;
+                }
+                else
+                {
+                    string desc = $"Prioritize '{work.description}'";
+                    if (work.currentAssignee != null)
+                        desc += $" (Assigned to {work.currentAssignee.def.name})";
+                    return desc;
+                }
+            }
+        }
     }
 
     [AttributeDontInstantiate]

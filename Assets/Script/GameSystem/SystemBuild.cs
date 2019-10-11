@@ -66,6 +66,12 @@ namespace BB
                 return new ClaimLambda(() => hasBuilder = false);
             }
 
+            // TODO:
+            public override IEnumerable<WorkDesc> AvailableWorks()
+                { yield break; }
+            public override void ReassignWork(WorkDesc desc, Minion minion)
+                => throw new System.NotSupportedException();
+
             public override IEnumerable<Work> QueryWork()
             {
                 // Already building

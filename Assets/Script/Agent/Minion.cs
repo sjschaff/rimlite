@@ -36,6 +36,9 @@ namespace BB
                 AbandonWork();
         }
 
+        // TODO:
+        public bool CanDoWork(WorkDesc desc) => true;
+
         public override void SetTool(Tool tool)
             => skin.SetTool(tool);
         public override void SetAnim(MinionAnim anim)

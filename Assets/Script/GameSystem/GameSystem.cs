@@ -4,10 +4,40 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public struct WorkDesc
+    {
+        // TODO: work type info for checking if minions are capable
+        // also target pos hint to prevent assigning unreachable jobs
+        // TODO: share logic for description of things like
+        // cant do (not assigned to <X> taks)
+        // (reserved by <x>)
+        public readonly JobHandle job;
+        public readonly string description;
+        public readonly string disabledReason;
+        public readonly Minion currentAssignee;
+        public readonly object workData;
+        public bool disabled => disabledReason != null;
+
+        public WorkDesc(
+            JobHandle job,
+            string description,
+            string disabledReason,
+            Minion currentAssignee,
+            object data)
+        {
+            this.job = job;
+            this.description = description;
+            this.disabledReason = disabledReason;
+            this.currentAssignee = currentAssignee;
+            this.workData = data;
+        }
+    }
     public abstract class JobHandle
     {
         public abstract void CancelJob();
         public abstract void AbandonWork(Work work);
+        public abstract IEnumerable<WorkDesc> AvailableWorks();
+        public abstract void ReassignWork(WorkDesc desc, Minion minion);
 
         // Utility for task generation
         protected TTask Capture<TTask>(TTask task, out TTask outTask)

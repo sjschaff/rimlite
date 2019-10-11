@@ -51,7 +51,7 @@ namespace BB
                     yield return work;
         }
 
-        protected bool HasJob(TKey key) => jobs.ContainsKey(key);
+        public bool HasJob(TKey key) => jobs.ContainsKey(key);
 
         protected void AddJob(TJob job)
         {
@@ -136,13 +136,17 @@ namespace BB
         where TSystem : GameSystemStandard<TSystem, JobBasicKey, TJob>
         where TJob : JobBasic<TSystem, TJob>
     {
+        public readonly string description;
         public Work activeWork;
-
-        public JobBasic(TSystem system, JobBasicKey key)
+        public JobBasic(TSystem system, JobBasicKey key, string description)
             : base(system, key)
-            => key.AddJobHandle(this);
-        public JobBasic(TSystem system, IBuilding building)
-            : this(system, new JobBasicKey(building)) { }
+        {
+            this.description = description;
+            key.AddJobHandle(this);
+        }
+
+        public JobBasic(TSystem system, IBuilding building, string description)
+            : this(system, new JobBasicKey(building), description) { }
 
         public abstract IEnumerable<Task> GetTasks();
 
@@ -159,27 +163,47 @@ namespace BB
             base.Destroy();
         }
 
+        public override IEnumerable<WorkDesc> AvailableWorks()
+        {
+            yield return new WorkDesc(
+                this, description, null,
+                activeWork?.minion, null);
+        }
+
+        public override void ReassignWork(WorkDesc desc, Minion minion)
+        {
+            if (activeWork != null)
+                activeWork.minion.AbandonWork();
+
+            if (system.HasJob(key))
+                minion.AssignWork(GetWork());
+        }
+
         public override IEnumerable<Work> QueryWork()
         {
             if (activeWork == null)
-                yield return new Work(this, GetTasks()
-                    .Prepend(new TaskLambda(game, "sys base init",
-                        (work) =>
-                        {
-                            if (activeWork != null)
-                                return false;
+                yield return GetWork();
+        }
+        private Work GetWork()
+        {
+            return new Work(this, GetTasks()
+                .Prepend(new TaskLambda(game, "sys base init",
+                    (work) =>
+                    {
+                        if (activeWork != null)
+                            return false;
 
-                            activeWork = work;
-                            return true;
-                        }))
-                    .Append(new TaskLambda(game, "sys base end",
-                        (work) =>
-                        {
-                            activeWork = null;
-                            system.CancelJob((TJob)this);
-                            return true;
-                        })),
-                    typeof(TSystem).Name + ":Work");
+                        activeWork = work;
+                        return true;
+                    }))
+                .Append(new TaskLambda(game, "sys base end",
+                    (work) =>
+                    {
+                        activeWork = null;
+                        system.CancelJob((TJob)this);
+                        return true;
+                    })),
+                typeof(TSystem).Name + ":Work");
         }
     }
 
@@ -192,8 +216,9 @@ namespace BB
         {
             public readonly Transform overlay;
 
-            public JobHandleOrders(TThis orders, JobBasicKey key)
-                : base(orders, key)
+            public JobHandleOrders(
+                TThis orders, JobBasicKey key, string description)
+                : base(orders, key, description)
             {
                 Transform parent = game.workOverlays;
                 Vec2I pos;
@@ -210,8 +235,8 @@ namespace BB
                 overlay = game.assets.CreateJobOverlay(parent, pos, orders.guiSprite).transform;
             }
 
-            public JobHandleOrders(TThis orders, IBuilding building)
-                : this(orders, new JobBasicKey(building)) { }
+            public JobHandleOrders(TThis orders, IBuilding building, string description)
+                : this(orders, new JobBasicKey(building), description) { }
 
             public override void Destroy()
             {

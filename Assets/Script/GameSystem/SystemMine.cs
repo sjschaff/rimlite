@@ -29,7 +29,8 @@ namespace BB
             private readonly IMineable mineable;
             private Tile tile => mineable.tile;
 
-            public JobMine(SystemMine system, IBuilding building) : base(system, building)
+            public JobMine(SystemMine system, IBuilding building)
+                : base(system, building, $"Mine {building.def.name}.") // TODO: tool type
             {
                 BB.AssertNotNull(building);
                 mineable = (IMineable)building;
