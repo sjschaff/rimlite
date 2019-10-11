@@ -6,7 +6,7 @@ namespace BB
     {
         public TaskImmediate(Game game, string description)
             : base(game, description) { }
-        public override Status PerformTask(float deltaTime)
+        public override Status OnPerformTask(float deltaTime)
             => throw new NotSupportedException("Called PerformTask on TaskImmediate");
         protected override void OnEndTask(bool canceled) { }
     }

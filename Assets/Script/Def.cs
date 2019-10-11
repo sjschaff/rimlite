@@ -296,6 +296,7 @@ namespace BB
             var tileset64 = Register(new AtlasDef("BB:tileset64", "tileset64", 32, 64));
             var sprites32 = Register(new AtlasDef("BB:sprites32", "sprites32", 8, 32));
             var sprites64 = Register(new AtlasDef("BB:sprites64", "sprites64", 16, 64));
+            var arrow = Register(new AtlasDef("BB:arrow", "character/arrow/arrow", 1, 64));
 
             Register(new TerrainDef("BB:Grass", "Grass", tileset32, new Vec2I(0, 29)));
             Register(new TerrainDef("BB:Dirt", "Dirt", tileset32, new Vec2I(0, 0)));
@@ -325,6 +326,7 @@ namespace BB
             Register(new SpriteDef("BB:PauseIcon", sprites64, new Vec2I(12, 28), new Vec2I(4, 4), Vec2I.zero));
             Register(new SpriteDef("BB:PlayFFIcon", sprites64, new Vec2I(16, 28), new Vec2I(6, 4), Vec2I.zero));
             Register(new SpriteDef("BB:PlaySFFIcon", sprites64, new Vec2I(22, 28), new Vec2I(10, 4), Vec2I.zero));
+            Register(new SpriteDef("BB:ProjArrow", arrow, new Vec2I(776, 210), new Vec2I(32, 8), new Vec2I(16, 4)));
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone"), 5));
             Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood"), 5));

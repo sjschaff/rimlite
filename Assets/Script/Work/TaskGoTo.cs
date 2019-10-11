@@ -114,7 +114,7 @@ namespace BB
                 UpdatePathVis();
             }
 
-            public override Status PerformTask(float deltaTime)
+            public override Status OnPerformTask(float deltaTime)
             {
                 float distance = deltaTime * agent.speed;
                 while (true)

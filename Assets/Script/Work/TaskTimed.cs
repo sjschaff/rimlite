@@ -11,11 +11,9 @@ namespace BB
         private readonly Func<Vec2I, Vec2I> faceFn;
         private readonly MinionAnim anim;
         private readonly Tool tool;
-        private bool softCanceled = false;
 
         protected abstract float WorkSpeed();
         protected virtual void OnWorkUpdated(float workAmt) { }
-        protected virtual void OnTaskComplete(bool canceled) { }
 
         public static Func<Vec2I, Vec2I> FaceSame() => (pt => pt);
         public static Func<Vec2I, Vec2I> FacePt(Vec2I ptTarget) => (pt => ptTarget);
@@ -33,8 +31,6 @@ namespace BB
             this.workAmt = workAmt;
         }
 
-        public void SoftCancel() => softCanceled = true;
-
         protected override Status OnBeginTask()
         {
             // TODO: make loading bar
@@ -47,11 +43,8 @@ namespace BB
             return Status.Continue;
         }
 
-        public override Status PerformTask(float deltaTime)
+        public override Status OnPerformTask(float deltaTime)
         {
-            if (softCanceled)
-                return Status.Complete;
-
             workAmt = Mathf.Max(workAmt - deltaTime * WorkSpeed(), 0);
             OnWorkUpdated(workAmt);
 
@@ -65,7 +58,6 @@ namespace BB
         {
             agent.SetTool(Tool.None);
             agent.SetAnim(MinionAnim.Idle);
-            OnTaskComplete(canceled || softCanceled);
         }
     }
 
@@ -95,8 +87,10 @@ namespace BB
         protected override void OnWorkUpdated(float workAmt)
             => workFn?.Invoke(this, workAmt);
 
-        protected override void OnTaskComplete(bool canceled)
+        protected override void OnEndTask(bool canceled)
         {
+            base.OnEndTask(canceled);
+
             if (!canceled)
                 completeFn?.Invoke(this);
         }

@@ -9,7 +9,7 @@ namespace BB
 
         protected abstract bool DoneWaiting(float dt);
 
-        public sealed override Status PerformTask(float deltaTime)
+        public sealed override Status OnPerformTask(float deltaTime)
         {
             if (DoneWaiting(deltaTime))
                 return Status.Complete;
