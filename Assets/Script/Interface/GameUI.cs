@@ -129,12 +129,13 @@ namespace BB
     {
         private readonly RectTransform canvas;
         private readonly RectTransform pane;
-        private readonly RectTransform container;
-        private readonly HorizontalLayoutGroup horiLayout;
+        private readonly VerticalLayoutGroup vertLayout;
         private readonly Font font;
         private readonly List<Btn> buttons =
             new List<Btn>();
         private int numShown;
+        private float longestText = 0;
+        const float maxWidth = 300;
 
         private struct Btn
         {
@@ -154,7 +155,7 @@ namespace BB
             this.canvas = canvas;
             this.font = font;
 
-            pane = Gui.CreateObject(canvas, "Context Menu");
+            pane = Gui.CreateColor(canvas, "Context Menu", ToolbarButton.onColor).rectTransform;
             pane.anchorMin = pane.anchorMax = new Vec2(.5f, .5f);
             pane.pivot = new Vec2(0, 1);
             pane.offsetMin = Vec2.zero;
@@ -165,23 +166,14 @@ namespace BB
             sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            horiLayout = pane.gameObject.AddComponent<HorizontalLayoutGroup>();
-            horiLayout.childAlignment = TextAnchor.UpperLeft;
-            horiLayout.childControlWidth = true;
-            horiLayout.childControlHeight = true;
-            horiLayout.childForceExpandWidth = false;
-            horiLayout.childForceExpandHeight = false;
-
-            var bg = Gui.CreateColor(pane, "<background>", ToolbarButton.onColor);
-            container = bg.rectTransform;
-            container.pivot = new Vec2(0, 1);
-            bg.gameObject.AddComponent<LayoutElement>();
-            var vertLayout = bg.gameObject.AddComponent<VerticalLayoutGroup>();
+            vertLayout = pane.gameObject.AddComponent<VerticalLayoutGroup>();
             vertLayout.childAlignment = TextAnchor.UpperLeft;
             vertLayout.childControlWidth = true;
             vertLayout.childControlHeight = true;
-            vertLayout.childForceExpandWidth = false;
-            vertLayout.childForceExpandHeight = false;
+            vertLayout.childForceExpandWidth = true;
+            vertLayout.childForceExpandHeight = true;
+            vertLayout.childScaleHeight = true;
+            vertLayout.childScaleWidth = true;
             vertLayout.spacing = 2;
             vertLayout.padding = new RectOffset(2, 2, 2, 2);
 
@@ -190,15 +182,17 @@ namespace BB
 
         private Btn CreateButton()
         {
-            var img = Gui.CreateColor(container, "<button>", ToolbarButton.offColor);
+            var img = Gui.CreateColor(pane, "<button>", ToolbarButton.offColor);
             img.rectTransform.pivot = new Vec2(0, 1);
             var btn = Gui.AddButton(img.gameObject, () => { });
             var layout = img.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+            layout.childScaleHeight = true;
+            layout.childScaleWidth = true;
             layout.padding = new RectOffset(8, 8, 8, 8);
 
             TextCfg cfg = new TextCfg
@@ -218,9 +212,11 @@ namespace BB
 
             return new Btn(img.gameObject, btn, text);
         }
-
         public void Show(Vec2 scPos, int numButtons)
         {
+            longestText = 0;
+            pane.sizeDelta = new Vec2(maxWidth, 0);
+
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvas, scPos, null, out var guiPos);
 
@@ -232,13 +228,13 @@ namespace BB
             pane.pivot = pivot;
 
             if (pivot.x == 0)
-                horiLayout.childAlignment = TextAnchor.UpperLeft;
+                vertLayout.childAlignment = TextAnchor.UpperLeft;
             else
-                horiLayout.childAlignment = TextAnchor.UpperRight;
+                vertLayout.childAlignment = TextAnchor.UpperRight;
             if (pivot.y == 0)
                 numShown = numButtons;
             else
-                numShown = -1;
+                numShown = -numButtons;
 
             pane.gameObject.SetActive(true);
 
@@ -260,13 +256,21 @@ namespace BB
 
         public void ConfigureButton(int i, string text, UnityAction fn, bool enabled)
         {
-            // TODO: enabling
+            bool lastButton = i == Math.Abs(numShown) - 1;
             if (numShown > 0)
                 i = (numShown - 1) - i;
             var btn = buttons[i];
             btn.text.text = text;
+            BB.LogInfo($"size: {btn.text.preferredWidth}");
+            if (btn.text.preferredWidth > longestText)
+                longestText = btn.text.preferredWidth;
+
             btn.button.onClick.RemoveAllListeners();
             btn.button.onClick.AddListener(fn);
+            btn.button.interactable = enabled;
+
+            if (lastButton)
+                pane.sizeDelta = new Vec2(Math.Min(maxWidth - 20, longestText) + 20, 0);
         }
     }
 
