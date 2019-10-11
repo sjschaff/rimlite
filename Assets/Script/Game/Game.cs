@@ -54,8 +54,11 @@ namespace BB
         public readonly Transform itemContainer;
         public readonly Transform agentContainer;
         public readonly Transform workOverlays;
+        public readonly Transform effectsContainer;
 
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
+        private readonly DeferredSet<Effect> effects =
+            new DeferredSet<Effect>(e => e.Destroy());
 
         public Game(Registry registry, AssetSrc assets)
         {
@@ -74,6 +77,8 @@ namespace BB
 
             for (int i = 0; i < 10; ++i)
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
+
+            assets.CreateSpriteObject(gameContainer, Vec2.zero, "ARROW", defs.Get<SpriteDef>("BB:ProjArrow"), Color.white, RenderLayer.Highlight);
         }
 
         private Transform CreateContainer(string name)
@@ -83,6 +88,13 @@ namespace BB
             return container;
         }
 
+        public void AddEffect(Effect effect)
+            => effects.Add(effect);
+
+        public void RemoveEffect(Effect effect)
+            => effects.Remove(effect);
+
+        // TODO: use agent bounds instead
         const float minionSelectThreshold = .4f;
         public IEnumerable<Minion> GUISelectMinions(Vec2 pos)
         {
@@ -93,6 +105,7 @@ namespace BB
                     yield return minion;
         }
 
+        // TODO: use agent bounds instead
         public IEnumerable<Minion> GUISelectMinions(Rect area)
         {
             // TODO: make distance to rect method, can be used for pathfinding too
@@ -105,18 +118,26 @@ namespace BB
         }
 
         public bool HasLineOfSight(Vec2 pos, Vec2 target)
+            => GetFirstRaycastTarget(pos, target) == null;
+
+        public RaycastTarget GetFirstRaycastTarget(Vec2 pos, Vec2 ray)
+            => Raycast(pos, ray).FirstOrDefault();
+
+        private IEnumerable<RaycastTarget> Raycast(Vec2 pos, Vec2 ray)
         {
             // TODO:
-            return true;
+            yield break;
         }
 
         public void GoTo(Minion minion, Vec2I pos)
             => minion.AssignWork(JobWalk.Create(
-                new TaskGoTo(this, "Debug Walking.", PathCfg.Point(pos))));
+                new TaskGoTo(this, "Walking.", PathCfg.Point(pos))));
 
         public void Update(float dt)
         {
             D_DebugUpdate();
+
+            effects.ForEach(e => e.Update(dt));
 
             foreach (Minion minion in minions)
             {

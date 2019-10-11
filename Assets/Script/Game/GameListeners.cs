@@ -22,44 +22,44 @@
 
     public partial class Game
     {
-        private readonly ListenerRegistry<IAgentListener> agentListeners
-            = new ListenerRegistry<IAgentListener>();
+        private readonly DeferredSet<IAgentListener> agentListeners
+            = new DeferredSet<IAgentListener>();
 
         public void RegisterAgentListener(IAgentListener listener)
-            => agentListeners.Register(listener);
+            => agentListeners.Add(listener);
         public void UnregisterAgentListener(IAgentListener listener)
-            => agentListeners.Unregister(listener);
+            => agentListeners.Remove(listener);
         private void NotifyAgentAdded(Agent agent)
-            => agentListeners.MessageAll((l) => l.AgentAdded(agent));
+            => agentListeners.ForEach((l) => l.AgentAdded(agent));
         private void NotifyAgentChanged(Agent agent)
-            => agentListeners.MessageAll((l) => l.AgentChanged(agent));
+            => agentListeners.ForEach((l) => l.AgentChanged(agent));
         private void NotifyAgentRemoved(Agent agent)
-            => agentListeners.MessageAll((l) => l.AgentRemoved(agent));
+            => agentListeners.ForEach((l) => l.AgentRemoved(agent));
 
 
-        private readonly ListenerRegistry<IItemListener> itemListeners
-            = new ListenerRegistry<IItemListener>();
+        private readonly DeferredSet<IItemListener> itemListeners
+            = new DeferredSet<IItemListener>();
         public void RegisterItemListener(IItemListener listener)
-            => itemListeners.Register(listener);
+            => itemListeners.Add(listener);
         public void UnregisterItemListener(IItemListener listener)
-            => itemListeners.Unregister(listener);
+            => itemListeners.Remove(listener);
         private void NotifyItemAdded(TileItem item)
-            => itemListeners.MessageAll((l) => l.ItemAdded(item));
+            => itemListeners.ForEach((l) => l.ItemAdded(item));
         private void NotifyItemChanged(TileItem item)
-            => itemListeners.MessageAll((l) => l.ItemChanged(item));
+            => itemListeners.ForEach((l) => l.ItemChanged(item));
         private void NotifyItemRemoved(TileItem item)
-            => itemListeners.MessageAll((l) => l.ItemRemoved(item));
+            => itemListeners.ForEach((l) => l.ItemRemoved(item));
 
 
-        private readonly ListenerRegistry<IBuildingListener> buildingListeners
-            = new ListenerRegistry<IBuildingListener>();
+        private readonly DeferredSet<IBuildingListener> buildingListeners
+            = new DeferredSet<IBuildingListener>();
         public void RegisterBuildingListener(IBuildingListener listener)
-            => buildingListeners.Register(listener);
+            => buildingListeners.Add(listener);
         public void UnregisterBuildingListener(IBuildingListener listener)
-            => buildingListeners.Unregister(listener);
+            => buildingListeners.Remove(listener);
         private void NotifyBuildingAdded(IBuilding building)
-            => buildingListeners.MessageAll((l) => l.BuildingAdded(building));
+            => buildingListeners.ForEach((l) => l.BuildingAdded(building));
         private void NotifyBuildingRemoved(IBuilding building)
-            => buildingListeners.MessageAll((l) => l.BuildingRemoved(building));
+            => buildingListeners.ForEach((l) => l.BuildingRemoved(building));
     }
 }

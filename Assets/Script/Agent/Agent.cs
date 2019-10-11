@@ -25,8 +25,7 @@ namespace BB
         // TODO: make an api that doesn't suck
         public abstract void SetTool(Tool tool);
         public abstract void SetAnim(MinionAnim anim);
-        public abstract void SetFacing(Vec2 dir);
-        protected abstract void ReconfigureItem(); // Jank AF
+        public abstract void UpdateSkinDir();
 
         public Agent(Game game, AgentDef def, Vec2I pos, string nodeName)
         {
@@ -41,7 +40,45 @@ namespace BB
             realPos = pos;
         }
 
+        // TODO: this is turning into a shit show
+
         public float speed => 2;
+
+        public Circle bounds => def.bounds + realPos;
+
+        public Dir dir { get; private set; } = Dir.Down;
+
+        public void SetFacing(Vec2 dir)
+        {
+            float dot = Vec2.Dot(dir.normalized, Vec2.right);
+            if (dot < .65f && dot > -.65f)
+            {
+                if (dir.y > 0)
+                    this.dir = Dir.Up;
+                else
+                    this.dir = Dir.Down;
+            }
+            else
+            {
+                if (dir.x > 0)
+                    this.dir = Dir.Right;
+                else
+                    this.dir = Dir.Left;
+            }
+
+            UpdateSkinDir();
+            if (carriedItem != null)
+                ReconfigureItem();
+        }
+
+        private void ReconfigureItem()
+        {
+            BB.AssertNotNull(carriedItem);
+            carriedItem.Configure(
+                dir == Dir.Up ?
+                    Item.Config.PlayerBelow :
+                    Item.Config.PlayerAbove);
+        }
 
         public Vec2 realPos
         {
@@ -57,6 +94,7 @@ namespace BB
             return (p.x % 1f) < Mathf.Epsilon && (p.y % 1) < Mathf.Epsilon;
         }
 
+        // TODO: use agent bounds instead
         const float containmentThresh = .9f;
         public bool InTile(Vec2I tile) =>
             Vec2.Distance(realPos, tile) < containmentThresh;

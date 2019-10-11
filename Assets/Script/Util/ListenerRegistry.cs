@@ -3,48 +3,59 @@ using System;
 
 namespace BB
 {
-    class ListenerRegistry<TListener>
+    class DeferredSet<T>
     {
-        private readonly HashSet<TListener> listeners
-            = new HashSet<TListener>();
-        private readonly List<TListener> listenersToAdd
-            = new List<TListener>();
-        private readonly List<TListener> listenersToRemove
-            = new List<TListener>();
+        private readonly Action<T> removeFn;
+        private readonly HashSet<T> ts
+            = new HashSet<T>();
+        private readonly List<T> tsToAdd
+            = new List<T>();
+        private readonly List<T> TsToRemove
+            = new List<T>();
         private bool iterating = false;
 
-        public ListenerRegistry() { }
+        public DeferredSet(Action<T> removeFn = null)
+            => this.removeFn = removeFn;
 
-        public void Register(TListener listener)
+        public void Add(T t)
         {
             if (iterating)
-                listenersToAdd.Add(listener);
+                tsToAdd.Add(t);
             else
-                listeners.Add(listener);
+                ts.Add(t);
         }
 
-        public void Unregister(TListener listener)
+        public void Remove(T t)
         {
             if (iterating)
-                listenersToRemove.Add(listener);
+                TsToRemove.Add(t);
             else
-                listeners.Remove(listener);
+            {
+                ts.Remove(t);
+                removeFn?.Invoke(t);
+            }
         }
 
-        public void MessageAll(Action<TListener> fn)
+        public bool ForEach(Action<T> fn)
         {
             iterating = true;
-            foreach (var listener in listeners)
-                fn(listener);
+            foreach (var t in ts)
+                fn(t);
 
-            foreach (var listener in listenersToAdd)
-                listeners.Add(listener);
-            foreach (var listener in listenersToRemove)
-                listeners.Remove(listener);
+            bool didChange = (tsToAdd.Count + TsToRemove.Count) > 0;
+            foreach (var t in tsToAdd)
+                ts.Add(t);
+            foreach (var t in TsToRemove)
+            {
+                ts.Remove(t);
+                removeFn?.Invoke(t);
+            }
 
-            listenersToAdd.Clear();
-            listenersToRemove.Clear();
+            tsToAdd.Clear();
+            TsToRemove.Clear();
             iterating = false;
+
+            return didChange;
         }
     }
 }

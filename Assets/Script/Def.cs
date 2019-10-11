@@ -278,10 +278,15 @@ namespace BB
     public class AgentDef : DefNamed
     {
         public readonly AgentTypeDef type;
+        public readonly Circle bounds;
 
-        public AgentDef(string defName, string name, AgentTypeDef type)
+        public AgentDef(string defName, string name,
+            AgentTypeDef type, Circle bounds)
             : base("BB:Agent", defName, name)
-            => this.type = type;
+        {
+            this.type = type;
+            this.bounds = bounds;
+        }
     }
 
     public class Defs
@@ -296,7 +301,7 @@ namespace BB
             var tileset64 = Register(new AtlasDef("BB:tileset64", "tileset64", 32, 64));
             var sprites32 = Register(new AtlasDef("BB:sprites32", "sprites32", 8, 32));
             var sprites64 = Register(new AtlasDef("BB:sprites64", "sprites64", 16, 64));
-            var arrow = Register(new AtlasDef("BB:arrow", "character/arrow/arrow", 1, 64));
+            var arrow = Register(new AtlasDef("BB:arrow", "character/arrow/arrow", 1, 37));
 
             Register(new TerrainDef("BB:Grass", "Grass", tileset32, new Vec2I(0, 29)));
             Register(new TerrainDef("BB:Dirt", "Dirt", tileset32, new Vec2I(0, 0)));

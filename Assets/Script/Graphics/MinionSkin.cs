@@ -48,7 +48,7 @@ namespace BB
                 {
                     Texture2D tex = Resources.Load<Texture2D>(path);
                     if (tex == null)
-                        Debug.LogError("No texture: " + path);
+                        BB.LogError("No texture: " + path);
 
                     tex.filterMode = FilterMode.Point;
                     return new Atlas(tex, 32, 64);
@@ -261,23 +261,6 @@ namespace BB
             DirtySprite();
         }
 
-        public void SetDir(Vec2 dir)
-        {
-            if (Mathf.Abs(dir.x) > float.Epsilon)
-            {
-                if (dir.x < 0)
-                    SetDir(Dir.Left);
-                else
-                    SetDir(Dir.Right);
-            }
-            else
-            {
-                if (dir.y < 0)
-                    SetDir(Dir.Down);
-                else
-                    SetDir(Dir.Up);
-            }
-        }
 
         static readonly string[] layers =
         {
@@ -330,7 +313,6 @@ namespace BB
             if (Input.GetKeyDown("z"))
                 K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
         }
-
         private void LateUpdate()
         {
             if (animDummy.sprite != null)
@@ -343,6 +325,14 @@ namespace BB
                     BB.Assert(vals.Length == 2);
                     string anim = vals[0];
                     string frame = vals[1];
+                    if (anim == "shoot")
+                    {
+                        // TODO: mega ghetto kludge right hur
+                        int f = int.Parse(frame);
+                        if (f == 12) // this frame has garbage
+                            f = 11;
+                        frame = f.ToString();
+                    }
 
                     foreach (var kvp in equipped)
                     {

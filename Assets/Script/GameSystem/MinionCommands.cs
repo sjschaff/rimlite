@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 
+using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
@@ -97,22 +98,40 @@ namespace BB
                         (task, dt) => task.work.minion.HasLineOfSight(target));
 
                 bool canceled = false;
+                bool fired = false;
+
                 yield return new TaskTimedLambda(
                     game, "Firing at ground.", MinionAnim.Shoot,
                     Tool.RecurveBow, MinionAnim.Shoot.Duration(), (p) => target,
                     (task) => 1,
-                    (task, amt) =>
+                    (task, time) =>
                     {
                         if (!task.work.minion.HasLineOfSight(target))
                         {
                             canceled = true;
                             task.SoftCancel();
                         }
+
+                        if (!fired && time <= (4f/12f))
+                        {
+                            fired = true;
+                            Vec2 ofs = Vec2.zero;
+                            switch (minion.dir)
+                            {
+                                case Dir.Right: ofs = new Vec2(.3f, .35f); break;
+                                case Dir.Left: ofs = new Vec2(-.3f, .35f); break;
+                                case Dir.Up: ofs = new Vec2(0, 1.25f); break;
+                                case Dir.Down: ofs = new Vec2(0, -.2f); break;
+                            }
+
+                            game.AddEffect(new Projectile(
+                                game, minion.bounds.center + ofs,
+                                target + Vec2.one * .5f, 24f,
+                                game.defs.Get<SpriteDef>("BB:ProjArrow"),
+                                new Vec2(-1, 0)));
+                        }
                     },
-                    (task) =>
-                    {
-                        // TODO: fire arrow
-                    });
+                    (task) => { });
                 if (!canceled)
                     yield return new TaskWaitDuration(game, "Reloading.", .5f);
             }

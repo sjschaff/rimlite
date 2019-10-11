@@ -8,9 +8,13 @@ namespace BB
         public MinionSkin skin { get; }
         public bool isDrafted { get; private set; }
 
+        private static AgentDef CreateMinionDef(Game game)
+            => new AgentDef("BB:Minion", "Minion",
+                game.defs.agentMinion,
+                new Circle(Vec2.one * .5f, .4f));
+
         public Minion(Game game, Vec2I pos)
-            : base(game, new AgentDef("BB:Minion", "Minion", game.defs.agentMinion),
-                   pos, "Minion")
+            : base(game, CreateMinionDef(game), pos, "Minion")
         {
             skin = transform.gameObject.AddComponent<MinionSkin>();
             skin.Init(game.assets);
@@ -34,24 +38,9 @@ namespace BB
 
         public override void SetTool(Tool tool)
             => skin.SetTool(tool);
-
         public override void SetAnim(MinionAnim anim)
             => skin.SetAnimLoop(anim);
-
-        public override void SetFacing(Vec2 dir)
-        {
-            skin.SetDir(dir);
-            if (carriedItem != null)
-                ReconfigureItem();
-        }
-
-        protected override void ReconfigureItem()
-        {
-            BB.AssertNotNull(carriedItem);
-            carriedItem.Configure(
-                skin.dir == Dir.Up ?
-                    Item.Config.PlayerBelow :
-                    Item.Config.PlayerAbove);
-        }
+        public override void UpdateSkinDir()
+            => skin.SetDir(dir);
     }
 }
