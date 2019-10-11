@@ -3,7 +3,7 @@ using System;
 
 namespace BB
 {
-    public enum Tool { None, Hammer, Pickaxe, Axe };
+    public enum Tool { None, Hammer, Pickaxe, Axe, RecurveBow };
 
     public enum Dir { Down, Left, Up, Right }
 

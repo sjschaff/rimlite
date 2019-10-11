@@ -178,11 +178,11 @@ namespace BB
                     _ => 1,
                     // TODO: track work amount on building
                     null, //(work, workAmt) => /**/, 9
-                    (work) =>
+                    (task) =>
                     {
                         BB.Assert(tile.building == building);
 
-                        work.Unclaim(buildClaim);
+                        task.work.Unclaim(buildClaim);
                         foreach (var haul in hauls)
                             haul.RemoveStored();
 
@@ -190,8 +190,8 @@ namespace BB
                         game.ReplaceBuilding(
                             building.conDef.proto.CreateBuilding(tile, building.dir));
 
-                        activeWorks.Remove(work);
-                        systemTyped.RemoveJob(this);
+                        activeWorks.Remove(task.work);
+                        system.RemoveJob(this);
                     });
             }
 

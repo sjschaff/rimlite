@@ -1,27 +1,11 @@
-﻿using System.Collections.Generic;
-using System;
-
-namespace BB
+﻿namespace BB
 {
-    [AttributeDontInstantiate]
-    public class SystemWalkDummy : IGameSystem
+    public class JobWalk : JobHandle
     {
-        private static readonly SystemWalkDummy system = new SystemWalkDummy();
-        private static readonly JobHandle dummy = new JobDummy(system);
-
-        private class JobDummy : JobHandle
-        {
-            public JobDummy(SystemWalkDummy system) : base(system) { }
-            public override void AbandonWork(Work work) { }
-            public override void CancelJob() { }
-        }
-
-        public IEnumerable<IOrdersGiver> GetOrders() { yield break; }
-        public IEnumerable<ICommandsGiver> GetCommands() { yield break; }
-        public IEnumerable<Work> QueryWork() { yield break; }
-        public void Update(float dt) { }
-
+        private static readonly JobWalk job = new JobWalk();
+        public override void AbandonWork(Work work) { }
+        public override void CancelJob() { }
         public static Work Create(TaskGoTo task)
-            => new Work(dummy, task.Enumerate(), "WalkDummy");
+            => new Work(job, task.Enumerate(), "WalkDummy");
     }
 }

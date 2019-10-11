@@ -84,7 +84,7 @@ namespace BB
 
             protected override void OnEndTask(bool canceled)
             {
-                agent.SetAnim(MinionAnim.None);
+                agent.SetAnim(MinionAnim.Idle);
                 pathVis?.Destroy();
             }
 
@@ -135,7 +135,7 @@ namespace BB
                         path.RemoveFirst();
                         if (!path.Any())
                         {
-                            agent.SetAnim(MinionAnim.None);
+                            agent.SetAnim(MinionAnim.Idle);
                             return onFallbackPath ? Status.Fail : Status.Complete;
                         }
                     }

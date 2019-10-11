@@ -89,6 +89,8 @@ namespace BB
 
         public void DropItem() => game.K_DropItem(game.Tile(pos), RemoveItem());
 
+        public bool HasLineOfSight(Vec2 target) => game.HasLineOfSight(realPos, target);
+
         public void Update(float deltaTime)
         {
             if (currentWork != null)

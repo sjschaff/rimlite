@@ -20,7 +20,6 @@ namespace BB
         }
 
         public IEnumerable<ICommandsGiver> GetCommands() => commands;
-
         public IEnumerable<IOrdersGiver> GetOrders() { yield break; }
         public IEnumerable<Work> QueryWork() { yield break; }
         public void Update(float dt) { }
@@ -69,6 +68,102 @@ namespace BB
         public CommandUndraft() : base(null, "Undraft") { }
         public override bool ApplicableToMinion(Minion minion) => minion.isDrafted;
         public override void IssueCommand(Minion minion) => minion.Undraft();
+    }
+
+    // TODO: allow for other targets
+    public class JobFireAtTarget : JobHandle
+    {
+        public readonly Game game;
+        public readonly Vec2I target;
+        public JobFireAtTarget(Game game, Vec2I target)
+        {
+            this.game = game;
+            this.target = target;
+        }
+
+        public override void CancelJob() { }
+        public override void AbandonWork(Work work) { }
+
+        public Work GetWork() => new Work(this, GetTasks(), "JobFireAt");
+
+        public IEnumerable<Task> GetTasks()
+        {
+            while (true)
+            {
+                yield return new TaskWaitLambda(
+                    game, "Waiting for line of sight.",
+                    (task, dt) => task.work.minion.HasLineOfSight(target));
+                bool canceled = false;
+                yield return new TaskTimedLambda(
+                    game, "Firing at ground.", MinionAnim.Shoot,
+                    Tool.RecurveBow, MinionAnim.Shoot.Duration(), (p) => target,
+                    (task) => 1,
+                    (task, amt) =>
+                    {
+                        if (!task.work.minion.HasLineOfSight(target))
+                        {
+                            canceled = true;
+                            task.SoftCancel();
+                        }
+                    },
+                    (task) =>
+                    {
+                        // TODO: fire arrow
+                    });
+                if (!canceled)
+                    yield return new TaskWaitDuration(game, "Reloading.", .5f);
+            }
+        }
+    }
+
+    public class CombatContextProvider : IContextMenuProvider, IContextCommand
+    {
+        public readonly Game game;
+
+        private Vec2I target;
+        private bool enabled;
+        private List<Minion> minions;
+
+        public CombatContextProvider(Game game) => this.game = game;
+
+        public IEnumerable<IContextCommand> CommandsForTarget(
+            Vec2I pos, Selection sel, List<Minion> minions)
+        {
+            this.target = pos;
+            this.minions = minions;
+
+            bool available = false;
+            enabled = false;
+            foreach (var minion in minions)
+            {
+                if (minion.isDrafted)
+                {
+                    available = true;
+                    if (minion.HasLineOfSight(target))
+                        enabled = true;
+                }
+            }
+
+            if (available)
+                yield return this;
+        }
+
+        public void IssueCommand()
+        {
+            var job = new JobFireAtTarget(game, target);
+            foreach (var minion in minions)
+            {
+                if (minion.isDrafted)
+                {
+                    if (minion.HasLineOfSight(target))
+                        minion.AssignWork(job.GetWork());
+                }
+            }
+        }
+
+        public bool Enabled() => enabled;
+        // TODO: name target if not ground, actually fire at target if not ground
+        public string GuiText() => enabled ? $"Fire at target." : "Cannot fire at target (No line of sight)";
     }
 
     [AttributeDontInstantiate]

@@ -6,14 +6,6 @@ namespace BB
 {
     public abstract class JobHandle
     {
-        public readonly IGameSystem system;
-
-        public JobHandle(IGameSystem system)
-        {
-            BB.Assert(system != null);
-            this.system = system;
-        }
-
         public abstract void CancelJob();
         public abstract void AbandonWork(Work work);
 

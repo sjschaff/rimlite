@@ -259,9 +259,7 @@ namespace BB
         public readonly GameController ctrl;
 
         public readonly Transform root;
-        public
-#warning public
-            readonly RectTransform canvas;
+        private readonly RectTransform canvas;
 
         public readonly Line dragOutline;
 

@@ -104,8 +104,14 @@ namespace BB
                     yield return minion;
         }
 
+        public bool HasLineOfSight(Vec2 pos, Vec2 target)
+        {
+            // TODO:
+            return true;
+        }
+
         public void GoTo(Minion minion, Vec2I pos)
-            => minion.AssignWork(SystemWalkDummy.Create(
+            => minion.AssignWork(JobWalk.Create(
                 new TaskGoTo(this, "Debug Walking.", PathCfg.Point(pos))));
 
         public void Update(float dt)

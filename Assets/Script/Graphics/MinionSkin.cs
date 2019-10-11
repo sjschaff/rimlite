@@ -90,7 +90,7 @@ namespace BB
             if (type == "tabbard")
                 type = "torso";
             string path = "character/" + type + "/";
-            if (type != "weapon")
+            if (type != "weapon" && type != "arrow")
                 path += (male ? "male" : "female") + "/";
             path += name;
 
@@ -101,7 +101,29 @@ namespace BB
 
     public enum MinionAnim
     {
-        None, Magic, Walk, Slash, Thrust, Hurt
+        Idle, Magic, Thrust, Walk, Slash, Shoot, Hurt
+    }
+
+    public static class MinionAnimExt
+    {
+        public static int NumFrames(this MinionAnim anim)
+        {
+            switch (anim)
+            {
+                case MinionAnim.Idle: return 0;
+                case MinionAnim.Magic: return 7;
+                case MinionAnim.Thrust: return 8;
+                case MinionAnim.Walk: return 9;
+                case MinionAnim.Slash: return 6;
+                case MinionAnim.Shoot: return 13;
+                case MinionAnim.Hurt: return 6;
+                default:
+                    throw new ArgumentException($"Invalid Anim {anim}");
+            }
+        }
+
+        public static float Duration(this MinionAnim anim)
+            => anim.NumFrames() / 12f;
     }
 
     public class MinionSkin : MonoBehaviour
@@ -160,6 +182,7 @@ namespace BB
                 case Tool.Hammer: return "warhammer";
                 case Tool.Pickaxe: return "pickaxe";
                 case Tool.Axe: return "axe";
+                case Tool.RecurveBow: return "recurvebow";
             }
             throw new Exception("unknown tool: " + tool);
         }
@@ -167,6 +190,10 @@ namespace BB
         public void SetTool(Tool tool)
         {
             equipped["weapon"] = NameForTool(tool);
+            if (tool == Tool.RecurveBow)
+                equipped["arrow"] = "arrow";
+            else
+                equipped["arrow"] = null;
             DirtySprite();
         }
 
@@ -190,7 +217,14 @@ namespace BB
 
         public void SetAnimLoop(MinionAnim anim)
         {
-            if (anim == MinionAnim.None)
+            // TODO: hackz
+            if (anim == MinionAnim.Shoot)
+            {
+                PlayAnimOnce(anim);
+                return;
+            }
+
+            if (anim == MinionAnim.Idle)
             {
                 SetAnimLoop(MinionAnim.Walk, false);
                 SetAnimLoop(MinionAnim.Slash, false);
@@ -200,15 +234,25 @@ namespace BB
                 SetAnimLoop(anim, true);
         }
 
-        public bool PlayAnimOnce(MinionAnim anim)
+        private static string TriggerForAnim(MinionAnim anim)
         {
-            throw new NotImplementedException("anim once not implemented for " + anim);
-            /*
-                animator.SetTrigger("slash");
-                animator.SetTrigger("thrust");
-                animator.SetTrigger("magic");
-                animator.SetTrigger("shoot");
-             */
+            switch (anim)
+            {
+                case MinionAnim.Shoot: return "shoot";
+                default:
+                    throw new NotSupportedException($"no trigger for {anim}");
+            }
+
+            //animator.SetTrigger("slash");
+            //animator.SetTrigger("thrust");
+            //animator.SetTrigger("magic");
+            //animator.SetTrigger("shoot");
+        }
+
+        public void PlayAnimOnce(MinionAnim anim)
+        {
+            string trigger = TriggerForAnim(anim);
+            animator.SetTrigger(trigger);
         }
 
         public void SetDir(Dir dir)
@@ -257,6 +301,7 @@ namespace BB
             "head",
             "body/ears",
             "weapon",
+            "arrow",
         };
 
         int k_curOutfit = 0;

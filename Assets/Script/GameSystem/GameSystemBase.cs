@@ -11,21 +11,21 @@ namespace BB
         where TSystem :  GameSystemStandard<TSystem, TKey, TThis>
         where TThis : JobStandard<TSystem, TKey, TThis>
     {
-        public readonly TSystem systemTyped;
+        public readonly TSystem system;
         public readonly TKey key;
-        public Game game => systemTyped.game;
+        public Game game => system.game;
 
-        public JobStandard(TSystem system, TKey key) : base(system)
+        public JobStandard(TSystem system, TKey key)
         {
             BB.AssertNotNull(system);
-            this.systemTyped = system;
+            this.system = system;
             this.key = key;
         }
 
         public abstract IEnumerable<Work> QueryWork();
 
         public override void CancelJob()
-            => systemTyped.CancelJob((TThis)this);
+            => system.CancelJob((TThis)this);
 
         public virtual void Destroy() { }
     }
@@ -176,7 +176,7 @@ namespace BB
                         (work) =>
                         {
                             activeWork = null;
-                            systemTyped.CancelJob((TJob)this);
+                            system.CancelJob((TJob)this);
                             return true;
                         })),
                     typeof(TSystem).Name + ":Work");

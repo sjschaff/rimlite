@@ -83,6 +83,7 @@ namespace BB
         public override void OnUpdate(Vec2 mouse)
         {
             // Close menu if mouse has strayed too far away
+            // TODO: update selection tool for info pane
         }
 
         private void Close() => ctrl.PopTool();
@@ -296,6 +297,9 @@ namespace BB
 
         public override void OnUpdate(float dt)
         {
+            if (selectables.Count == 1)
+                ConfigureInfoPaneSingle(selectables.First());
+
             foreach (var selectable in selectables)
                 selectable.highlight.Update(dt);
         }
@@ -400,13 +404,20 @@ namespace BB
                 text += $" x{count}";
             ctrl.gui.infoPane.header.text = text;
 
-            if (selectables.Count == 1 && first is SelBuilding b)
+            if (selectables.Count == 1)
+                ConfigureInfoPaneSingle(first);
+        }
+
+        private void ConfigureInfoPaneSingle(Selectable sel)
+        { 
+            // TODO: dont use casting hear, let selections provide they're own descriptions
+            if (sel is SelBuilding b)
             {
                 IBuilding building = b.building;
                 ctrl.gui.infoPane.header.text =
                     $"{building.jobHandles.Count} handles.";
             }
-            if (selectables.Count == 1 && first is SelMinion m)
+            if (selectables.Count == 1 && sel is SelMinion m)
             {
                 Minion minion = m.minion;
                 if (minion.hasWork)

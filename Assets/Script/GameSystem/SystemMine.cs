@@ -58,14 +58,14 @@ namespace BB
                     mineable.tool, mineable.mineAmt,
                     TaskTimed.FacePt(tile.pos),
                     _ => 1,
-                    (work, workAmt) =>
+                    (task, workAmt) =>
                     {
-                        BB.Assert(work == activeWork);
+                        BB.Assert(task.work == activeWork);
                         mineable.mineAmt -= workAmt;
                     },
-                    (work) =>
+                    (task) =>
                     {
-                        BB.Assert(work == activeWork);
+                        BB.Assert(task.work == activeWork);
                         BB.Assert(mineable.mineAmt <= 0);
 
                         mineable.jobHandles.Remove(this);

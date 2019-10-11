@@ -40,7 +40,7 @@ namespace BB
                     TaskTimed.FaceArea(building.bounds),
                     _ => 1,
                     null, // TODO: track deconstruct amt
-                    (work) =>
+                    (task) =>
                     {
                         BB.Assert(building.tile.building == building);
                         building.jobHandles.Remove(this);
