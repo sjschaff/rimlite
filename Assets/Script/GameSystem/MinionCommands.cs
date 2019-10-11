@@ -16,6 +16,7 @@ namespace BB
             this.game = game;
             commands = new List<ICommandsGiver>
             {
+                new CommandStop(),
                 new CommandDraft(),
                 new CommandUndraft()
             };
@@ -121,8 +122,12 @@ namespace BB
                         }
                     },
                     (task) => { });
+
                 if (!canceled)
-                    yield return new TaskWaitDuration(game, "Reloading.", .5f);
+                    yield return new TaskTimedLambda(
+                        game, "Reloading", MinionAnim.Reload,
+                        Tool.RecurveBow, .5f, pt => pt,
+                        _ => 1, (_1,_2) => { }, _ => { });
             }
         }
     }

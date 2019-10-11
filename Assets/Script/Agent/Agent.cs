@@ -129,7 +129,7 @@ namespace BB
 
         public bool HasLineOfSight(Vec2 target) => game.HasLineOfSight(realPos, target);
 
-        public void Update(float deltaTime)
+        public virtual void Update(float deltaTime)
         {
             if (currentWork != null)
                 currentWork.PerformWork(deltaTime);

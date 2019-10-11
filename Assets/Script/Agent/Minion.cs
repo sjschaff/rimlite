@@ -36,6 +36,12 @@ namespace BB
                 AbandonWork();
         }
 
+        public override void Update(float dt)
+        {
+            base.Update(dt);
+            skin.Update(dt);
+        }
+
         // TODO:
         public bool CanDoWork(WorkDesc desc) => true;
 

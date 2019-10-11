@@ -13,11 +13,11 @@ namespace BB
     {
         private struct AnimKey
         {
-            public readonly string anim;
-            public readonly string dir;
-            public readonly string frame;
+            public readonly MinionAnim anim;
+            public readonly Dir dir;
+            public readonly int frame;
 
-            public AnimKey(string anim, string dir, string frame)
+            public AnimKey(MinionAnim anim, Dir dir, int frame)
             {
                 this.anim = anim;
                 this.dir = dir;
@@ -55,37 +55,39 @@ namespace BB
                 });
         }
 
-        private static int OriginAnim(string anim)
+        private static int OriginAnim(MinionAnim anim)
         {
             switch (anim)
             {
-                case "magic": return 0;
-                case "thrust": return 4;
-                case "walk": return 8;
-                case "slash": return 12;
-                case "shoot": return 16;
-                case "hurt": return 20;
+                case MinionAnim.Magic: return 0;
+                case MinionAnim.Thrust: return 4;
+                case MinionAnim.Idle:
+                case MinionAnim.Walk: return 8;
+                case MinionAnim.Slash: return 12;
+                case MinionAnim.Reload:
+                case MinionAnim.Shoot: return 16;
+                case MinionAnim.Hurt: return 20;
             }
 
             throw new Exception("unknown anim: " + anim);
         }
 
-        private static int OffsetDir(string dir)
+        private static int OffsetDir(Dir dir)
         {
             switch (dir)
             {
-                case "up": return 0;
-                case "left": return 1;
-                case "down": return 2;
-                case "right": return 3;
+                case Dir.Up: return 0;
+                case Dir.Left: return 1;
+                case Dir.Down: return 2;
+                case Dir.Right: return 3;
             }
 
             throw new Exception("unknown dir: " + dir);
         }
 
-        private static int OffsetFrame(string frame) => Int32.Parse(frame);
+        private static int OffsetFrame(int frame) => frame;
 
-        public Sprite GetSprite(string type, bool male, string name, string anim, string dir, string frame)
+        public Sprite GetSprite(string type, bool male, string name, MinionAnim anim, Dir dir, int frame)
         {
             if (type == "tabbard")
                 type = "torso";
@@ -101,7 +103,7 @@ namespace BB
 
     public enum MinionAnim
     {
-        Idle, Magic, Thrust, Walk, Slash, Shoot, Hurt
+        Idle, Magic, Thrust, Walk, Slash, Shoot, Hurt, Reload
     }
 
     public static class MinionAnimExt
@@ -110,12 +112,13 @@ namespace BB
         {
             switch (anim)
             {
-                case MinionAnim.Idle: return 0;
+                case MinionAnim.Idle: return 1;
                 case MinionAnim.Magic: return 7;
                 case MinionAnim.Thrust: return 8;
                 case MinionAnim.Walk: return 9;
                 case MinionAnim.Slash: return 6;
-                case MinionAnim.Shoot: return 13;
+                case MinionAnim.Reload: return 1;
+                case MinionAnim.Shoot: return 12;//that last frame sucks 13;
                 case MinionAnim.Hurt: return 6;
                 default:
                     throw new ArgumentException($"Invalid Anim {anim}");
@@ -132,38 +135,68 @@ namespace BB
         private Dictionary<string, SpriteRenderer> spriteLayers;
 
         private Camera cam;
-        private SpriteRenderer animDummy;
-        private Animator animator;
         private Transform spriteContainer;
 
         private Dictionary<string, string> equipped;
         public Dir dir { get; private set; } = Dir.Down;
 
-        private string lastSprite = null;
+        const float frameTime = 1f / 12f;
+        private AnimState state;
+        private struct AnimState
+        {
+            public MinionAnim anim;
+            public bool loop;
+            public int numFrames;
+            public int curFrame;
+            public float elapsed;
 
-        private void DirtySprite() => lastSprite = null;
+            public bool dirty;
 
+            public void SetAnim(MinionAnim anim, bool loop)
+            {
+                this.anim = anim;
+                this.loop = loop;
+                numFrames = anim.NumFrames();
+                curFrame = 0;
+                elapsed = 0;
+                dirty = true;
+            }
+
+            public void Update(float dt)
+            {
+                elapsed += dt;
+                if (elapsed > frameTime)
+                {
+                    dirty = true;
+                    elapsed -= frameTime;
+                    curFrame += 1;
+                    if (curFrame >= numFrames)
+                    {
+                        if (loop)
+                            curFrame %= numFrames;
+                        else
+                            SetAnim(MinionAnim.Idle, true);
+                    }
+                }
+            }
+        }
         public void Init(AssetSrc assets)
         {
             if (atlas == null)
                 atlas = new MetaAtlas();
 
             cam = Camera.main;
-            animDummy = assets.CreateSpriteObject(
-                transform, new Vec2(.5f, 0), "AnimDummy", null, Color.white, RenderLayer.Highlight);
-            animDummy.transform.localScale = Vec3.one * 1.75f;
-            animDummy.enabled = false;
-            spriteContainer = animDummy.transform;
-            animator = animDummy.gameObject.AddComponent<Animator>();
-            animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("anim/MinionAnimController");
-
+            spriteContainer = new GameObject("Sprite Container").transform;
+            spriteContainer.SetParent(transform, false);
+            spriteContainer.localPosition = new Vec2(.5f, 0);
+            spriteContainer.localScale = Vec3.one * 1.75f;
 
             spriteLayers = new Dictionary<string, SpriteRenderer>();
             int subLayer = 0;
             foreach (string layer in layers)
             {
                 var sprite = assets.CreateSpriteObject(
-                    animDummy.transform, Vec2.zero,
+                    spriteContainer, Vec2.zero,
                     layer, null, Color.white, RenderLayer.Minion);
                 //sprite
                 sprite.transform.localPosition -= new Vec3(0, 0, .001f * subLayer);
@@ -172,6 +205,7 @@ namespace BB
             }
 
             K_SetOutfit(0);
+            state.SetAnim(MinionAnim.Idle, true);
         }
 
         private string NameForTool(Tool tool)
@@ -194,73 +228,25 @@ namespace BB
                 equipped["arrow"] = "arrow";
             else
                 equipped["arrow"] = null;
-            DirtySprite();
-        }
-
-        private void SetAnimLoop(MinionAnim anim, bool f)
-        {
-            switch (anim)
-            {
-                case MinionAnim.Walk:
-                    animator.SetBool("walking", f);
-                    break;
-                case MinionAnim.Slash:
-                    animator.SetBool("slash_loop", f);
-                    break;
-                case MinionAnim.Magic:
-                    animator.SetBool("magic_loop", f);
-                    break;
-                default:
-                    throw new NotImplementedException("Anim loop not implemented for: " + anim);
-            }
+            state.dirty = true;
         }
 
         public void SetAnimLoop(MinionAnim anim)
         {
             // TODO: hackz
-            if (anim == MinionAnim.Shoot)
-            {
-                PlayAnimOnce(anim);
-                return;
-            }
-
-            if (anim == MinionAnim.Idle)
-            {
-                SetAnimLoop(MinionAnim.Walk, false);
-                SetAnimLoop(MinionAnim.Slash, false);
-                SetAnimLoop(MinionAnim.Magic, false);
-            }
-            else
-                SetAnimLoop(anim, true);
-        }
-
-        private static string TriggerForAnim(MinionAnim anim)
-        {
-            switch (anim)
-            {
-                case MinionAnim.Shoot: return "shoot";
-                default:
-                    throw new NotSupportedException($"no trigger for {anim}");
-            }
-
-            //animator.SetTrigger("slash");
-            //animator.SetTrigger("thrust");
-            //animator.SetTrigger("magic");
-            //animator.SetTrigger("shoot");
+            state.SetAnim(anim, anim != MinionAnim.Shoot);
         }
 
         public void PlayAnimOnce(MinionAnim anim)
         {
-            string trigger = TriggerForAnim(anim);
-            animator.SetTrigger(trigger);
+            state.SetAnim(anim, false);
         }
 
         public void SetDir(Dir dir)
         {
             this.dir = dir;
-            DirtySprite();
+            state.dirty = true;
         }
-
 
         static readonly string[] layers =
         {
@@ -293,10 +279,10 @@ namespace BB
             k_curOutfit = i;
             equipped = new Dictionary<string, string>(
                 K_outfits[i]);
-            DirtySprite();
+            state.dirty = true;
         }
 
-        void Update()
+        void LateUpdate()
         {
             // Manipulate z coord. to sort sprites tr -> bl
             Rect bounds = cam.WorldRect().Expand(2f); 
@@ -310,38 +296,22 @@ namespace BB
             float z = posNormalized.y * maxZ + posNormalized.x * horizontalStride;
             spriteContainer.position = new Vec3(position.x, position.y, z);
 
+        }
+        public void Update(float dt)
+        {
             if (Input.GetKeyDown("z"))
                 K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
-        }
-        private void LateUpdate()
-        {
-            if (animDummy.sprite != null)
-            {
-                string spriteName = animDummy.sprite.name;
-                if (lastSprite != spriteName)
-                {
-                    lastSprite = animDummy.sprite.name;
-                    var vals = spriteName.Split('_');
-                    BB.Assert(vals.Length == 2);
-                    string anim = vals[0];
-                    string frame = vals[1];
-                    if (anim == "shoot")
-                    {
-                        // TODO: mega ghetto kludge right hur
-                        int f = int.Parse(frame);
-                        if (f == 12) // this frame has garbage
-                            f = 11;
-                        frame = f.ToString();
-                    }
 
-                    foreach (var kvp in equipped)
-                    {
-                        if (kvp.Value == null)
-                            spriteLayers[kvp.Key].sprite = null;
-                        else
-                            spriteLayers[kvp.Key].sprite
-                                = atlas.GetSprite(kvp.Key, false, kvp.Value, anim, dir.ToString().ToLower(), frame);
-                    }
+            state.Update(dt);
+            if (state.dirty)
+            {
+                foreach (var kvp in equipped)
+                {
+                    if (kvp.Value == null)
+                        spriteLayers[kvp.Key].sprite = null;
+                    else
+                        spriteLayers[kvp.Key].sprite
+                            = atlas.GetSprite(kvp.Key, false, kvp.Value, state.anim, dir, state.curFrame);
                 }
             }
         }

@@ -361,6 +361,11 @@ namespace BB
                 ctrl.gui.buttons[i].Configure(buttons[i].Value, ctrl.assets, buttons[i].Key);
         }
 
+        public override void OnUnsuspend()
+        {
+            InvalidateUI();
+        }
+
         public override void OnActivate()
         {
             BB.Assert(selectables.Count > 0);
