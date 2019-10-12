@@ -98,31 +98,23 @@ namespace BB
         public void RemoveEffect(Effect effect)
             => effects.Remove(effect);
 
-        // TODO: use agent bounds instead
         const float minionSelectThreshold = .4f;
         public IEnumerable<Minion> GUISelectMinions(Vec2 pos)
         {
-            float threshSq = minionSelectThreshold * minionSelectThreshold;
-            pos += new Vec2(-.5f, -.5f);
             foreach (var minion in minions)
-                if (pos.DistanceSq(minion.realPos) <= threshSq)
+                if (minion.bounds.Contains(pos))
                     yield return minion;
         }
 
-        // TODO: use agent bounds instead
         public IEnumerable<Minion> GUISelectMinions(Rect area)
         {
-            // TODO: make distance to rect method, can be used for pathfinding too
-            Rect rectThresh =
-                area.Expand(minionSelectThreshold)
-                    .Shift(new Vec2(-.5f, -.5f));
             foreach (var minion in minions)
-                if (rectThresh.Contains(minion.realPos))
+                if (minion.bounds.Intersects(area))
                     yield return minion;
         }
 
         public bool HasLineOfSight(Vec2 pos, Vec2 target)
-            => GetFirstRaycastTarget(new Ray(pos, target - pos), false) == null;
+            => GetFirstRaycastTarget(Ray.FromPts(pos, target), false) == null;
 
         public RaycastTarget GetFirstRaycastTarget(Ray ray, bool allowInternal)
             => Raycast(ray, allowInternal).FirstOrDefault();

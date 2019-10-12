@@ -13,8 +13,8 @@ namespace BB
         private readonly SpriteRenderer spriteTrailA;
         private readonly SpriteRenderer spriteTrailB;
 
-        private Vec2?[] prevPos = new Vec2?[2];
-        bool finished = false;
+        private readonly Vec2?[] prevPos = new Vec2?[2];
+        private bool finished = false;
 
         public Projectile(Game game, Vec2 start, Vec2 target, float speed,
             SpriteDef def, Vec2 spriteForward)
@@ -59,7 +59,7 @@ namespace BB
                 }
 
                 Vec2 travel = dirTarget.normalized * dist;
-                if (game.GetFirstRaycastTarget(new Ray(pos, travel), false) != null)
+                if (game.GetFirstRaycastTarget(Ray.FromDir(pos, travel), false) != null)
                 {
                     // TODO: hit that target
                     finished = true;

@@ -27,7 +27,7 @@ namespace BB
         public void Update(Vec2 a, Vec2 b, bool allowInternal)
         {
             clear.SetPts(new Vec2[] { a, b });
-            var hit = game.GetFirstRaycastTarget(new Ray(a, b - a), allowInternal);
+            var hit = game.GetFirstRaycastTarget(Ray.FromPts(a, b), allowInternal);
             if (hit != null)
             {
                 this.hit.enabled = true;

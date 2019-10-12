@@ -71,10 +71,29 @@ namespace BB
 
         public static Circle operator +(Circle circle, Vec2 offset)
             => new Circle(circle.center + offset, circle.radius);
+
+        public bool Contains(Vec2 pt)
+            => (pt - center).sqrMagnitude <= radius * radius;
+
+        public bool Intersects(Rect rect)
+        {
+            if (rect.Contains(center))
+                return true;
+
+            Vec2 bl = rect.min;
+            Vec2 br = new Vec2(rect.xMax, rect.yMin);
+            Vec2 tr = rect.max;
+            Vec2 tl = new Vec2(rect.xMin, rect.yMax);
+            return
+                Ray.FromPts(bl, br).IntersectsCircle(this, true, out _) ||
+                Ray.FromPts(br, tr).IntersectsCircle(this, true, out _) ||
+                Ray.FromPts(tr, tl).IntersectsCircle(this, true, out _) ||
+                Ray.FromPts(tl, bl).IntersectsCircle(this, true, out _);
+        }
     }
 
     // Really a line segment parameterized like a ray,
-    // but ray is less verbous and who needs actual
+    // but ray is less verbose and who needs actual
     // rays anyways
     public struct Ray
     {
@@ -82,7 +101,7 @@ namespace BB
         public Vec2 dir;
         public float mag;
 
-        public Ray(Vec2 start, Vec2 ray)
+        private Ray(Vec2 start, Vec2 ray)
         {
             BB.Assert(ray.sqrMagnitude > 0);
             this.start = start;
@@ -90,13 +109,18 @@ namespace BB
             this.dir = ray / mag;
         }
 
+        public static Ray FromDir(Vec2 start, Vec2 dir)
+            => new Ray(start, dir);
+        public static Ray FromPts(Vec2 start, Vec2 end)
+            => new Ray(start, end - start);
+
         public bool IntersectsCircle(
             Circle c, bool allowIntersectFromWithin, out float frIntersection)
         {
             frIntersection = -1;
 
             // Get c in ray space
-            c = c + -start;
+            c += -start;
 
             float dot = Vec2.Dot(dir, c.center);
             if (dot > mag + c.radius || dot < -c.radius)
@@ -122,7 +146,7 @@ namespace BB
             if (allowIntersectFromWithin)
             {
                 dotIntersect = dot + deltaIntersect;
-                if (dotIntersect >= 0 || dotIntersect <= mag)
+                if (dotIntersect >= 0 && dotIntersect <= mag)
                 {
                     frIntersection = dotIntersect / mag;
                     return true;

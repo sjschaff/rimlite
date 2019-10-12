@@ -99,20 +99,11 @@ namespace BB
             return (p.x % 1f) < Mathf.Epsilon && (p.y % 1) < Mathf.Epsilon;
         }
 
-        // TODO: use agent bounds instead
-        const float containmentThresh = .9f;
-        public bool InTile(Vec2I tile) =>
-            Vec2.Distance(realPos, tile) < containmentThresh;
+        public bool InTile(Vec2I tile)
+            => bounds.Intersects(new Rect(tile, Vec2.one));
 
         public bool InArea(RectInt area)
-        {
-            Vec2 dist = (realPos - area.center).Abs();
-            Vec2 halfSize = (Vec2)area.size * .5f;
-            float invThresh = 1 - containmentThresh;
-            return
-                dist.x < (halfSize.x - invThresh) &&
-                dist.y < (halfSize.y - invThresh);
-        }
+            => bounds.Intersects(new Rect(area.min, area.size));
 
         public void PickupItem(Item item)
         {
