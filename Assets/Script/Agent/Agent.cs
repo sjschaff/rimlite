@@ -38,6 +38,11 @@ namespace BB
             transform = new GameObject(nodeName).transform;
             transform.SetParent(game.agentContainer, false);
             realPos = pos;
+
+            var line = game.assets.CreateLine(
+                transform, "DgbBounds", RenderLayer.Highlight,
+                Color.blue, 1 / 32f, true, false);
+            line.SetCircle(def.bounds, 32);
         }
 
         // TODO: this is turning into a shit show
@@ -127,7 +132,8 @@ namespace BB
 
         public void DropItem() => game.K_DropItem(game.Tile(pos), RemoveItem());
 
-        public bool HasLineOfSight(Vec2 target) => game.HasLineOfSight(realPos, target);
+        public bool HasLineOfSight(Vec2I target) =>
+            game.HasLineOfSight(bounds.center, target + new Vec2(.5f, .5f));
 
         public virtual void Update(float deltaTime)
         {

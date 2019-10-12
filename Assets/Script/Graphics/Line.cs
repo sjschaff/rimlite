@@ -39,6 +39,21 @@ namespace BB
 
         public void SetRect(RectInt rect) => SetRect(rect.min, rect.max);
 
+        public void SetCircle(Circle circle, int subdivisions)
+        {
+            Vec2[] pts = new Vec2[subdivisions];
+            float drad = 2 * Mathf.PI / subdivisions;
+            for (int i = 0; i < subdivisions; ++i)
+            {
+                float rad = drad * i;
+                float x = Mathf.Cos(rad);
+                float y = Mathf.Sin(rad);
+                pts[i] = new Vec2(x, y) * circle.radius + circle.center;
+            }
+
+            SetPts(pts);
+        }
+
         public void Destroy()
             => transform.gameObject.Destroy();
     }

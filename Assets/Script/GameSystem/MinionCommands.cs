@@ -82,10 +82,10 @@ namespace BB
         {
             while (true)
             {
-                if (!minion.HasLineOfSight(target))
+               /* if (!minion.HasLineOfSight(target))
                     yield return new TaskWaitLambda(
                         game, "Waiting for line of sight.",
-                        (task, dt) => task.work.minion.HasLineOfSight(target));
+                        (task, dt) => task.work.minion.HasLineOfSight(target));*/
 
                 bool canceled = false;
                 bool fired = false;
@@ -98,8 +98,8 @@ namespace BB
                     {
                         if (!task.work.minion.HasLineOfSight(target))
                         {
-                            canceled = true;
-                            task.SoftCancel();
+                       //     canceled = true;
+                       //     task.SoftCancel();
                         }
 
                         if (!fired && time <= (4f/12f))
@@ -167,13 +167,8 @@ namespace BB
         public void IssueCommand()
         {
             foreach (var minion in minions)
-            {
                 if (minion.isDrafted)
-                {
-                    if (minion.HasLineOfSight(target))
-                        CombatProvider.AssignFireAtRepeating(game, minion, target);
-                }
-            }
+                    CombatProvider.AssignFireAtRepeating(game, minion, target);
         }
 
         public bool Enabled() => enabled;

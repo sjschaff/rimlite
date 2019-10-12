@@ -151,7 +151,7 @@ namespace BB
             if (stepY > 0) dyFirst = 1 - dyFirst;
 
             float txNext = (ray.dir.x == 0) ? float.PositiveInfinity : dxFirst * dt_dx;
-            float tyNext = (ray.dir.x == 0) ? float.PositiveInfinity : dyFirst * dt_dy;
+            float tyNext = (ray.dir.y == 0) ? float.PositiveInfinity : dyFirst * dt_dy;
 
             Vec2I pos = start;
             while (t < 1 && ValidTile(pos))

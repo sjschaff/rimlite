@@ -46,14 +46,13 @@ namespace BB
             {
                 ctrl.PopTool();
             }
-            // Special case goto
+            // Special case goto command
             else if (commands.Count == 1 && commands[0] == goTo && commands[0].Enabled())
             {
                 IssueCmd(commands[0]);
             }
             else
             {
-                // TODO: launch ctx menu
                 ctrl.gui.ctxtMenu.Show(menuPos, commands.Count);
                 for (int i = 0; i < commands.Count; ++i)
                 {
