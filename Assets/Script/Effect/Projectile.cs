@@ -8,48 +8,94 @@ namespace BB
     {
         private readonly Vec2 target;
         private readonly float speed;
-        private readonly Transform transform;
+
+        private readonly SpriteRenderer sprite;
+        private readonly SpriteRenderer spriteTrailA;
+        private readonly SpriteRenderer spriteTrailB;
+
+        private Vec2?[] prevPos = new Vec2?[2];
+        bool finished = false;
 
         public Projectile(Game game, Vec2 start, Vec2 target, float speed,
-            SpriteDef sprite, Vec2 spriteForward)
+            SpriteDef def, Vec2 spriteForward)
             : base(game)
         {
             this.target = target;
             this.speed = speed;
-            this.transform = game.assets.CreateSpriteObject(
-                game.effectsContainer, start, "Projectile",
-                sprite, Color.white, RenderLayer.OverMap.Layer(1)).transform;
 
             Vec2 dir = target - start;
             float angle = Vec2.SignedAngle(spriteForward, dir);
-            transform.localRotation = Quaternion.Euler(0, 0, angle);
+            var rot = Quaternion.Euler(0, 0, angle);
+            sprite = MakeProjSprite(game, start, rot, def, Color.white, 3);
+            spriteTrailA = MakeProjSprite(game, start, rot, def, new Color(1, 1, 1, .25f), 2);
+            spriteTrailB = MakeProjSprite(game, start, rot, def, new Color(1, 1, 1, .0625f), 1);
+        }
+
+        private SpriteRenderer MakeProjSprite(
+            Game game, Vec2 start, Quaternion rot, SpriteDef def, Color color, int layer)
+        {
+            var sprite = game.assets.CreateSpriteObject(
+                game.effectsContainer, start, "Projectile",
+                def, color, RenderLayer.OverMap.Layer(layer));
+            sprite.transform.localRotation = rot;
+            return sprite;
         }
 
         public override void Update(float dt)
         {
-            Vec2 pos = transform.position.xy();
-            Vec2 dirTarget = target - pos;
-            bool finished = false;
-            float dist = dt * speed;
-            if (dist * dist > dirTarget.sqrMagnitude)
-            {
-                dist = dirTarget.magnitude;
-                finished = true;
-            }
+            prevPos[1] = prevPos[0];
 
-            Vec2 travel = dirTarget.normalized * dist;
-            if (game.GetFirstRaycastTarget(new Ray(pos, travel), false) != null)
+            if (!finished)
             {
-                // TODO: hit that target
-                finished = true;
-            }
+                Vec2 pos = sprite.transform.position.xy();
+                prevPos[0] = pos;
 
-            if (finished)
-                game.RemoveEffect(this);
+                Vec2 dirTarget = target - pos;
+                float dist = dt * speed;
+                if (dist * dist > dirTarget.sqrMagnitude)
+                {
+                    dist = dirTarget.magnitude;
+                    finished = true;
+                }
+
+                Vec2 travel = dirTarget.normalized * dist;
+                if (game.GetFirstRaycastTarget(new Ray(pos, travel), false) != null)
+                {
+                    // TODO: hit that target
+                    finished = true;
+                    ConfigSprite(sprite, null);
+                }
+                else
+                    ConfigSprite(sprite, pos + travel);
+            }
             else
-                transform.localPosition = pos + travel;
+            {
+                if (prevPos[1] == null)
+                    game.RemoveEffect(this);
+
+                prevPos[0] = null;
+            }
+
+            ConfigSprite(spriteTrailA, prevPos[0]);
+            ConfigSprite(spriteTrailB, prevPos[1]);
         }
 
-        public override void Destroy() => transform.Destroy();
+        private void ConfigSprite(SpriteRenderer sprite, Vec2? pos)
+        {
+            if (pos == null)
+                sprite.enabled = false;
+            else
+            {
+                sprite.enabled = true;
+                sprite.transform.localPosition = (Vec2)pos;
+            }
+        }
+
+        public override void Destroy()
+        {
+            sprite.Destroy();
+            spriteTrailA.Destroy();
+            spriteTrailB.Destroy();
+        }
     }
 }
