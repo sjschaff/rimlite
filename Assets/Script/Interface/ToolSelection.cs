@@ -426,11 +426,24 @@ namespace BB
             if (selectables.Count == 1 && sel is SelMinion m)
             {
                 Minion minion = m.minion;
+                string text = "";
+                if (minion.isDrafted)
+                    text += "Drafted";
+                if (minion.isIdle)
+                {
+                    if (text != "") text += ", ";
+                    text += "Idle";
+                }
+                if (text != "")
+                    text += "\n";
+
                 if (minion.hasWork)
-                    ctrl.gui.infoPane.info.text =
-                    $"Active Work: {minion.currentWork.D_workName}\n{minion.currentWork.activeTask.description}";
+                    text +=
+                        $"Active Work: {minion.currentWork.D_workName}\n{minion.currentWork.activeTask.description}";
                 else
-                    ctrl.gui.infoPane.info.text = "No work.";
+                   text += "No work.";
+
+                ctrl.gui.infoPane.info.text = text;
             }
         }
 

@@ -297,7 +297,8 @@ namespace BB
             spriteContainer.position = new Vec3(position.x, position.y, z);
 
         }
-        public void Update(float dt)
+
+        public void UpdateAnim(float dt)
         {
             if (Input.GetKeyDown("z"))
                 K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);

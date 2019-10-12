@@ -7,6 +7,7 @@ namespace BB
     {
         public MinionSkin skin { get; }
         public bool isDrafted { get; private set; }
+        public bool isIdle { get; private set; }
 
         private static AgentDef CreateMinionDef(Game game)
             => new AgentDef("BB:Minion", "Minion",
@@ -39,7 +40,19 @@ namespace BB
         public override void Update(float dt)
         {
             base.Update(dt);
-            skin.Update(dt);
+            skin.UpdateAnim(dt);
+        }
+
+        public override bool AssignWork(Work work)
+        {
+            isIdle = false;
+            return base.AssignWork(work);
+        }
+
+        public void AssignIdleWork(Work work)
+        {
+            if (base.AssignWork(work))
+                isIdle = true;
         }
 
         // TODO:

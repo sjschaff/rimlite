@@ -15,5 +15,7 @@ namespace BB
             => AssignWork(minion, D_workName, task.Enumerate());
         public static bool AssignWork(Minion minion, string D_workName, IEnumerable<Task> tasks)
             => minion.AssignWork(new Work(job, tasks, D_workName));
+        public static void AssignIdleWork(Minion minion, string D_workName, IEnumerable<Task> tasks)
+            => minion.AssignIdleWork(new Work(job, tasks, D_workName));
     }
 }

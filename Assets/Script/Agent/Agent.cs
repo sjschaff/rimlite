@@ -132,7 +132,7 @@ namespace BB
                 currentWork.PerformWork(deltaTime);
         }
 
-        public bool AssignWork(Work work)
+        public virtual bool AssignWork(Work work)
         {
             if (currentWork != null)
                 currentWork.Abandon(this);

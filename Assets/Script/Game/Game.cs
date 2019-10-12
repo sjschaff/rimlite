@@ -63,6 +63,8 @@ namespace BB
         private readonly DeferredSet<Effect> effects =
             new DeferredSet<Effect>(e => e.Destroy());
 
+        private readonly MinionIdle idleJobs;
+
         public Game(Registry registry, AssetSrc assets)
         {
             this.registry = registry;
@@ -70,10 +72,15 @@ namespace BB
             // TODO: initialization order is getting wonky
             registry.LoadTypes(this);
 
+            idleJobs = new MinionIdle(this);
+
             gameContainer = new GameObject("Game").transform;
             itemContainer = CreateContainer("Items");
             agentContainer = CreateContainer("Agents");
             workOverlays = CreateContainer("Work Overlays");
+
+            if (System.Diagnostics.Debugger.IsAttached)
+                System.Diagnostics.Debugger.Break();
 
             map = new Map(this);
             map.InitDebug(new Vec2I(128, 128));
@@ -186,7 +193,7 @@ namespace BB
 
             foreach (Minion minion in minions)
             {
-                if (!minion.hasWork && !minion.isDrafted)
+                if ((!minion.hasWork || minion.isIdle) && !minion.isDrafted)
                 {
                     foreach (var system in registry.systems)
                     {
@@ -194,12 +201,16 @@ namespace BB
                         {
                             if (minion.AssignWork(work))
                                 break;
+
                         }
 
-                        if (minion.hasWork)
+                        if (minion.hasWork && !minion.isIdle)
                             break;
                     }
                 }
+
+                if (!minion.hasWork)
+                    idleJobs.AssignIdleTask(minion);
             }
 
             foreach (var agent in agents)
