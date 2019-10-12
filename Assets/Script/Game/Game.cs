@@ -39,6 +39,8 @@ using Vec2I = UnityEngine.Vector2Int;
         slows down mentor, consumes materials without producing anything
     workspeed logarithmic with skill level
     architecture drawings as an alternative style of research, needed to make new buildings/benches
+    golem workshop
+        parts made separately then combined then enchanted
 */
 
 namespace BB
@@ -57,6 +59,7 @@ namespace BB
         public readonly Transform effectsContainer;
 
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
+        private readonly List<Agent> agents = new List<Agent>();
         private readonly DeferredSet<Effect> effects =
             new DeferredSet<Effect>(e => e.Destroy());
 
@@ -77,6 +80,7 @@ namespace BB
 
             for (int i = 0; i < 10; ++i)
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
+            agents.AddRange(minions);
 
             assets.CreateSpriteObject(gameContainer, Vec2.zero, "ARROW", defs.Get<SpriteDef>("BB:ProjArrow"), Color.white, RenderLayer.Highlight);
         }
@@ -118,15 +122,68 @@ namespace BB
         }
 
         public bool HasLineOfSight(Vec2 pos, Vec2 target)
-            => GetFirstRaycastTarget(pos, target) == null;
+            => GetFirstRaycastTarget(new Ray(pos, target - pos), false) == null;
 
-        public RaycastTarget GetFirstRaycastTarget(Vec2 pos, Vec2 ray)
-            => Raycast(pos, ray).FirstOrDefault();
+        public RaycastTarget GetFirstRaycastTarget(Ray ray, bool allowInternal)
+            => Raycast(ray, allowInternal).FirstOrDefault();
 
-        private IEnumerable<RaycastTarget> Raycast(Vec2 pos, Vec2 ray)
+        private IEnumerable<RaycastTarget> Raycast(Ray ray, bool allowInternal)
         {
-            // TODO:
-            yield break;
+            SortedList<float, RaycastTarget> hits = new SortedList<float, RaycastTarget>();
+
+            foreach (var agent in agents)
+                if (ray.IntersectsCircle(agent.bounds, allowInternal, out float fr))
+                    hits.Add(fr, new RaycastTarget(fr, agent));
+
+            Vec2I start = ray.start.Floor();
+            BB.Assert(ValidTile(start));
+
+            float t = 0;
+            int stepX = ray.dir.x < 0 ? -1 : 1; // 0 shouldnt matter
+            int stepY = ray.dir.y < 0 ? -1 : 1; // 0 shouldnt matter
+
+            float dt_dx = stepX * 1 / (ray.dir.x * ray.mag); // may be inf.
+            float dt_dy = stepY * 1 / (ray.dir.y * ray.mag); // may be inf.
+
+            float dxFirst = ray.start.x - start.x;    
+            float dyFirst = ray.start.y - start.y;
+            if (stepX > 0) dxFirst = 1 - dxFirst;
+            if (stepY > 0) dyFirst = 1 - dyFirst;
+
+            float txNext = (ray.dir.x == 0) ? float.PositiveInfinity : dxFirst * dt_dx;
+            float tyNext = (ray.dir.x == 0) ? float.PositiveInfinity : dyFirst * dt_dy;
+
+            Vec2I pos = start;
+            while (t < 1 && ValidTile(pos))
+            {
+                if (allowInternal || pos != start)
+                {
+                    var tile = Tile(pos);
+                    if (tile.hasBuilding && !tile.building.passable)
+                    {
+                        if (hits.ContainsKey(t)) // Fucking hell
+                            t = t.NextBiggest();
+                        hits.Add(t, new RaycastTarget(t, tile.building));
+                    }
+                }
+
+                // Note: this will bias vertically when going exactly through corners
+                if (txNext < tyNext)
+                {
+                    pos.x += stepX;
+                    t = txNext;
+                    txNext += dt_dx;
+                }
+                else
+                {
+                    pos.y += stepY;
+                    t = tyNext;
+                    tyNext += dt_dy;
+                }
+            }
+
+            foreach (var hit in hits)
+                yield return hit.Value;
         }
 
         public void Update(float dt)
@@ -153,8 +210,8 @@ namespace BB
                 }
             }
 
-            foreach (var minion in minions)
-                minion.Update(dt);
+            foreach (var agent in agents)
+                agent.Update(dt);
         }
     }
 }

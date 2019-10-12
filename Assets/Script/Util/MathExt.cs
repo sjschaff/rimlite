@@ -115,5 +115,17 @@ namespace BB
 
         public static Rect AsRect(this RectInt rect)
             => new Rect(rect.position, rect.size);
+
+        public static float NextBiggest(this float f)
+        {
+            var bytes = BitConverter.GetBytes(f);
+            int bits = BitConverter.ToInt32(bytes, 0);
+            if (bits > 0)
+                bits += 1;
+            else
+                bits -= 1;
+            bytes = BitConverter.GetBytes(bits);
+            return BitConverter.ToSingle(bytes, 0);
+        }
     }
 }

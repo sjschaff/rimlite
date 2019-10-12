@@ -1,8 +1,9 @@
-﻿// A dumping ground for things I don't yet know where to put
-using System;
+﻿using System;
+using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 
+// A dumping ground for things I don't yet know where to put
 namespace BB
 {
     public enum Tool { None, Hammer, Pickaxe, Axe, RecurveBow };
@@ -72,4 +73,63 @@ namespace BB
             => new Circle(circle.center + offset, circle.radius);
     }
 
+    // Really a line segment parameterized like a ray,
+    // but ray is less verbous and who needs actual
+    // rays anyways
+    public struct Ray
+    {
+        public Vec2 start;
+        public Vec2 dir;
+        public float mag;
+
+        public Ray(Vec2 start, Vec2 ray)
+        {
+            BB.Assert(ray.sqrMagnitude > 0);
+            this.start = start;
+            this.mag = ray.magnitude;
+            this.dir = ray / mag;
+        }
+
+        public bool IntersectsCircle(
+            Circle c, bool allowIntersectFromWithin, out float frIntersection)
+        {
+            frIntersection = -1;
+
+            // Get c in ray space
+            c = c + -start;
+
+            float dot = Vec2.Dot(dir, c.center);
+            if (dot > mag + c.radius || dot < -c.radius)
+                return false;
+
+            Vec2 ptNearest = dir * dot;
+            float distSq = (c.center - ptNearest).sqrMagnitude;
+            float radSq = c.radius * c.radius;
+            if (distSq > radSq)
+                return false;
+
+            float deltaIntersect = Mathf.Sqrt(radSq - distSq);
+            float dotIntersect = dot - deltaIntersect;
+            // not this does not check for circles the ray starts in
+            // to do so we would have
+
+            if (dotIntersect >= 0 && dotIntersect <= mag)
+            {
+                frIntersection = dotIntersect / mag;
+                return true;
+            }
+
+            if (allowIntersectFromWithin)
+            {
+                dotIntersect = dot + deltaIntersect;
+                if (dotIntersect >= 0 || dotIntersect <= mag)
+                {
+                    frIntersection = dotIntersect / mag;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 }

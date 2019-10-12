@@ -38,7 +38,7 @@ namespace BB
             }
 
             Vec2 travel = dirTarget.normalized * dist;
-            if (game.GetFirstRaycastTarget(pos, travel) != null)
+            if (game.GetFirstRaycastTarget(new Ray(pos, travel), false) != null)
             {
                 // TODO: hit that target
                 finished = true;
