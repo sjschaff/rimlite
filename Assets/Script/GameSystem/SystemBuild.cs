@@ -92,9 +92,17 @@ namespace BB
                         yield return new Work(this, GetHaulWork(haul), "Build_Haul");
             }
 
-            private bool CanBuild(Minion minion)
+            private bool Passable()
+                => building.conDef.proto.passable;
+
+            private bool IsBlocked(Minion minionIgnore)
             {
-                return HasAllMaterials() && !game.IsAreaOccupied(area, minion);
+                return !Passable() && game.IsAreaOccupied(area, minionIgnore);
+            }
+
+            private bool CanBuild(Minion minionIgnore)
+            {
+                return HasAllMaterials() && !IsBlocked(minionIgnore);
             }
 
             private bool HasAvailableHauls(out HaulProvider haulAvailable)
@@ -170,7 +178,7 @@ namespace BB
                     game, "vacate build",
                     (work) =>
                     {
-                        if (HasAllMaterials())
+                        if (!Passable() && HasAllMaterials())
                             game.VacateArea(area, "build site");
 
                         return true;
@@ -188,7 +196,7 @@ namespace BB
                         game, "init. build",
                         (work) =>
                         {
-                            if (!game.IsAreaOccupied(area, work.agent))
+                            if (!IsBlocked(work.minion))
                             {
                                 building.constructionBegan = true;
                                 game.RerouteMinions(area, true);
