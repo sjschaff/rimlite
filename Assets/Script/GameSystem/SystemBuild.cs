@@ -2,6 +2,8 @@
 using System.Linq;
 using UnityEngine;
 
+using Vec2 = UnityEngine.Vector2;
+
 namespace BB
 {
     public interface IBuildable : IBuildingProto
@@ -95,6 +97,18 @@ namespace BB
             private bool Passable()
                 => building.conDef.proto.passable;
 
+            private bool HasDebris()
+            {
+                if (Passable())
+                    return false;
+
+                foreach (var tile in building.bounds.allPositionsWithin)
+                    if (game.Tile(tile).hasItems)
+                        return true;
+
+                return false;
+            }
+
             private bool IsBlocked(Minion minionIgnore)
             {
                 return !Passable() && game.IsAreaOccupied(area, minionIgnore);
@@ -102,7 +116,7 @@ namespace BB
 
             private bool CanBuild(Minion minionIgnore)
             {
-                return HasAllMaterials() && !IsBlocked(minionIgnore);
+                return HasAllMaterials() && !IsBlocked(minionIgnore) && !HasDebris();
             }
 
             private bool HasAvailableHauls(out HaulProvider haulAvailable)
@@ -172,6 +186,40 @@ namespace BB
                 }
             }
 
+            private IEnumerable<Task> GetClearDebrisTasks()
+            {
+                const string desc = "Hauling debris from build site.";
+                while (HasDebris())
+                {
+                    foreach (var pos in building.bounds.allPositionsWithin)
+                    {
+                        var tile = game.Tile(pos);
+                        if (tile.hasItems)
+                        {
+                            yield return Capture(game.ClaimItem(tile), out var claim);
+                            yield return new TaskGoTo(game, desc, PathCfg.Point(pos));
+                            yield return new TaskPickupItem(claim);
+                            yield return new TaskGoTo(game, desc,
+                                new PathCfg(
+                                    pt => !area.Contains(pt) && !game.Tile(pt).hasItems,
+                                    pt => Vec2.Distance(pt, area.center)));
+                            yield return new TaskLambda(game, "drop item",
+                                (work) =>
+                                {
+                                    BB.Assert(work.agent.carryingItem);
+                                    Item item = work.agent.RemoveItem();
+                                    game.DropItems(
+                                        game.Tile(work.agent.pos),
+                                        item.info.Enumerate());
+                                    item.Destroy();
+                                    return true;
+                                });
+                        }
+
+                    }
+                }
+            }
+
             private Task TaskVacate()
             {
                 return new TaskLambda(
@@ -187,9 +235,14 @@ namespace BB
 
             private IEnumerable<Task> GetBuildTasks()
             {
-                // TODO: move items out of build area
                 yield return Capture(new TaskClaim(game,
                     (work) => ClaimBuild()), out var buildClaim);
+
+                // TODO: only the builder can clear debris for
+                // now to prevent jobs failing immediately after
+                // all the debris is claimed
+                foreach (var task in GetClearDebrisTasks())
+                    yield return task;
 
                 if (!building.conDef.proto.passable)
                     yield return new TaskLambda(

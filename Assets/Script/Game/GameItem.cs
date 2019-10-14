@@ -156,6 +156,22 @@ namespace BB
                 }
             }
         }
+        public TaskClaimItem ClaimItem(Tile tile)
+        {
+            BB.AssertNotNull(tile);
+            return new TaskClaimItem(this,
+                (work) =>
+                {
+                    if (!tile.hasItems)
+                        return null;
+
+                    TileItem item = map.GetItem(tile);
+                    if (item.amtAvailable > 0) // TODO: account for carrying capacity
+                        return ItemClaim.MakeClaim(this, item, item.amtAvailable);
+
+                    return null;
+                });
+        }
 
         public ItemQuery QueryItems(ItemQueryCfg cfg)
         {

@@ -36,9 +36,7 @@ namespace BB
             }
         }
 
-        // TODO: figure out selecting items
         public bool hasItems => tile.item != null;
-        //public Item item => tile.item;
     }
 
     public class Map
