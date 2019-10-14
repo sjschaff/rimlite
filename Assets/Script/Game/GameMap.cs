@@ -22,6 +22,19 @@ namespace BB
             Func<Tile, bool> fillFn)
             => map.FloodFill(tileStart, fillableFn, fillFn);
 
+        public Tile FindNearestTile(Tile tileStart, Func<Tile, bool> filterFn)
+        {
+            BB.AssertNotNull(filterFn);
+            Tile ret = null;
+            FloodFill(tileStart, filterFn, tile =>
+            {
+                ret = tile;
+                return true;
+            });
+
+            return ret;
+        }
+
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(RectInt rect, bool required)
         {
@@ -112,13 +125,13 @@ namespace BB
             return false;
         }
 
-        public void VacateArea(RectInt area)
+        public void VacateArea(RectInt area, string areaName)
         {
             foreach (Minion minion in minions)
             {
                 if (!minion.hasWork && area.Contains(minion.pos))
                     JobTransient.AssignWork(minion, "MapVacate",
-                        new TaskGoTo(this, "Vacating the area.", PathCfg.Vacate(area)));
+                        new TaskGoTo(this, $"Vacating {areaName}.", PathCfg.Vacate(area)));
             }
         }
     }

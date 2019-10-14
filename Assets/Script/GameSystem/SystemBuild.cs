@@ -79,17 +79,22 @@ namespace BB
                     yield break;
 
                 // Ready to build
-                if (HasAllMaterials())
+                if (CanBuild(null)) // TODO: would be real nice if we could have a minion here
                     yield return new Work(this, GetBuildWork(), "Build_Build");
 
                 // Ready to haul and build
-                if (AllMaterialsAvailable())
+                if (HasAvailableHauls(out _) && AllMaterialsAvailable())
                     yield return new Work(this, GetHaulAndBuildWork(), "Build_HaulAndBuild");
 
                 // Hauls only
                 foreach (var haul in hauls)
                     if (haul.HasAvailableHauls())
                         yield return new Work(this, GetHaulWork(haul), "Build_Haul");
+            }
+
+            private bool CanBuild(Minion minion)
+            {
+                return HasAllMaterials() && !game.IsAreaOccupied(area, minion);
             }
 
             private bool HasAvailableHauls(out HaulProvider haulAvailable)
@@ -129,12 +134,15 @@ namespace BB
                 => new TaskLambda(game, "rem handle", (work) => activeWorks.Remove(work));
 
             private IEnumerable<Task> GetHaulWork(HaulProvider haul)
-                => haul.GetHaulTasks().Append(TaskBegin()).Prepend(TaskEnd());
+                => haul.GetHaulTasks()
+                    .Prepend(TaskBegin())
+                    .Append(TaskVacate())
+                    .Append(TaskEnd());
 
             private IEnumerable<Task> GetBuildWork()
                 => GetBuildTasks().Prepend(TaskBegin());
 
-            public IEnumerable<Task> GetHaulAndBuildWork()
+            private IEnumerable<Task> GetHaulAndBuildWork()
             {
                 yield return TaskBegin();
 
@@ -146,6 +154,7 @@ namespace BB
 
                 if (HasAllMaterials())
                 {
+                    yield return TaskVacate();
                     foreach (var task in GetBuildTasks())
                         yield return task;
                 }
@@ -153,6 +162,19 @@ namespace BB
                 {
                     yield return TaskEnd();
                 }
+            }
+
+            private Task TaskVacate()
+            {
+                return new TaskLambda(
+                    game, "vacate build",
+                    (work) =>
+                    {
+                        if (HasAllMaterials())
+                            game.VacateArea(area, "build site");
+
+                        return true;
+                    });
             }
 
             private IEnumerable<Task> GetBuildTasks()
@@ -163,10 +185,9 @@ namespace BB
 
                 if (!building.conDef.proto.passable)
                     yield return new TaskLambda(
-                        game, "vacate build",
+                        game, "init. build",
                         (work) =>
                         {
-                            game.VacateArea(area);
                             if (!game.IsAreaOccupied(area, work.agent))
                             {
                                 building.constructionBegan = true;

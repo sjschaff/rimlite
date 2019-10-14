@@ -98,8 +98,8 @@ namespace BB
             if (ctrl.game.CanPlaceBuilding(selection.Bounds(curDir).AsRect(pos)))
             {
                 var tile = ctrl.game.Tile(pos);
-                //SystemBuild.K_instance.CreateBuild(selection, tile, curDir);
-                ctrl.game.AddBuilding(selection.CreateBuilding(tile, curDir));
+                SystemBuild.K_instance.CreateBuild(selection, tile, curDir);
+                //ctrl.game.AddBuilding(selection.CreateBuilding(tile, curDir));
             }
         }
 
