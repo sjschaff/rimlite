@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Collections;
+using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
@@ -28,8 +29,36 @@ namespace BB
             fonts = new Cache<string, Font>(
                 font => Resources.GetBuiltinResource<Font>(font));
 
-            spriteShader = Shader.Find("Sprites/Default");
+            spriteShader = //Shader.Find("Sprites/Default");
+                Resources.Load<Shader>("BBLitDefault");
             spriteMaterial = new Material(spriteShader);
+
+            Texture2D tex = new Texture2D(128, 128, TextureFormat.R8, false, true)
+            {
+                filterMode = FilterMode.Point
+            };
+            NativeArray<byte> data = tex.GetRawTextureData<byte>();
+
+            bool[,] roofs = new bool[128, 128];
+
+            for (int x = 8; x < 12; ++x)
+                for (int y = 10; y < 14; ++y)
+                    roofs[x, y] = true;
+
+            int index = 0;
+            for (int y = 0; y < 128; ++y)
+            {
+                for (int x = 0; x < 128; ++x)
+                {
+                    bool roof = roofs[x, y];
+                    data[index++] = (byte)(roof ? 64 : 255);
+                }
+            }
+            tex.Apply();
+            spriteMaterial.SetTexture("_MaskTex", tex);
+            spriteMaterial.SetVector("_MapSize", new Vector4(128, 128));
+
+            Shader.SetGlobalColor("_globalLight", Color.white * .25f);
 
             lineShader = Shader.Find("Unlit/Transparent");
             lineMaterials = new Cache<Color, Material>(
@@ -64,6 +93,7 @@ namespace BB
         public SpriteRenderer CreateSpriteObject(Transform parent, Vec2 pos, string name, SpriteDef sprite, Color color, RenderLayer layer)
         {
             var renderer = CreateObjectWithRenderer<SpriteRenderer>(parent, pos, name, layer);
+            renderer.material = spriteMaterial;
             renderer.sprite = sprites.Get(sprite);
             renderer.color = color;
             return renderer;

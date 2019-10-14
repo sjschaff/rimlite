@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+using UnityEngine.Experimental.Rendering.Universal;
+
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -58,6 +60,8 @@ namespace BB
         public readonly Transform workOverlays;
         public readonly Transform effectsContainer;
 
+        private readonly Light2D lightGlobal;
+
         private readonly LinkedList<Minion> minions = new LinkedList<Minion>();
         private readonly List<Agent> agents = new List<Agent>();
         private readonly DeferredSet<Effect> effects =
@@ -79,9 +83,6 @@ namespace BB
             agentContainer = CreateContainer("Agents");
             workOverlays = CreateContainer("Work Overlays");
 
-            if (System.Diagnostics.Debugger.IsAttached)
-                System.Diagnostics.Debugger.Break();
-
             map = new Map(this);
             map.InitDebug(new Vec2I(128, 128));
 
@@ -89,7 +90,7 @@ namespace BB
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
             agents.AddRange(minions);
 
-            assets.CreateSpriteObject(gameContainer, Vec2.zero, "ARROW", defs.Get<SpriteDef>("BB:ProjArrow"), Color.white, RenderLayer.Highlight);
+            lightGlobal = Camera.main.gameObject.GetComponent<Light2D>();
         }
 
         private Transform CreateContainer(string name)
@@ -185,8 +186,65 @@ namespace BB
                 yield return hit.Value;
         }
 
+        private static Color ColorInt(int r, int g, int b)
+            => new Color(r / 255f, g / 255f, b / 255f);
+
+        private static readonly Color[] skyColors = new Color[]
+        {
+            ColorInt(31, 28, 55),
+            ColorInt(43, 40, 67),
+            ColorInt(57, 38, 83),
+            ColorInt(78, 37, 107),
+            ColorInt(99, 37, 127),
+            ColorInt(121, 41, 133),
+            ColorInt(147, 50, 123),
+            ColorInt(172, 61, 103),
+            ColorInt(183, 78, 85),
+            ColorInt(190, 99, 94),
+            ColorInt(198, 116, 93),
+            ColorInt(202, 138, 92),
+            ColorInt(201, 158, 104),
+            ColorInt(219, 189, 134),
+            ColorInt(240, 224, 187),
+            ColorInt(255, 255, 255),
+        };
+
+        float tElapsed = 3;
+        const float tLoop = 8;
+
         public void Update(float dt)
         {
+            if (Input.GetKey("v"))
+            {
+                tElapsed += dt;
+                tElapsed %= tLoop;
+            }
+            float tNrm = tElapsed / tLoop;
+            Color color;
+            if (tNrm < .25f || (tNrm > .5f && tNrm < .75f))
+            {
+                if (tNrm > .5f)
+                    tNrm = .25f - (tNrm - .5f);
+
+                tNrm *= 4;
+                float fInd = tNrm * skyColors.Length;
+                int ind = Mathf.FloorToInt(fInd);
+                var colorA = skyColors[ind];
+                int indB = ind + 1;
+                if (indB >= skyColors.Length)
+                    indB = skyColors.Length - 1;
+                var colorB = skyColors[indB];
+                float interp = fInd - ind;
+                color = Color.Lerp(colorA, colorB, interp);
+            }
+            else if (tNrm <= .5f)
+                color = skyColors[skyColors.Length - 1];
+            else
+                color = skyColors[0];
+            color -= new Color(.03f, .03f, .03f, 0);
+
+            lightGlobal.color = color;
+
             D_DebugUpdate();
 
             effects.ForEach(e => e.Update(dt));
