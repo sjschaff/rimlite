@@ -100,7 +100,7 @@ namespace BB
             if (claims.Count != 0)
                 BB.LogError("Task completed with claims left over, this is a bug");
             ClearClaims();
-            agent.RemoveWork(this);
+            agent.WorkCompleted(this);
         }
 
         private bool MoveToNextTask()

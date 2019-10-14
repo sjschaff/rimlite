@@ -41,6 +41,9 @@ namespace BB
         // TODO: this hueristic is probably wrong
         public static PathCfg Area(RectInt area)
             => new PathCfg(pt => area.Contains(pt), pt => Vec2.Distance(pt, area.center));
+
+        public static PathCfg Anywhere(Vec2 start)
+            => new PathCfg(pt => true, pt => Vec2.Distance(pt, start));
     }
 
     public class Nav

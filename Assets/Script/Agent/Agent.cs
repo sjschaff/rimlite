@@ -135,7 +135,7 @@ namespace BB
         public virtual bool AssignWork(Work work)
         {
             if (currentWork != null)
-                currentWork.Abandon(this);
+                RemoveWork(true, true);
 
             // TODO: if can do work:
             {
@@ -146,14 +146,14 @@ namespace BB
             // else return false
         }
 
-        public void RemoveWork(Work work)
+        private void RemoveWork(bool abandon, bool hasNewWork)
         {
             BB.AssertNotNull(currentWork);
-            BB.Assert(work == currentWork);
+            if (abandon)
+                currentWork.Abandon(this);
             currentWork = null;
 
-            // TODO: handle case of not being Grid Aligned
-            if (!GridAligned())
+            if (!hasNewWork && !GridAligned())
             {
                 Debug.LogWarning("minion work removed while not grid aligned.");
                 realPos = realPos.Floor();
@@ -163,11 +163,21 @@ namespace BB
                 DropItem();
         }
 
+        public void WorkCompleted(Work work)
+        {
+            BB.AssertNotNull(currentWork);
+            BB.Assert(work == currentWork);
+            RemoveWork(false, false);
+        }
+
         public void AbandonWork()
         {
             BB.AssertNotNull(currentWork);
-            currentWork.Abandon(this);
-            RemoveWork(currentWork);
+            if (!GridAligned())
+                JobTransient.AssignWork(this, "WalkGridAlign",
+                    new TaskGoTo(game, "Wandering.", PathCfg.Anywhere(realPos)).Enumerate());
+            else
+                RemoveWork(true, false);
         }
     }
 }
