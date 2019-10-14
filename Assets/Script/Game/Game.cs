@@ -226,7 +226,6 @@ namespace BB
                         {
                             if (minion.AssignWork(work))
                                 break;
-
                         }
 
                         if (minion.hasWork && !minion.isIdle)

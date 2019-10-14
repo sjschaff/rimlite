@@ -278,12 +278,19 @@ namespace BB
 
         public void IssueCommand()
         {
-            foreach (var minion in minions)
+            List<Minion> drafted = minions.Where(m => m.isDrafted).ToList();
+            List<Vec2I> targets = new List<Vec2I>(drafted.Count);
+            game.FloodFill(game.Tile(target), t => t.passable,
+                tile =>
+                {
+                    targets.Add(tile.pos);
+                    return targets.Count >= drafted.Count;
+                });
+
+            for (int i = 0; i < drafted.Count; ++i)
             {
-                // TODO: make them all go to different spots
-                if (minion.isDrafted)
-                    JobTransient.AssignWork(minion, "WalkCmd", 
-                    new TaskGoTo(game, "Walking.", PathCfg.Point(target)));
+                JobTransient.AssignWork(drafted[i], "WalkCmd", 
+                    new TaskGoTo(game, "Walking.", PathCfg.Point(targets[i])));
             }
         }
     }

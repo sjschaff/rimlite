@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 using Vec2I = UnityEngine.Vector2Int;
 
@@ -14,7 +15,13 @@ namespace BB
 
         public Vec2I[] GetPath(Vec2I start, PathCfg cfg)
             => map.nav.GetPath(start, cfg);
-         
+
+        public void FloodFill(
+            Tile tileStart,
+            Func<Tile, bool> fillableFn,
+            Func<Tile, bool> fillFn)
+            => map.FloodFill(tileStart, fillableFn, fillFn);
+
         // required:  true if pos is no longer passable, false if pos is now passable
         public void RerouteMinions(RectInt rect, bool required)
         {
