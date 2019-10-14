@@ -214,39 +214,6 @@ namespace BB
 
         public void Update(float dt)
         {
-            if (Input.GetKey("v"))
-            {
-                tElapsed += dt;
-                tElapsed %= tLoop;
-            }
-            float tNrm = tElapsed / tLoop;
-            Color color;
-            if (tNrm < .25f || (tNrm > .5f && tNrm < .75f))
-            {
-                if (tNrm > .5f)
-                    tNrm = .25f - (tNrm - .5f);
-
-                tNrm *= 4;
-                float fInd = tNrm * skyColors.Length;
-                int ind = Mathf.FloorToInt(fInd);
-                var colorA = skyColors[ind];
-                int indB = ind + 1;
-                if (indB >= skyColors.Length)
-                    indB = skyColors.Length - 1;
-                var colorB = skyColors[indB];
-                float interp = fInd - ind;
-                color = Color.Lerp(colorA, colorB, interp);
-            }
-            else if (tNrm <= .5f)
-                color = skyColors[skyColors.Length - 1];
-            else
-                color = skyColors[0];
-            color -= new Color(.03f, .03f, .03f, 0);
-
-            lightGlobal.color = color;
-
-            D_DebugUpdate();
-
             effects.ForEach(e => e.Update(dt));
 
             foreach (Minion minion in minions)
@@ -265,10 +232,10 @@ namespace BB
                         if (minion.hasWork && !minion.isIdle)
                             break;
                     }
-                }
 
-                if (!minion.hasWork)
-                    idleJobs.AssignIdleTask(minion);
+                    if (!minion.hasWork)
+                        idleJobs.AssignIdleTask(minion);
+                }
             }
 
             foreach (var agent in agents)

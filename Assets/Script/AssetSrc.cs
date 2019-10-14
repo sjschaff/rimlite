@@ -8,11 +8,12 @@ namespace BB
 {
     public class AssetSrc
     {
+        public readonly Cache<string, Texture2D> textures;
         public readonly Cache<AtlasDef, Atlas> atlases;
         public readonly Cache<SpriteDef, Sprite> sprites;
         public readonly Cache<string, Font> fonts;
 
-        private readonly Shader spriteShader;
+        public readonly Shader spriteShader;
         public readonly Material spriteMaterial;
 
         private readonly Shader lineShader;
@@ -20,8 +21,11 @@ namespace BB
 
         public AssetSrc()
         {
+            textures = new Cache<string, Texture2D>(
+                file => LoadTex(file));
+
             atlases = new Cache<AtlasDef, Atlas>(
-                def => new Atlas(Resources.Load<Texture2D>(def.file), def.pixelsPerTile, def.pixelsPerUnit));
+                def => new Atlas(textures.Get(def.file), def.pixelsPerTile, def.pixelsPerUnit));
 
             sprites = new Cache<SpriteDef, Sprite>(
                 def => atlases.Get(def.atlas).GetSprite(def.rect));
@@ -29,8 +33,7 @@ namespace BB
             fonts = new Cache<string, Font>(
                 font => Resources.GetBuiltinResource<Font>(font));
 
-            spriteShader = //Shader.Find("Sprites/Default");
-                Resources.Load<Shader>("BBLitDefault");
+            spriteShader = Resources.Load<Shader>("BBLitDefault");
             spriteMaterial = new Material(spriteShader);
 
             Texture2D tex = new Texture2D(128, 128, TextureFormat.R8, false, true)
@@ -76,6 +79,13 @@ namespace BB
 
                     return material;
                 });
+        }
+
+        private Texture2D LoadTex(string path)
+        {
+            var tex = Resources.Load<Texture2D>(path);
+            tex.filterMode = FilterMode.Point;
+            return tex;
         }
 
         public T CreateObjectWithRenderer<T>(Transform parent, Vec2 pos, string name, RenderLayer layer)

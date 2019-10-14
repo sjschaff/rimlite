@@ -161,6 +161,8 @@ namespace BB
             activeTool?.OnUpdate(dt);
 
             // Game
+            game.D_DebugUpdate(dt);
+
             if (speed != PlaySpeed.Paused)
                 game.Update(dt * Speed(speed));
         }

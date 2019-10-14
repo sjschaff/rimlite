@@ -39,10 +39,10 @@ namespace BB
             transform.SetParent(game.agentContainer, false);
             realPos = pos;
 
-            var line = game.assets.CreateLine(
-                transform, "DgbBounds", RenderLayer.Highlight,
-                Color.blue, 1 / 32f, true, false);
-            line.SetCircle(def.bounds, 32);
+            /*    var line = game.assets.CreateLine(
+                    transform, "DgbBounds", RenderLayer.Highlight,
+                    Color.blue, 1 / 32f, true, false);
+                line.SetCircle(def.bounds, 32);*/
         }
 
         // TODO: this is turning into a shit show

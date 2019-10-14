@@ -11,6 +11,7 @@ namespace BB
     #region Atlas
     public class MetaAtlas
     {
+        #region AnimKey
         private struct AnimKey
         {
             public readonly MinionAnim anim;
@@ -24,12 +25,15 @@ namespace BB
                 this.frame = frame;
             }
         }
+        #endregion
 
         private readonly CacheNonNullable<AnimKey, Atlas.Rect> keys;
         private readonly Cache<string, Atlas> atlases;
+        public readonly Cache<int, Material> paletteMats;
 
-        public MetaAtlas()
+        public MetaAtlas(AssetSrc assets)
         {
+            #region Caches
             keys = new CacheNonNullable<AnimKey, Atlas.Rect>(
                 animKey =>
                 {
@@ -46,15 +50,23 @@ namespace BB
             atlases = new Cache<string, Atlas>(
                 path =>
                 {
-                    Texture2D tex = Resources.Load<Texture2D>(path);
-                    if (tex == null)
-                        BB.LogError("No texture: " + path);
-
-                    tex.filterMode = FilterMode.Point;
+                    var tex = assets.textures.Get(path);
                     return new Atlas(tex, 32, 64);
                 });
+
+            paletteMats = new Cache<int, Material>(
+                index =>
+                {
+                    var mat = new Material(assets.spriteShader);
+                    mat.EnableKeyword("_ISPALETTED");
+                    mat.SetFloat("_PaletteOffset", 1 - (index + .5f) / 64f);
+                    mat.SetTexture("_PaletteTex", assets.textures.Get("character/palette"));
+                    return mat;
+                });
+            #endregion
         }
 
+        #region Anim Atlasing
         private static int OriginAnim(MinionAnim anim)
         {
             switch (anim)
@@ -86,6 +98,7 @@ namespace BB
         }
 
         private static int OffsetFrame(int frame) => frame;
+        #endregion
 
         public Sprite GetSprite(string type, bool male, string name, MinionAnim anim, Dir dir, int frame)
         {
@@ -104,6 +117,54 @@ namespace BB
     public enum MinionAnim
     {
         Idle, Magic, Thrust, Walk, Slash, Shoot, Hurt, Reload
+    }
+
+    public enum MinionSkinColor : int
+    {
+        Light = 0,
+        Tanned = 1,
+        Tanned2 = 2,
+        Dark = 3,
+        Dark2 = 4,
+        DarkElf = 5,
+        DarkElf2 = 6,
+        Albino = 7,
+        Albino2 = 8,
+        Orc = 9,
+        OrcRed = 10,
+
+        Length
+    }
+
+    public enum MinionHairColor : int
+    {
+        Purple = 12,
+        Black = 13,
+        Blonde = 14,
+        Blonde2 = 15,
+        Blue = 16,
+        Blue2 = 17,
+        Brown = 18,
+        Brunette = 19,
+        Brunette2 = 20,
+        DarkBlonde = 21,
+        Gray = 22,
+        Green = 23,
+        Green2 = 24,
+        LightBlonde = 25,
+        LightBlonde2 = 26,
+        Pink = 27,
+        Pink2 = 28,
+        Raven = 29,
+        Raven2 = 30,
+        Redhead = 31,
+        RubyRed = 32,
+        White = 33,
+        WhiteBlonde = 34,
+        WhiteBlonde2 = 35,
+        WhiteCyan = 36,
+
+        Length
     }
 
     public static class MinionAnimExt
@@ -138,6 +199,9 @@ namespace BB
         private Transform spriteContainer;
 
         private Dictionary<string, string> equipped;
+        private MinionSkinColor skinColor;
+        private MinionHairColor hairColor;
+
         public Dir dir { get; private set; } = Dir.Down;
 
         const float frameTime = 1f / 12f;
@@ -180,10 +244,11 @@ namespace BB
                 }
             }
         }
+
         public void Init(AssetSrc assets)
         {
             if (atlas == null)
-                atlas = new MetaAtlas();
+                atlas = new MetaAtlas(assets);
 
             cam = Camera.main;
             spriteContainer = new GameObject("Sprite Container").transform;
@@ -198,12 +263,14 @@ namespace BB
                 var sprite = assets.CreateSpriteObject(
                     spriteContainer, Vec2.zero,
                     layer, null, Color.white, RenderLayer.Minion);
-                //sprite
+
                 sprite.transform.localPosition -= new Vec3(0, 0, .001f * subLayer);
                 spriteLayers.Add(layer, sprite);
                 ++subLayer;
             }
 
+            K_SetSkin(MinionSkinColor.Light);
+            K_SetHair(MinionHairColor.Purple);
             K_SetOutfit(0);
             state.SetAnim(MinionAnim.Idle, true);
         }
@@ -248,6 +315,15 @@ namespace BB
             state.dirty = true;
         }
 
+        static readonly string[] skinLayers =
+        {
+            "body/base",
+            "body/nose",
+            "body/ears",
+        };
+
+        static readonly string hairLayer = "hair";
+
         static readonly string[] layers =
         {
             // "cape back"
@@ -272,6 +348,39 @@ namespace BB
             "weapon",
             "arrow",
         };
+
+        public void D_NextEyes()
+        {
+            // TODO:
+        }
+
+        public void D_NextSkin()
+        {
+            int next = (int)(skinColor + 1) % (int)MinionSkinColor.Length;
+            K_SetSkin((MinionSkinColor)next);
+        }
+
+        private void K_SetSkin(MinionSkinColor skin)
+        {
+            skinColor = skin;
+            foreach (var layer in skinLayers)
+                spriteLayers[layer].material = atlas.paletteMats.Get((int)skin);
+        }
+
+        public void D_NextHair()
+        {
+            int next = (hairColor + 1 - MinionHairColor.Purple) % (MinionHairColor.Length - MinionHairColor.Purple);
+            K_SetHair((MinionHairColor)(next + MinionHairColor.Purple));
+        }
+
+        private void K_SetHair(MinionHairColor hair)
+        {
+            hairColor = hair;
+            spriteLayers[hairLayer].material = atlas.paletteMats.Get((int)hair);
+        }
+
+        public void D_NextOutfit()
+            => K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
 
         int k_curOutfit = 0;
         private void K_SetOutfit(int i)
@@ -300,9 +409,6 @@ namespace BB
 
         public void UpdateAnim(float dt)
         {
-            if (Input.GetKeyDown("z"))
-                K_SetOutfit((k_curOutfit + 1) % K_outfits.Count);
-
             state.Update(dt);
             if (state.dirty)
             {
@@ -316,6 +422,28 @@ namespace BB
                 }
             }
         }
+
+        private static readonly Dictionary<string, string> K_naked = new Dictionary<string, string>
+        {
+            { "body/base", "base" },
+            { "body/eyes", "blue" },
+            { "body/nose", "buttonnose" },
+            { "body/ears", "elvenears" },
+            { "hair",  "princess" },
+            //{ "hair",  null },
+            { "face", null },
+
+            { "feet",  null },
+            { "legs", null },
+            { "wrist", null },
+            { "hands", null },
+            { "torso", null },
+            { "tabbard", null },
+            { "shoulders", null },
+            { "belt", null },
+            { "head", null },
+            //{ "weapon", }
+        };
 
         private static readonly Dictionary<string, string> K_clothed = new Dictionary<string, string>
         {
@@ -381,6 +509,6 @@ namespace BB
         };
 
         private static readonly List<Dictionary<string, string>> K_outfits =
-            new List<Dictionary<string, string>>() { K_clothed, K_monk, K_plate };
+            new List<Dictionary<string, string>>() { K_clothed, K_monk, K_plate, K_naked };
     }
 }
