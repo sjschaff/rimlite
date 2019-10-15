@@ -42,19 +42,19 @@ namespace BB
             spriteRenderer = game.assets.CreateSpriteObject(
                 gameObject.transform, new Vec2(.5f, .5f), "icon",
                 info.def.sprite, Color.white, RenderLayer.Default.Layer(100));
+            spriteRenderer.transform.localScale = new Vector3(1.5f, 1.5f, 1);
 
             // TODO: figure out htf text works
             var canvasObj = new GameObject("canvas", typeof(RectTransform));
             var canvasTrans = (RectTransform)canvasObj.transform;
             canvasTrans.SetParent(gameObject.transform, false);
-            canvasTrans.localPosition = new Vec2(.5f, .228f);
 
             canvasTrans.offsetMin = new Vec2(0, -.3f);
             canvasTrans.offsetMax = new Vec2(1, .7f);
             canvasTrans.sizeDelta = Vec2.one;
             canvasTrans.anchorMin = Vec2.zero;
             canvasTrans.anchorMax = Vec2.zero;
-            canvasTrans.localPosition = new Vec2(.5f, .228f); // has to be last for some reason
+            canvasTrans.localPosition = new Vec2(.5f, .17f); // has to be last for some reason
 
             var canvas = canvasObj.AddComponent<Canvas>();
             canvas.SetLayer(RenderLayer.Default.Layer(101));
@@ -99,9 +99,9 @@ namespace BB
             gameObject.transform.localPosition = pos;
         }
 
-        public void ReParent(Transform parent, Vec2 pos)
+        public void ReParent(Transform parent)
         {
-            ReParentInternal(parent, pos);
+            ReParentInternal(parent, Vec2.zero);
         }
 
         public void ReParent(Tile tile)

@@ -109,7 +109,7 @@ namespace BB
         {
             BB.Assert(!carryingItem);
             carriedItem = item;
-            carriedItem.ReParent(transform, new Vec2(0, .2f));
+            carriedItem.ReParent(transform);
             ReconfigureItem();
         }
 
