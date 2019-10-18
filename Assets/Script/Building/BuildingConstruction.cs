@@ -28,7 +28,7 @@ namespace BB
         public override RenderFlags renderFlags => conDef.proto.GetFlags(dir);
 
         private TileSprite Virtualize(TileSprite sprite)
-            => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .5f));
+            => new TileSprite(sprite.sprite, sprite.color * new Color(.6f, .6f, 1, .65f));
 
         public override TileSprite GetSprite(Vec2I pos, Vec2I subTile)
             => Virtualize(conDef.proto.GetSprite(dir, pos, subTile));

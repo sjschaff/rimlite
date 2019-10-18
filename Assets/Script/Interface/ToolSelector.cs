@@ -38,7 +38,7 @@ namespace BB
             if (!wasSelected)
             {
                 selection = button;
-                ctrl.gui.buttons[selection].SetSelected(true);
+                ctrl.gui.toolbar.Get(selection).SetSelected(true);
                 manipulator.Configure(selectables[selection]);
                 ctrl.PushTool(manipulator);
             }
@@ -48,16 +48,16 @@ namespace BB
         {
             if (selection != -1)
             {
-                ctrl.gui.buttons[selection].SetSelected(false);
+                ctrl.gui.toolbar.Get(selection).SetSelected(false);
                 selection = -1;
             }
         }
 
         public override void OnActivate()
         {
-            ctrl.gui.ShowToolbarButtons(selectables.Count);
+            ctrl.gui.toolbar.Show(selectables.Count);
             for (int i = 0; i < selectables.Count; ++i)
-                ConfigureButton(ctrl.gui.buttons[i], selectables[i],
+                ConfigureButton(ctrl.gui.toolbar.Get(i), selectables[i],
                     ToolbarAction(i));
         }
 
@@ -66,7 +66,7 @@ namespace BB
         public override void OnDeactivate()
         {
             selection = -1;
-            ctrl.gui.HideToolbarButtons();
+            ctrl.gui.toolbar.Hide();
         }
 
         public abstract void ConfigureButton(

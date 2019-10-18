@@ -116,7 +116,7 @@ namespace BB
                 pos + new Vec2(.5f, .5f),
                 "JobOverlay",
                 sprite,
-                new Color(.6f, .6f, 1, .5f),
+                new Color(.6f, .6f, 1, .65f),
                 RenderLayer.Highlight);
 
         public Line CreateLine(

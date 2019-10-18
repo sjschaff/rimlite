@@ -319,7 +319,7 @@ namespace BB
 
         private void ClearUI()
         {
-            ctrl.gui.HideToolbarButtons();
+            ctrl.gui.toolbar.Hide();
             ctrl.gui.infoPane.header.text = null;
             ctrl.gui.infoPane.info.text = null;
             ctrl.gui.workbench.SetActive(false);
@@ -358,9 +358,9 @@ namespace BB
                 }
             }
 
-            ctrl.gui.ShowToolbarButtons(buttons.Count);
+            ctrl.gui.toolbar.Show(buttons.Count);
             for (int i = 0; i < buttons.Count; ++i)
-                ctrl.gui.buttons[i].Configure(buttons[i].Value, ctrl.assets, buttons[i].Key);
+                ctrl.gui.toolbar.Get(i).Configure(buttons[i].Value, ctrl.assets, buttons[i].Key);
         }
 
         public override void OnUnsuspend()

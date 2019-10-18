@@ -68,8 +68,8 @@ namespace BB
             if (fn != null)
                 button.onClick.AddListener(fn);
             var colors = button.colors;
-            colors.pressedColor = new Color(.5f, .5f, .5f, 1);
-            colors.highlightedColor = new Color(.78f, .78f, .78f, 1);
+            colors.pressedColor = Color.white.Scale(.5f);
+            colors.highlightedColor = Color.white.Scale(.78f);
             colors.fadeDuration = .06f;
             button.colors = colors;
             return button;

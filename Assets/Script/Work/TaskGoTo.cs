@@ -74,7 +74,7 @@ namespace BB
                 pathVis = game.assets.CreateLine(
                     game.workOverlays, "MinionPath",
                     RenderLayer.Default.Layer(1000),
-                    new Color(.2f, .2f, .2f, .5f),
+                    Color.white.Scale(.2f).Alpha(.5f),
                     1 / 32f, false, true);
                 UpdatePathVis();
 

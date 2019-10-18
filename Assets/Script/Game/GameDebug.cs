@@ -86,7 +86,7 @@ namespace BB
                 color = skyColors[skyColors.Length - 1];
             else
                 color = skyColors[0];
-            color -= new Color(.03f, .03f, .03f, 0);
+            color -= Color.white.Alpha(0).Scale(.03f);
 
             lightGlobal.color = color;
         }

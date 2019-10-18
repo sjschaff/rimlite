@@ -27,8 +27,8 @@ namespace BB
             float angle = Vec2.SignedAngle(spriteForward, dir);
             var rot = Quaternion.Euler(0, 0, angle);
             sprite = MakeProjSprite(game, start, rot, def, Color.white, 3);
-            spriteTrailA = MakeProjSprite(game, start, rot, def, new Color(1, 1, 1, .25f), 2);
-            spriteTrailB = MakeProjSprite(game, start, rot, def, new Color(1, 1, 1, .0625f), 1);
+            spriteTrailA = MakeProjSprite(game, start, rot, def, Color.white.Alpha(.25f), 2);
+            spriteTrailB = MakeProjSprite(game, start, rot, def, Color.white.Alpha(.0625f), 1);
         }
 
         private SpriteRenderer MakeProjSprite(

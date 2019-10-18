@@ -8,6 +8,7 @@ using UnityEngine;
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
+// TODO: this whole thing is a nightmare
 namespace BB
 {
     public interface IActivatable
@@ -44,12 +45,10 @@ namespace BB
         }
     }
 
-
-    // TODO: this whole thing is a nightmare
-    public class ToolbarButton
+    public class ToolbarButton : IActivatable
     {
-        public static readonly Color onColor = new Color(.4f, .4f, .4f);
-        public static readonly Color offColor = new Color(.19f, .19f, .19f);
+        public static readonly Color onColor = Color.white.Scale(.4f);
+        public static readonly Color offColor = Color.white.Scale(.19f);
 
         private readonly Image pane;
         private readonly Image img;
@@ -142,21 +141,13 @@ namespace BB
             };
 
             header = Gui.CreateText(pane.rectTransform, "<header>", cfg);
-            header.rectTransform.SetSizePivotAnchor(
-                new Vec2(360, 27), new Vec2(0, 1), new Vec2(0, 1));
-            header.rectTransform.offsetMin = new Vec2(20, 0);
-            header.rectTransform.offsetMax = new Vec2(0, -14);
-            header.rectTransform.sizeDelta = new Vec2(360, 27);
+            header.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(20, 14), new Vec2(360, 27));
 
             cfg.fontSize = 18;
             cfg.style = FontStyle.Normal;
             cfg.horiWrap = HorizontalWrapMode.Wrap;
             info = Gui.CreateText(pane.rectTransform, "<info>", cfg);
-            info.rectTransform.SetSizePivotAnchor(
-                new Vec2(360, 144), new Vec2(0, 1), new Vec2(0, 1));
-            info.rectTransform.offsetMin = new Vec2(20, 0);
-            info.rectTransform.offsetMax = new Vec2(0, -46);
-            info.rectTransform.sizeDelta = new Vec2(360, 144);
+            info.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(20, 46), new Vec2(360, 144));
         }
     }
 
@@ -194,11 +185,7 @@ namespace BB
             buttons = new UIPool<Btn>(i => CreateButton());
 
             pane = Gui.CreateColor(canvas, "Context Menu", ToolbarButton.onColor).rectTransform;
-            pane.anchorMin = pane.anchorMax = new Vec2(.5f, .5f);
-            pane.pivot = new Vec2(0, 1);
-            pane.offsetMin = Vec2.zero;
-            pane.offsetMax = Vec2.zero;
-            pane.sizeDelta = new Vec2(300, 0);
+            pane.SetSizePivotAnchor(new Vec2(300, 0), new Vec2(0, 1), new Vec2(.5f, .5f));
 
             var sizeFitter = pane.gameObject.AddComponent<ContentSizeFitter>();
             sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -250,25 +237,24 @@ namespace BB
 
             return new Btn(img.gameObject, btn, text);
         }
+
         public void Show(Vec2 scPos, int numButtons)
         {
-            longestText = 0;
-            pane.sizeDelta = new Vec2(maxWidth, 0);
-
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvas, scPos, null, out var guiPos);
 
             Vec2 guiNorm = new Vec2(.5f, .5f) + guiPos / canvas.sizeDelta;
-            pane.anchorMin = pane.anchorMax = guiNorm;
-            Vec2 pivot;
-            pivot.x = guiNorm.x < .5f ? 0 : 1;
-            pivot.y = guiNorm.y < .5f ? 0 : 1;
-            pane.pivot = pivot;
+            Vec2 pivot = new Vec2(
+                guiNorm.x < .5f ? 0 : 1,
+                guiNorm.y < .5f ? 0 : 1);
+            pane.SetSizePivotAnchor(new Vec2(maxWidth, 0), pivot, guiNorm);
 
             if (pivot.x == 0)
                 vertLayout.childAlignment = TextAnchor.UpperLeft;
             else
                 vertLayout.childAlignment = TextAnchor.UpperRight;
+
+            longestText = 0;
             if (pivot.y == 0)
                 numShown = numButtons;
             else
@@ -344,19 +330,11 @@ namespace BB
 
             var headerA = Gui.CreateText(pane.rectTransform, "<header>", cfg);
             headerA.text = "Recipes:";
-            headerA.rectTransform.anchorMin = headerA.rectTransform.anchorMax = new Vec2(0, 1);
-            headerA.rectTransform.pivot = new Vec2(0, 1);
-            headerA.rectTransform.offsetMin = new Vec2(20, 0);
-            headerA.rectTransform.offsetMax = new Vec2(0, -14);
-            headerA.rectTransform.sizeDelta = new Vec2(colWidth, 27);
+            headerA.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(20, 14), new Vec2(colWidth, 27));
 
             var headerB = Gui.CreateText(pane.rectTransform, "<header>", cfg);
             headerB.text = "Orders:";
-            headerB.rectTransform.anchorMin = headerB.rectTransform.anchorMax = new Vec2(0, 1);
-            headerB.rectTransform.pivot = new Vec2(0, 1);
-            headerB.rectTransform.offsetMin = new Vec2(xColB, 0);
-            headerB.rectTransform.offsetMax = new Vec2(0, -14);
-            headerB.rectTransform.sizeDelta = new Vec2(colWidth, 27);
+            headerB.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(xColB, 14), new Vec2(colWidth, 27));
 
             Color colColor = ToolbarButton.offColor.Scale(.8f);
             float colOfs = 29 + headerA.rectTransform.sizeDelta.y;
@@ -386,12 +364,12 @@ namespace BB
             cfg.anchor = TextAnchor.UpperCenter;
 
             Text topText = Gui.CreateText(pane.rectTransform, "<name>", cfg);
-            topText.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(6, 4), new Vec2(xfPane.sizeDelta.x, 30));
+            topText.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(0, 4), new Vec2(xfPane.sizeDelta.x, 30));
 
             cfg.fontSize = 16;
             cfg.style = FontStyle.Normal;
             Text botText = Gui.CreateText(pane.rectTransform, "<materials>", cfg);
-            botText.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(6, 26), new Vec2(xfPane.sizeDelta.x, 30));
+            botText.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(0, 26), new Vec2(xfPane.sizeDelta.x, 30));
 
             return new Btn()
             {
@@ -453,8 +431,7 @@ namespace BB
         public readonly RectTransform toolbarContainer;
         public readonly ToolbarButton buildButton;
         public readonly ToolbarButton orderButton;
-        public readonly List<ToolbarButton> buttons
-            = new List<ToolbarButton>();
+        public readonly UIPool<ToolbarButton> toolbar;
 
         public readonly RectTransform playButtonContainer;
         private readonly ToolbarButton pauseButton;
@@ -481,6 +458,7 @@ namespace BB
 
             toolbarContainer = Gui.CreateObject(canvas, "Toolbar");
             toolbarContainer.SetFill();
+            toolbar = new UIPool<ToolbarButton>(i => CreateToolbarButton(i));
 
             buildButton = CreateToolbarButton(
                 "Build Button", new Vec2(420, 0));
@@ -542,27 +520,6 @@ namespace BB
             CreatePane(canvas, "tl", Color.blue, new Vec2(100, 100), Anchor.TopLeft, new Vec2(20, 20));
             CreatePane(canvas, "tc", Color.blue, new Vec2(100, 100), Anchor.Top, new Vec2(20, 20));
             CreatePane(canvas, "tr", Color.blue, new Vec2(100, 100), Anchor.TopRight, new Vec2(20, 20));*/
-        }
-
-        public void HideToolbarButtons()
-        {
-            foreach (var btn in buttons)
-                btn.SetActive(false);
-        }
-
-        public void ShowToolbarButtons(int count)
-        {
-            for (int i = 0; i < count; ++i)
-            {
-                if (i < buttons.Count)
-                {
-                    ToolbarButton button = buttons[i];
-                    button.SetActive(true);
-                    button.Reset();
-                }
-                else
-                    buttons.Add(CreateToolbarButton(i));
-            }
         }
 
         private ToolbarButton CreateToolbarButton(int pos)

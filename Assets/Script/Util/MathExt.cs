@@ -130,5 +130,8 @@ namespace BB
 
         public static Color Scale(this Color c, float f)
             => new Color(c.r * f, c.g * f, c.b * f, c.a);
+
+        public static Color Alpha(this Color c, float a)
+            => new Color(c.r, c.g, c.b, a);
     }
 }
