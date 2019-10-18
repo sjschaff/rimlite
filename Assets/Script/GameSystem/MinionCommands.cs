@@ -120,6 +120,8 @@ namespace BB
                                 game.defs.Get<SpriteDef>("BB:ProjArrow"),
                                 new Vec2(-1, 0)));
                         }
+
+                        return true;
                     },
                     (task) => { });
 
@@ -127,7 +129,7 @@ namespace BB
                     yield return new TaskTimedLambda(
                         game, "Reloading", MinionAnim.Reload,
                         Tool.RecurveBow, .5f, pt => pt,
-                        _ => 1, (_1,_2) => { }, _ => { });
+                        _ => 1, (_1,_2) => true, _ => { });
             }
         }
     }

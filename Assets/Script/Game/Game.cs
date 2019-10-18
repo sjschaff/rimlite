@@ -91,6 +91,9 @@ namespace BB
             agents.AddRange(minions);
 
             lightGlobal = Camera.main.gameObject.GetComponent<Light2D>();
+
+            var benchProto = (IBuildable)registry.D_GetProto<BldgWorkbenchDef>("BB:Woodcutter");
+            AddBuilding(benchProto.CreateBuilding(Tile(new Vec2I(9, 3)), Dir.Down));
         }
 
         private Transform CreateContainer(string name)
@@ -218,18 +221,21 @@ namespace BB
 
             foreach (Minion minion in minions)
             {
-                if ((!minion.hasWork || minion.isIdle) && !minion.isDrafted)
+                if (!minion.isDrafted)
                 {
-                    foreach (var system in registry.systems)
+                    if (!minion.hasWork || minion.isIdle)
                     {
-                        foreach (var work in system.QueryWork())
+                        foreach (var system in registry.systems)
                         {
-                            if (minion.AssignWork(work))
+                            foreach (var work in system.QueryWork())
+                            {
+                                if (minion.AssignWork(work))
+                                    break;
+                            }
+
+                            if (minion.hasWork && !minion.isIdle)
                                 break;
                         }
-
-                        if (minion.hasWork && !minion.isIdle)
-                            break;
                     }
 
                     if (!minion.hasWork)

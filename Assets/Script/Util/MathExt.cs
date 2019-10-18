@@ -127,5 +127,8 @@ namespace BB
             bytes = BitConverter.GetBytes(bits);
             return BitConverter.ToSingle(bytes, 0);
         }
+
+        public static Color Scale(this Color c, float f)
+            => new Color(c.r * f, c.g * f, c.b * f, c.a);
     }
 }

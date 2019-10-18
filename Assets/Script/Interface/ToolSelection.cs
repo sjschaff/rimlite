@@ -178,6 +178,7 @@ namespace BB
 
         private readonly List<IOrdersGiver> orders = new List<IOrdersGiver>();
         private readonly List<ICommandsGiver> commands = new List<ICommandsGiver>();
+        private readonly SystemWorkbench sysBench;
         private readonly Transform poolRoot;
         private readonly Pool<SelectionHighlight> highlights;
         private readonly ToolContextMenu ctxtTool;
@@ -198,6 +199,7 @@ namespace BB
             highlights = new Pool<SelectionHighlight>(
                 () => new SelectionHighlight(ctrl.assets, poolRoot));
 
+            sysBench = ctrl.registry.GetSystem<SystemWorkbench>();
             foreach (var system in ctrl.registry.systems)
                 foreach (var c in system.GetCommands())
                     commands.Add(c);
@@ -320,6 +322,7 @@ namespace BB
             ctrl.gui.HideToolbarButtons();
             ctrl.gui.infoPane.header.text = null;
             ctrl.gui.infoPane.info.text = null;
+            ctrl.gui.workbench.SetActive(false);
         }
 
         private void InitUI()
@@ -422,8 +425,14 @@ namespace BB
                 IBuilding building = b.building;
                 ctrl.gui.infoPane.info.text =
                     $"{building.jobHandles.Count} handles.";
+
+                if (building is BuildingWorkbench bench)
+                {
+                    ctrl.gui.workbench.SetActive(true);
+                    sysBench.ConfigureGUI(ctrl.gui.workbench, bench);
+                }
             }
-            if (selectables.Count == 1 && sel is SelMinion m)
+            else if (sel is SelMinion m)
             {
                 Minion minion = m.minion;
                 string text = "";

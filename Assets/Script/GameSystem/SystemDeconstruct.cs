@@ -31,7 +31,7 @@ namespace BB
                 BB.Assert(buildable != null);
             }
 
-            public override IEnumerable<Task> GetTasks()
+            protected override IEnumerable<Task> GetTasks()
             {
                 string desc = $"Deconstructing {building.def.name}.";
                 yield return new TaskGoTo(game, desc, PathCfg.Adjacent(building.bounds));

@@ -53,6 +53,12 @@ namespace BB
 
         public bool HasJob(TKey key) => jobs.ContainsKey(key);
 
+        protected TJob GetJob(TKey key)
+        {
+            BB.Assert(HasJob(key));
+            return jobs[key];
+        }
+
         protected void AddJob(TJob job)
         {
             BB.Assert(!HasJob(job.key));
@@ -138,6 +144,7 @@ namespace BB
     {
         public readonly string description;
         public Work activeWork;
+
         public JobBasic(TSystem system, JobBasicKey key, string description)
             : base(system, key)
         {
@@ -148,7 +155,7 @@ namespace BB
         public JobBasic(TSystem system, IBuilding building, string description)
             : this(system, new JobBasicKey(building), description) { }
 
-        public abstract IEnumerable<Task> GetTasks();
+        protected abstract IEnumerable<Task> GetTasks();
 
         public override void AbandonWork(Work work)
         {
@@ -184,6 +191,7 @@ namespace BB
             if (activeWork == null)
                 yield return GetWork();
         }
+
         private Work GetWork()
         {
             return new Work(this, GetTasks()

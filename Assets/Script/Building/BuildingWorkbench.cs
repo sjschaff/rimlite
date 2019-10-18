@@ -2,11 +2,13 @@
 using System;
 using UnityEngine;
 
+using Vec2I = UnityEngine.Vector2Int;
+
 namespace BB
 {
-    class BuildingProtoWorkbench : BuildingProtoSpriteRender, IBuildable
+    public class BuildingProtoWorkbench : BuildingProtoSpriteRender, IBuildable
     {
-        private readonly BldgWorkbenchDef def;
+        public readonly BldgWorkbenchDef def;
 
         public BuildingProtoWorkbench(Game game, BldgWorkbenchDef def)
             : base(game, def.bounds, def.spriteDown, def.spriteRight)
@@ -27,15 +29,17 @@ namespace BB
 
         public IEnumerable<ItemInfo> GetBuildMaterials()
             => def.materials;
+    }
 
-        private class BuildingWorkbench : BuildingBase<BuildingProtoWorkbench>
-        {
-            public BuildingWorkbench(BuildingProtoWorkbench proto, Tile tile, Dir dir)
-                : base(proto, tile) => this.dir = dir;
+    public class BuildingWorkbench : BuildingBase<BuildingProtoWorkbench>
+    {
+        public BuildingWorkbench(BuildingProtoWorkbench proto, Tile tile, Dir dir)
+            : base(proto, tile) => this.dir = dir;
 
-            public override Dir dir { get; }
-            public override RectInt bounds
-                => proto.Bounds(dir).AsRect(tile);
-        }
+        public override Dir dir { get; }
+        public override RectInt bounds
+            => proto.Bounds(dir).AsRect(tile);
+
+        public Vec2I workSpot => proto.def.workSpot + tile.pos;
     }
 }

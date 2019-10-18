@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace BB
 {
-    class HaulProvider
+    public class HaulProvider
     {
         private readonly Game game;
         private readonly PathCfg dst;
@@ -93,6 +94,61 @@ namespace BB
                     amtStored += haulAmt;
                     return true;
                 });
+        }
+    }
+
+    public class HaulProviders
+    {
+        public readonly List<HaulProvider> hauls
+            = new List<HaulProvider>();
+
+        public HaulProviders(
+            Game game, string dstDesc, PathCfg dst,
+            IEnumerable<ItemInfo> items)
+        {
+            hauls = items.Select(
+                item => new HaulProvider(game, dst, item, dstDesc)).ToList();
+        }
+
+        public void Destroy()
+        {
+            foreach (var haul in hauls)
+                haul.Destroy();
+        }
+
+        public IEnumerable<ItemInfo> RemoveStored()
+            => hauls.Where(haul => haul.HasSomeMaterials())
+                    .Select(haul => haul.RemoveStored());
+
+        public bool HasAvailableHauls(out HaulProvider haulAvailable)
+        {
+            haulAvailable = null;
+            foreach (var haul in hauls)
+                if (haul.HasAvailableHauls())
+                {
+                    haulAvailable = haul;
+                    return true;
+                }
+
+            return false;
+        }
+
+        public bool AllMaterialsAvailable()
+        {
+            foreach (var haul in hauls)
+                if (!haul.HasAllMaterials() && !haul.HasAvailableHauls())
+                    return false;
+
+            return true;
+        }
+
+        public bool HasAllMaterials()
+        {
+            foreach (var haul in hauls)
+                if (!haul.HasAllMaterials())
+                    return false;
+
+            return true;
         }
     }
 }

@@ -116,7 +116,7 @@ namespace BB
     public abstract class BuildingBase<TProto> : IBuilding where TProto : IBuildingProto
     {
         public Tile tile { get; }
-        protected readonly TProto proto;
+        public readonly TProto proto;
         public IBuildingProto prototype => proto;
         public HashSet<JobHandle> jobHandles { get; }
         protected BuildingBase(TProto proto, Tile tile)

@@ -13,7 +13,7 @@ namespace BB
         private readonly Tool tool;
 
         protected abstract float WorkSpeed();
-        protected virtual void OnWorkUpdated(float workAmt) { }
+        protected virtual bool OnWorkUpdated(float workAmt) => true;
 
         public static Func<Vec2I, Vec2I> FaceSame() => (pt => pt);
         public static Func<Vec2I, Vec2I> FacePt(Vec2I ptTarget) => (pt => ptTarget);
@@ -46,7 +46,8 @@ namespace BB
         public override Status OnPerformTask(float deltaTime)
         {
             workAmt = Mathf.Max(workAmt - deltaTime * WorkSpeed(), 0);
-            OnWorkUpdated(workAmt);
+            if (!OnWorkUpdated(workAmt))
+                return Status.Fail;
 
             if (workAmt <= 0)
                 return Status.Complete;
@@ -64,7 +65,7 @@ namespace BB
     public class TaskTimedLambda : TaskTimed
     {
         private readonly Func<TaskTimedLambda, float> workSpeedFn;
-        private readonly Action<TaskTimedLambda, float> workFn;
+        private readonly Func<TaskTimedLambda, float, bool> workFn;
         private readonly Action<TaskTimedLambda> completeFn;
 
         public TaskTimedLambda(
@@ -73,7 +74,7 @@ namespace BB
             Tool tool, float workAmt,
             Func<Vec2I, Vec2I> faceFn,
             Func<TaskTimedLambda, float> workSpeedFn,
-            Action<TaskTimedLambda, float> workFn,
+            Func<TaskTimedLambda, float, bool> workFn,
             Action<TaskTimedLambda> completeFn)
             : base(game, description, anim, tool, workAmt, faceFn)
         {
@@ -84,8 +85,8 @@ namespace BB
         }
 
         protected override float WorkSpeed() => workSpeedFn(this);
-        protected override void OnWorkUpdated(float workAmt)
-            => workFn?.Invoke(this, workAmt);
+        protected override bool OnWorkUpdated(float workAmt)
+            => workFn == null ? true : workFn(this, workAmt);
 
         protected override void OnEndTask(bool canceled)
         {

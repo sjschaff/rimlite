@@ -15,15 +15,10 @@ namespace BB
 
     public class SystemBuild : GameSystemStandard<SystemBuild, Tile, SystemBuild.JobBuild>
     {
-        // TODO: kludge
-        public static SystemBuild K_instance;
-
         private readonly Cache<IBuildable, BldgConstructionDef> virtualDefs;
 
         public SystemBuild(Game game) : base(game)
         {
-            BB.AssertNull(K_instance);
-            K_instance = this;
             virtualDefs = new Cache<IBuildable, BldgConstructionDef>(
                 (buildable) => new BldgConstructionDef(buildable));
         }
@@ -40,7 +35,7 @@ namespace BB
             private Tile tile => key;
 
             // Build State
-            private readonly List<HaulProvider> hauls;
+            private readonly HaulProviders hauls;
             private bool hasBuilder;
 
             public JobBuild(SystemBuild build, BldgConstructionDef def, Tile tile, Dir dir)
@@ -53,10 +48,9 @@ namespace BB
                 building.jobHandles.Add(this);
                 game.AddBuilding(building);
 
-                hauls = new List<HaulProvider>();
                 PathCfg dst = PathCfg.Area(area);
-                hauls = def.proto.GetBuildMaterials().Select(
-                    item => new HaulProvider(build.game, dst, item, name)).ToList();
+                hauls = new HaulProviders(
+                    build.game, name, dst, def.proto.GetBuildMaterials());
             }
 
             private IClaim ClaimBuild()
@@ -85,11 +79,11 @@ namespace BB
                     yield return new Work(this, GetBuildWork(), "Build_Build");
 
                 // Ready to haul and build
-                if (HasAvailableHauls(out _) && AllMaterialsAvailable())
+                if (hauls.HasAvailableHauls(out _) && hauls.AllMaterialsAvailable())
                     yield return new Work(this, GetHaulAndBuildWork(), "Build_HaulAndBuild");
 
                 // Hauls only
-                foreach (var haul in hauls)
+                foreach (var haul in hauls.hauls)
                     if (haul.HasAvailableHauls())
                         yield return new Work(this, GetHaulWork(haul), "Build_Haul");
             }
@@ -116,38 +110,7 @@ namespace BB
 
             private bool CanBuild(Minion minionIgnore)
             {
-                return HasAllMaterials() && !IsBlocked(minionIgnore) && !HasDebris();
-            }
-
-            private bool HasAvailableHauls(out HaulProvider haulAvailable)
-            {
-                haulAvailable = null;
-                foreach (var haul in hauls)
-                    if (haul.HasAvailableHauls())
-                    {
-                        haulAvailable = haul;
-                        return true;
-                    }
-
-                return false;
-            }
-
-            private bool AllMaterialsAvailable()
-            {
-                foreach (var haul in hauls)
-                    if (!haul.HasAllMaterials() && !haul.HasAvailableHauls())
-                        return false;
-
-                return true;
-            }
-
-            private bool HasAllMaterials()
-            {
-                foreach (var haul in hauls)
-                    if (!haul.HasAllMaterials())
-                        return false;
-
-                return true;
+                return hauls.HasAllMaterials() && !IsBlocked(minionIgnore) && !HasDebris();
             }
 
             private Task TaskBegin()
@@ -168,13 +131,13 @@ namespace BB
             {
                 yield return TaskBegin();
 
-                while (HasAvailableHauls(out var haul))
+                while (hauls.HasAvailableHauls(out var haul))
                 {
                     foreach (var task in haul.GetHaulTasks())
                         yield return task;
                 }
 
-                if (HasAllMaterials())
+                if (hauls.HasAllMaterials())
                 {
                     yield return TaskVacate();
                     foreach (var task in GetBuildTasks())
@@ -226,7 +189,7 @@ namespace BB
                     game, "vacate build",
                     (work) =>
                     {
-                        if (!Passable() && HasAllMaterials())
+                        if (!Passable() && hauls.HasAllMaterials())
                             game.VacateArea(area, "build site");
 
                         return true;
@@ -263,7 +226,7 @@ namespace BB
                     game, $"Building {name}.",
                     MinionAnim.Slash, Tool.Hammer, 2,
                     TaskTimed.FaceArea(area),
-                    _ => 1,
+                    _ => 1, // TODO: workspeed
                     // TODO: track work amount on building
                     null, //(work, workAmt) => /**/, 9
                     (task) =>
@@ -271,8 +234,7 @@ namespace BB
                         BB.Assert(tile.building == building);
 
                         task.work.Unclaim(buildClaim);
-                        foreach (var haul in hauls)
-                            haul.RemoveStored();
+                        hauls.RemoveStored();
 
                         building.jobHandles.Remove(this);
                         game.ReplaceBuilding(
@@ -304,14 +266,8 @@ namespace BB
                     building.jobHandles.Remove(this);
                     game.RemoveBuilding(building);
 
-                    game.DropItems(tile, hauls
-                        .Where((haul) => haul.HasSomeMaterials())
-                        .Select((haul) => haul.RemoveStored())
-                    );
+                    game.DropItems(tile, hauls.RemoveStored());
                 }
-
-                foreach (var haul in hauls)
-                    haul.Destroy();
 
                 base.Destroy();
             }

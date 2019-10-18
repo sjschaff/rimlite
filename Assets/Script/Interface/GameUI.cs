@@ -10,6 +10,42 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
+    public interface IActivatable
+    {
+        void SetActive(bool active);
+    }
+
+    public class UIPool<T>
+        where T : IActivatable
+    {
+        private readonly List<T> ts = new List<T>();
+        private readonly Func<int, T> createFn;
+
+        public UIPool(Func<int, T> createFn)
+            => this.createFn = createFn;
+
+        public T Get(int i) => ts[i];
+
+        public void Hide()
+        {
+            foreach (var t in ts)
+                t.SetActive(false);
+        }
+
+        public void Show(int c)
+        {
+            for (int i = 0; i < c; ++i)
+            {
+                if (i < ts.Count)
+                    ts[i].SetActive(true);
+                else
+                    ts.Add(createFn(i));
+            }
+        }
+    }
+
+
+    // TODO: this whole thing is a nightmare
     public class ToolbarButton
     {
         public static readonly Color onColor = new Color(.4f, .4f, .4f);
@@ -81,7 +117,6 @@ namespace BB
         public void Reset() => SetSelected(false);
     }
 
-    // TODO: make better
     public class InfoPane
     {
         public readonly Image pane;
@@ -92,7 +127,7 @@ namespace BB
         {
             Vec2 size = new Vec2(400, 200);
             pane = Gui.CreatePane(
-                parent, "Info Panel", new Color(.19f, .19f, .19f),
+                parent, "Info Panel", ToolbarButton.offColor,
                 size, Anchor.BottomLeft, Vec2.zero);
 
             TextCfg cfg = new TextCfg()
@@ -131,13 +166,12 @@ namespace BB
         private readonly RectTransform pane;
         private readonly VerticalLayoutGroup vertLayout;
         private readonly Font font;
-        private readonly List<Btn> buttons =
-            new List<Btn>();
+        private readonly UIPool<Btn> buttons;
         private int numShown;
         private float longestText = 0;
         const float maxWidth = 300;
 
-        private struct Btn
+        private class Btn : IActivatable
         {
             public readonly GameObject obj;
             public readonly Button button;
@@ -148,12 +182,16 @@ namespace BB
                 this.button = button;
                 this.text = text;
             }
+
+            public void SetActive(bool a) => obj.SetActive(a);
         }
 
         public ContextMenu(RectTransform canvas, Font font)
         {
             this.canvas = canvas;
             this.font = font;
+
+            buttons = new UIPool<Btn>(i => CreateButton());
 
             pane = Gui.CreateColor(canvas, "Context Menu", ToolbarButton.onColor).rectTransform;
             pane.anchorMin = pane.anchorMax = new Vec2(.5f, .5f);
@@ -184,7 +222,7 @@ namespace BB
         {
             var img = Gui.CreateColor(pane, "<button>", ToolbarButton.offColor);
             img.rectTransform.pivot = new Vec2(0, 1);
-            var btn = Gui.AddButton(img.gameObject, () => { });
+            var btn = Gui.AddButton(img.gameObject);
             var layout = img.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.UpperLeft;
             layout.childControlWidth = true;
@@ -237,21 +275,13 @@ namespace BB
                 numShown = -numButtons;
 
             pane.gameObject.SetActive(true);
-
-            for (int i = 0; i < numButtons; ++i)
-            {
-                if (i < buttons.Count)
-                    buttons[i].obj.SetActive(true);
-                else
-                    buttons.Add(CreateButton());
-            }
+            buttons.Show(numButtons);
         }
 
         public void Hide()
         {
             pane.gameObject.SetActive(false);
-            foreach (var button in buttons)
-                button.obj.SetActive(false);
+            buttons.Hide();
         }
 
         public void ConfigureButton(int i, string text, UnityAction fn, bool enabled)
@@ -259,9 +289,8 @@ namespace BB
             bool lastButton = i == Math.Abs(numShown) - 1;
             if (numShown > 0)
                 i = (numShown - 1) - i;
-            var btn = buttons[i];
+            var btn = buttons.Get(i);
             btn.text.text = text;
-            BB.LogInfo($"size: {btn.text.preferredWidth}");
             if (btn.text.preferredWidth > longestText)
                 longestText = btn.text.preferredWidth;
 
@@ -274,6 +303,141 @@ namespace BB
         }
     }
 
+    public class WorkbenchPane
+    {
+        private readonly Font font;
+        private readonly Image pane;
+        private readonly UIPool<Btn> btnsA;
+        private readonly UIPool<Btn> btnsB;
+
+        class Btn : IActivatable
+        {
+            public Button button;
+            public Text textMain;
+            public Text textSub;
+
+            public void SetActive(bool a) => button.gameObject.SetActive(a);
+        }
+
+        public WorkbenchPane(RectTransform canvas, Font font)
+        {
+            this.font = font;
+
+            Vec2 size = new Vec2(510, 600);
+            pane = Gui.CreatePane(
+                canvas, "Workbench Panel", ToolbarButton.offColor,
+                size, Anchor.BottomLeft, new Vec2(0, 202));
+
+            float colWidth = (size.x - 60) / 2;
+            float xColB = colWidth + 40;
+
+            TextCfg cfg = new TextCfg()
+            {
+                font = font,
+                fontSize = 24,
+                autoResize = false,
+                style = FontStyle.Bold,
+                anchor = TextAnchor.UpperLeft,
+                horiWrap = HorizontalWrapMode.Overflow,
+                vertWrap = VerticalWrapMode.Truncate
+            };
+
+            var headerA = Gui.CreateText(pane.rectTransform, "<header>", cfg);
+            headerA.text = "Recipes:";
+            headerA.rectTransform.anchorMin = headerA.rectTransform.anchorMax = new Vec2(0, 1);
+            headerA.rectTransform.pivot = new Vec2(0, 1);
+            headerA.rectTransform.offsetMin = new Vec2(20, 0);
+            headerA.rectTransform.offsetMax = new Vec2(0, -14);
+            headerA.rectTransform.sizeDelta = new Vec2(colWidth, 27);
+
+            var headerB = Gui.CreateText(pane.rectTransform, "<header>", cfg);
+            headerB.text = "Orders:";
+            headerB.rectTransform.anchorMin = headerB.rectTransform.anchorMax = new Vec2(0, 1);
+            headerB.rectTransform.pivot = new Vec2(0, 1);
+            headerB.rectTransform.offsetMin = new Vec2(xColB, 0);
+            headerB.rectTransform.offsetMax = new Vec2(0, -14);
+            headerB.rectTransform.sizeDelta = new Vec2(colWidth, 27);
+
+            Color colColor = ToolbarButton.offColor.Scale(.8f);
+            float colOfs = 29 + headerA.rectTransform.sizeDelta.y;
+            float colHeight = size.y - (20 + colOfs);
+            var colA = Gui.CreateColor(pane.rectTransform, "<col>", colColor);
+            colA.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(20, colOfs), new Vec2(colWidth, colHeight));
+
+            var colB = Gui.CreateColor(pane.rectTransform, "<col>", colColor);
+            colB.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(xColB, colOfs), new Vec2(colWidth, colHeight));
+
+            btnsA = new UIPool<Btn>(i => MakeButton(colA.rectTransform, i));
+            btnsB = new UIPool<Btn>(i => MakeButton(colB.rectTransform, i));
+
+            SetActive(false);
+        }
+
+        private Btn MakeButton(RectTransform parent, int order)
+        {
+            Image pane = Gui.CreateColor(parent, "<button>", ToolbarButton.offColor);
+            var xfPane = pane.rectTransform;
+            xfPane.SetFixed(Anchor.TopLeft, new Vec2(8, 8 + 58*order), new Vec2(parent.sizeDelta.x - 16, 50));
+            var btn = Gui.AddButton(pane.gameObject);
+
+            TextCfg cfg = TextCfg.Default(font);
+            cfg.fontSize = 20;
+            cfg.style = FontStyle.Bold;
+            cfg.anchor = TextAnchor.UpperCenter;
+
+            Text topText = Gui.CreateText(pane.rectTransform, "<name>", cfg);
+            topText.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(6, 4), new Vec2(xfPane.sizeDelta.x, 30));
+
+            cfg.fontSize = 16;
+            cfg.style = FontStyle.Normal;
+            Text botText = Gui.CreateText(pane.rectTransform, "<materials>", cfg);
+            botText.rectTransform.SetFixed(Anchor.TopLeft, new Vec2(6, 26), new Vec2(xfPane.sizeDelta.x, 30));
+
+            return new Btn()
+            {
+                button = btn,
+                textMain = topText,
+                textSub = botText
+            };
+        }
+
+        public void SetActive(bool a)
+            => pane.gameObject.SetActive(a);
+
+        public void SetRecipes(RecipeDef[] recipes, Action<RecipeDef> cbFn)
+        {
+            btnsA.Hide();
+            btnsA.Show(recipes.Length);
+            for (int i = 0; i < recipes.Length; ++i)
+            {
+                var btn = btnsA.Get(i);
+                var rec = recipes[i];
+                btn.textMain.text = rec.description;
+                var mat = rec.materials[0]; // TODO: multi
+                var prod = rec.product[0];
+                btn.textSub.text =
+                    $"{mat.def.name} x{mat.amt} -> {prod.def.name} x{prod.amt}";
+                btn.button.onClick.RemoveAllListeners();
+                btn.button.onClick.AddListener(() => cbFn(rec));
+            }
+        }
+
+        public void ShowOrders(int num)
+        {
+            btnsB.Hide();
+            btnsB.Show(num);
+        }
+
+        public void ConfigureButton(int i, string main, string sub, UnityAction cbFn)
+        {
+            var btn = btnsB.Get(i);
+            btn.textMain.text = main;
+            btn.textSub.text = sub;
+            btn.button.onClick.RemoveAllListeners();
+            btn.button.onClick.AddListener(cbFn);
+        }
+    }
+
     public class GameUI
     {
         public readonly GameController ctrl;
@@ -283,7 +447,8 @@ namespace BB
 
         public readonly Line dragOutline;
         public readonly ContextMenu ctxtMenu;
-        public InfoPane infoPane;
+        public readonly InfoPane infoPane;
+        public readonly WorkbenchPane workbench;
 
         public readonly RectTransform toolbarContainer;
         public readonly ToolbarButton buildButton;
@@ -366,6 +531,7 @@ namespace BB
                 GetSprite("BB:PlaySFFIcon"));
 
             ctxtMenu = new ContextMenu(canvas, font);
+            workbench = new WorkbenchPane(canvas, font);
             /*
             CreatePane(canvas, "bl", Color.blue, new Vec2(100, 100), Anchor.BottomLeft, new Vec2(20, 20));
             CreatePane(canvas, "bc", Color.blue, new Vec2(100, 100), Anchor.Bottom, new Vec2(20, 20));

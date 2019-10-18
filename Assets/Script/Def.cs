@@ -234,13 +234,14 @@ namespace BB
         public readonly SpriteDef spriteDown;
         public readonly SpriteDef spriteRight;
         public readonly ItemInfo[] materials;
-        // TODO: recipes
+        public readonly RecipeDef[] recipes;
 
         public BldgWorkbenchDef(
             string defName, string name,
             BuildingBounds bounds, Vec2I workSpot,
             SpriteDef spriteDown, SpriteDef spriteRight,
-            ItemInfo[] materials)
+            ItemInfo[] materials,
+            RecipeDef[] recipes)
             : base("BB:Workbench", defName, name)
         {
             BB.Assert(bounds.IsAdjacent(workSpot));
@@ -249,6 +250,7 @@ namespace BB
             this.spriteDown = spriteDown;
             this.spriteRight = spriteRight;
             this.materials = materials;
+            this.recipes = recipes;
         }
     }
 
@@ -289,6 +291,26 @@ namespace BB
         }
     }
 
+    public class RecipeDef : Def
+    {
+        public readonly string description;
+        public readonly ItemInfo[] materials;
+        public readonly ItemInfo[] product;
+        public readonly float workAmt;
+
+        public RecipeDef(
+            string defName, string description, float workAmt,
+            ItemInfo[] materials, ItemInfo[] product)
+            : base("BB:Recipe", defName)
+        {
+            this.description = description;
+            this.workAmt = workAmt;
+            this.materials = materials;
+            this.product = product;
+        }
+    }
+
+
     public class Defs
     {
         public readonly AgentTypeDef agentMinion;
@@ -320,6 +342,7 @@ namespace BB
 
             Register(new SpriteDef("BB:Stone", sprites32, Vec2I.zero, new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:Wood", sprites32, new Vec2I(2, 0), new Vec2I(2, 2), Vec2I.one));
+            Register(new SpriteDef("BB:Plank", sprites64, new Vec2I(0, 0), new Vec2I(2, 2), Vec2I.one));
             Register(new SpriteDef("BB:BldgRock", sprites32, new Vec2I(0, 18), new Vec2I(4, 4), Vec2I.zero));
             Register(new SpriteDef("BB:BldgTree", sprites32, new Vec2I(0, 4), new Vec2I(8, 14), new Vec2I(2, 0)));
             Register(new SpriteDef("BB:WoodcuttingTableD", sprites32, new Vec2I(10, 26), new Vec2I(12, 5), new Vec2I(4, 0)));
@@ -335,7 +358,7 @@ namespace BB
 
             Register(new ItemDef("BB:Stone", "Stone", Get<SpriteDef>("BB:Stone"), 5));
             Register(new ItemDef("BB:Wood", "Wood", Get<SpriteDef>("BB:Wood"), 5));
-
+            Register(new ItemDef("BB:Plank", "Planks", Get<SpriteDef>("BB:Plank"), 10));
 
             Register(BldgProtoDef.Create<BuildingProtoResource, BldgMineableDef>());
             Register(new BldgMineableDef("BB:Rock", "Rock", Tool.Pickaxe,
@@ -358,10 +381,15 @@ namespace BB
 
             Register(BldgProtoDef.Create<BuildingProtoWorkbench, BldgWorkbenchDef>());
             Register(new BldgWorkbenchDef("BB:Woodcutter", "Woodcutting Table",
-                new BuildingBounds(new Vec2I(3, 1), new Vec2I(1, 0)), new Vec2I(1, -1),
+                new BuildingBounds(new Vec2I(3, 1), new Vec2I(1, 0)), new Vec2I(0, -1),
                 Get<SpriteDef>("BB:WoodcuttingTableD"),
                 Get<SpriteDef>("BB:WoodcuttingTableR"),
-                new[] { new ItemInfo(Get<ItemDef>("BB:Wood"), 10) }));
+                new[] { new ItemInfo(Get<ItemDef>("BB:Wood"), 10) },
+                new[] { Register(new RecipeDef("BB:CutLogs", "Saw Planks", 4,
+                    new[] { new ItemInfo(Get<ItemDef>("BB:Wood"), 1) },
+                    new[] { new ItemInfo(Get<ItemDef>("BB:Plank"), 10) }
+                ))}
+            ));
         }
 
         private interface IDefList : IEnumerable<Def>

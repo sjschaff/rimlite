@@ -11,10 +11,13 @@ namespace BB
         // TODO: make these readonly, or at the very list private
         public readonly Dictionary<BldgDef, IBuildingProto> buildings
              = new Dictionary<BldgDef, IBuildingProto>();
-        public readonly List<IGameSystem> systems
-            = new List<IGameSystem>();
+        public readonly Dictionary<Type, IGameSystem> gameSystems
+            = new Dictionary<Type, IGameSystem>();
         public readonly List<IContextMenuProvider> contextProviders
             = new List<IContextMenuProvider>();
+
+        public TSystem GetSystem<TSystem>() => (TSystem)gameSystems[typeof(TSystem)];
+        public IEnumerable<IGameSystem> systems => gameSystems.Values;
 
         public IBuildingProto D_GetProto<TDef>(string name) where TDef : BldgDef
             => buildings[defs.Get<TDef>(name)];
@@ -23,7 +26,11 @@ namespace BB
 
         public void LoadTypes(Game game)
         {
-            InstantiateTypes(game, systems, "game system");
+            List<IGameSystem> systemList = new List<IGameSystem>();
+            InstantiateTypes(game, systemList, "game system");
+            foreach (var s in systemList)
+                gameSystems.Add(s.GetType(), s);
+
             InstantiateTypes(game, contextProviders, "context provider");
 
             // TODO: more evidence that these suck

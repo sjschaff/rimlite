@@ -44,10 +44,14 @@ namespace BB
         private readonly Line outlineAllow;
         private readonly Line outlineDisallow;
 
+        private readonly SystemBuild builds;
         private Dir curDir;
 
         public ToolBuild(GameController ctrl) : base(ctrl)
         {
+            builds = ctrl.registry.GetSystem<SystemBuild>();
+            BB.AssertNotNull(builds);
+
             outlineAllow = ctrl.assets.CreateLine(
                 ctrl.gui.root, "Build Outline",
                 RenderLayer.Highlight,
@@ -98,7 +102,7 @@ namespace BB
             if (ctrl.game.CanPlaceBuilding(selection.Bounds(curDir).AsRect(pos)))
             {
                 var tile = ctrl.game.Tile(pos);
-                SystemBuild.K_instance.CreateBuild(selection, tile, curDir);
+                builds.CreateBuild(selection, tile, curDir);
                 //ctrl.game.AddBuilding(selection.CreateBuilding(tile, curDir));
             }
         }

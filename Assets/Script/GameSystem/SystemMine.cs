@@ -50,7 +50,7 @@ namespace BB
                 }
             }
 
-            public override IEnumerable<Task> GetTasks()
+            protected override IEnumerable<Task> GetTasks()
             {
                 string desc = $"{DescForTool(mineable.tool)} {mineable.def.name}.";
                 yield return new TaskGoTo(game, desc, PathCfg.Adjacent(tile.pos));
@@ -63,6 +63,7 @@ namespace BB
                     {
                         BB.Assert(task.work == activeWork);
                         mineable.mineAmt -= workAmt;
+                        return true;
                     },
                     (task) =>
                     {

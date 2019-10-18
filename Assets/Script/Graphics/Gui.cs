@@ -27,6 +27,18 @@ namespace BB
         public HorizontalWrapMode horiWrap;
         public VerticalWrapMode vertWrap;
 
+        public static TextCfg Default(Font font)
+        {
+            return new TextCfg()
+            {
+                font = font,
+                autoResize = false,
+                anchor = TextAnchor.UpperLeft,
+                horiWrap = HorizontalWrapMode.Overflow,
+                vertWrap = VerticalWrapMode.Truncate,
+            };
+        }
+
         public void Apply(Text text)
         {
             text.font = font;
@@ -50,10 +62,11 @@ namespace BB
 
     public static class Gui
     {
-        public static Button AddButton(GameObject obj, UnityAction fn)
+        public static Button AddButton(GameObject obj, UnityAction fn = null)
         {
             var button = obj.AddComponent<Button>();
-            button.onClick.AddListener(fn);
+            if (fn != null)
+                button.onClick.AddListener(fn);
             var colors = button.colors;
             colors.pressedColor = new Color(.5f, .5f, .5f, 1);
             colors.highlightedColor = new Color(.78f, .78f, .78f, 1);
@@ -131,6 +144,7 @@ namespace BB
             var scaler = obj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = refSize;
+            scaler.matchWidthOrHeight = .5f;
 
             return node;
         }
@@ -174,6 +188,15 @@ namespace BB
 
         // Known not working:
         // anchors -> pivot -> size -> offset
+
+        public static void SetFixed(this RectTransform rect, Anchor anchor, Vec2 ofs, Vec2 size)
+        {
+            Vec2 pivot = anchor.Pivot();
+            rect.anchorMin = rect.anchorMax = rect.pivot = pivot;
+            rect.offsetMin = new Vec2((1 - pivot.x) * ofs.x, (1 - pivot.y) * ofs.y);
+            rect.offsetMax = new Vec2(pivot.x * -ofs.x, pivot.y * -ofs.y);
+            rect.sizeDelta = size;
+        }
 
         public static void SetFill(this RectTransform rect)
             => rect.SetFillWithMargin(0);
