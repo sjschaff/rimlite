@@ -302,7 +302,10 @@ namespace BB
                             if (y == 0 && perm[b][x] == 0)
                                 continue;
 
-                            D_AddBuilding(xofs + x, 2 + y, wallProto);
+                            var bldgX = xofs + x;
+                            var bldgY = 2 + y;
+                            if (bldgX < size.x && bldgY < size.y)
+                                D_AddBuilding(xofs + x, 2 + y, wallProto);
                         }
                     }
                 }

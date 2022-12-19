@@ -186,6 +186,7 @@ namespace BB
             => tile.bldgMain.GetSpriteOver(pos);
     }
 
+
     public class MapTiler
     {
         private class Tilemap<T> where T : VirtualTileBase
@@ -226,13 +227,16 @@ namespace BB
                 VirtualTileBase.disableRefresh = false;
             }
 
-            public void UpdateTile(Vec2I v)
+            public void UpdateTile(Vec2I v, bool skipSubtiles = false)
             {
                 Vec3I gridPos = (v * 2).Vec3();
                 var vtilePrev = tilemap.GetTile(gridPos) as T;
                 var vtile = vtilePrev == vtileA ? vtileB : vtileA;
-                for (int i = 0; i < 4; ++i)
-                    tilemap.SetTile(gridPos + new Vec3I(i % 2, i >> 1, 0), vtile);
+                if (skipSubtiles)
+                    tilemap.SetTile(gridPos, vtile);
+                else
+                    for (int i = 0; i < 4; ++i)
+                        tilemap.SetTile(gridPos + new Vec3I(i % 2, i >> 1, 0), vtile);
             }
         }
 

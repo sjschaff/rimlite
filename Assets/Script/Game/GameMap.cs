@@ -7,7 +7,7 @@ namespace BB
 {
     public partial class Game
     {
-        private readonly Map map;
+        public readonly Map map;
 
         public Vec2I size => map.size;
         public bool ValidTile(Vec2I pos) => map.ValidTile(pos);

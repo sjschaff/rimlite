@@ -19,6 +19,8 @@ namespace BB
         private readonly Shader lineShader;
         private readonly Cache<Color, Material> lineMaterials;
 
+        private readonly Texture2D whiteTex;
+
         public AssetSrc()
         {
             textures = new Cache<string, Texture2D>(
@@ -35,6 +37,7 @@ namespace BB
 
             spriteShader = Resources.Load<Shader>("BBLitDefault");
             spriteMaterial = new Material(spriteShader);
+
 
             Texture2D tex = new Texture2D(128, 128, TextureFormat.R8, false, true)
             {
@@ -84,6 +87,15 @@ namespace BB
         private Texture2D LoadTex(string path)
         {
             var tex = Resources.Load<Texture2D>(path);
+
+            tex.filterMode = FilterMode.Point;
+            return tex;
+        }
+
+        public static Texture2D CreateFlatTex(Color colr)
+        {
+            var tex = new Texture2D(1, 1);
+            tex.SetPixel(0, 0, colr);
             tex.filterMode = FilterMode.Point;
             return tex;
         }

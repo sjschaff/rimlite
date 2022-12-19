@@ -7,26 +7,27 @@ using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
 
 /* Ideas/concepts *
-   multi-levels
+    [2019 (lol)]
+    multi-levels
         reuire walls/supports underneath other walls suppors
-   schools of magic -> schools of research
+    schools of magic -> schools of research
         specialized mages req. to research different trees
-   portals to other planes/dimensions possible based on schools of magic
+    portals to other planes/dimensions possible based on schools of magic
         rare / lategame resources found in planes, unlocks high tier research
         example, capture elementals and study them or something
         maybe early usage allows limited access, i.e planes touch but dont connect
             to allow for heaters/coolers, then later access allows travel between,
             dangerous but allows cooler stuff
-   send adventuring parties to explore planes, caves, mines, dungeons, all on 1 map
-   lots of concepts from dnd
+    send adventuring parties to explore planes, caves, mines, dungeons, all on 1 map
+    lots of concepts from dnd
         stock adventuring kits for sale
         sell magic items, potions etc.
         sell access to teleportaion circle
             private/public circles?
         library access
             buy books from travelers, advance research or maybe unlock special things
-   ability to house travelers/adventurers
-   random events
+    ability to house travelers/adventurers
+    random events
         mine infestations
         portal breach
         angry peasants
@@ -43,6 +44,26 @@ using Vec2I = UnityEngine.Vector2Int;
     architecture drawings as an alternative style of research, needed to make new buildings/benches
     golem workshop
         parts made separately then combined then enchanted
+
+    [2023 edition]
+    robust magic system
+        key mechanic: stability (eg thaumcraft)
+        "aether" magic simulation similar to a gas sim
+            different metrics
+                temp
+                pressure
+                chaos
+                ??
+            different elements interact differently
+                create instability or stability
+                physically repel/attract
+                react to create/destroy
+            objects in world interact in unique ways
+            highly quantized for nicer ability to control
+        pipe/pipelike object
+        
+
+
 */
 
 namespace BB
@@ -59,6 +80,7 @@ namespace BB
         public readonly Transform agentContainer;
         public readonly Transform workOverlays;
         public readonly Transform effectsContainer;
+        public readonly Transform aetherContainer;
 
         private readonly Light2D lightGlobal;
 
@@ -68,6 +90,7 @@ namespace BB
             new DeferredSet<Effect>(e => e.Destroy());
 
         private readonly MinionIdle idleJobs;
+        private readonly AetherSim aether;
 
         public Game(Registry registry, AssetSrc assets)
         {
@@ -82,9 +105,11 @@ namespace BB
             itemContainer = CreateContainer("Items");
             agentContainer = CreateContainer("Agents");
             workOverlays = CreateContainer("Work Overlays");
+            aetherContainer = CreateContainer("Aether Container");
 
+            aether = new AetherSim(this, 32);
             map = new Map(this);
-            map.InitDebug(new Vec2I(128, 128));
+            map.InitDebug(new Vec2I(32, 32));
 
             for (int i = 0; i < 10; ++i)
                 minions.AddLast(new Minion(this, new Vec2I(1 + i, 1)));
@@ -217,6 +242,7 @@ namespace BB
 
         public void Update(float dt)
         {
+            aether.Update(dt);
             effects.ForEach(e => e.Update(dt));
 
             foreach (Minion minion in minions)
