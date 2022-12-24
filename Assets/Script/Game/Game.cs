@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-using UnityEngine.Experimental.Rendering.Universal;
+using UnityEngine.Rendering.Universal;
 
 using Vec2 = UnityEngine.Vector2;
 using Vec2I = UnityEngine.Vector2Int;
@@ -61,7 +61,7 @@ using Vec2I = UnityEngine.Vector2Int;
             objects in world interact in unique ways
             highly quantized for nicer ability to control
         pipe/pipelike object
-        
+
 
 
 */
@@ -173,7 +173,7 @@ namespace BB
             float dt_dx = stepX * 1 / (ray.dir.x * ray.mag); // may be inf.
             float dt_dy = stepY * 1 / (ray.dir.y * ray.mag); // may be inf.
 
-            float dxFirst = ray.start.x - start.x;    
+            float dxFirst = ray.start.x - start.x;
             float dyFirst = ray.start.y - start.y;
             if (stepX > 0) dxFirst = 1 - dxFirst;
             if (stepY > 0) dyFirst = 1 - dyFirst;

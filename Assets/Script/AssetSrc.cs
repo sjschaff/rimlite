@@ -97,6 +97,7 @@ namespace BB
             var tex = new Texture2D(1, 1);
             tex.SetPixel(0, 0, colr);
             tex.filterMode = FilterMode.Point;
+            tex.Apply();
             return tex;
         }
 
