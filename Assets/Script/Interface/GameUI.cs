@@ -568,12 +568,12 @@ namespace BB
             var events = obj.AddComponent<EventSystem>();
             events.sendNavigationEvents = false;
             var module = obj.AddComponent<StandaloneInputModule>();
-            module.forceModuleActive = true;
 
             return node;
         }
     }
 
+    [RequireComponent(typeof(CanvasRenderer))]
     class InputSink : Graphic,
         IPointerEnterHandler,
         IPointerExitHandler,
