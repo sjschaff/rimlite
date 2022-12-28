@@ -50,7 +50,7 @@ namespace BB
             public AetherTilesDB(int x, int y)
             {
                 current = new AetherTiles(x, y);
-                next = new AetherTiles(x, y); 
+                next = new AetherTiles(x, y);
             }
 
             public void Swap()
@@ -107,10 +107,14 @@ namespace BB
         private readonly Game game;
         private readonly Aether aether;
 
+        public readonly AetherSPH sph;
+
 
         public AetherSim(Game game, int size)
         {
             Debug.Log("Initializing Aether Subsystem");
+            sph = new AetherSPH(game);
+            return;
 
             var whiteTex = AssetSrc.CreateFlatTex(Color.white);
             var sprite = Sprite.Create(
@@ -179,7 +183,7 @@ namespace BB
         private void Simulate(AetherTilesDB tiles, float dt)
         {
             //for (int iter = 0; iter < 20; ++iter)
-            var diffusion = dt * .2f;
+            var diffusion = dt * 1f;
             for (int x = 0; x < aether.width; ++x)
                 for (int y = 0; y < aether.height; ++y) {
                     float sumIn = 0;
@@ -196,9 +200,11 @@ namespace BB
 
         protected override void Tick(float dt)
         {
+            sph.Tick(dt);
+            return;
             /*
             Navier-Strokes:
-                dV/dt + (V * X)V = -Xp/Y +  
+                dV/dt + (V * X)V = -Xp/Y +
 
             */
             aether.aethers[0].current.density[8, 8] += 500 * dt;
