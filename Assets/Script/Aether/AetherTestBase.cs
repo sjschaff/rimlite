@@ -49,9 +49,11 @@ namespace BB
       }
 
       public void Destroy() {
-        xf.gameObject.Destroy();
-        foreach (var obj in objs)
-          obj.Destroy();
+        if (xf != null)
+          xf.gameObject.Destroy();
+        if (objs != null)
+          foreach (var obj in objs)
+            obj.Destroy();
       }
     }
 

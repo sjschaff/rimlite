@@ -16,18 +16,20 @@ namespace BB {
     private bool _restart = false;
     public bool restart = false;
 
-    public float GAS_CONST = 8f;
-    public float VISCOSITY = 5.5f;
-    public float BOUNDS_DAMPING = -.05f;
+    public float GAS_CONST = 200f;
+    public float VISCOSITY = 3f;
+    public float BOUNDS_DAMPING = -.9f;
     public float VEL_DAMPING = 1f;
 
-    public float MIN_X = 7.35f;//4;
-    public float MAX_X = 7.65f;//16;
+    public float MIN_X = 0;//4;
+    public float MAX_X = 20;//16;
     public float INIT_MIN_X = 7.5f;
-    public float INIT_MAX_X = 7.5f;//12f;
+    public float INIT_MAX_X = 12.5f;//12f;
     public float INIT_MIN_Y = 1f;//7.5f;
-    public float INIT_JITTER = 0;//1/16f;
-    public int INIT_PARTICLES = 2;
+    public float INIT_JITTER = 1/16f;
+    public int INIT_PARTICLES = 200;
+
+    private bool do_restart = false;
 
     void UpdateParams() {
 
@@ -53,7 +55,7 @@ namespace BB {
       if (!EqualityComparer<T>.Default.Equals(src, d)) {
         dst = src;
         if (restart)
-          aether.Init();
+          do_restart = true;
       }
     }
 
@@ -70,6 +72,10 @@ namespace BB {
 
     public void Update() {
       UpdateParams();
+      if (do_restart) {
+        aether.Restart();
+        do_restart = false;
+      }
       aether.Update(Time.deltaTime);
     }
   }

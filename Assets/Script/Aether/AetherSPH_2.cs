@@ -43,17 +43,17 @@ namespace BB
     }
 
     // BOUNDS
-    public float MIN_X = 7.35f;//4;
-    public float MAX_X = 7.65f;//16;
+    public float MIN_X = 0;//4;
+    public float MAX_X = 20;//16;
     public float MIN_Y = 0;
 
 
     // INITIAL STATE
     public float INIT_MIN_X = 7.5f;
-    public float INIT_MAX_X = 7.5f;//12f;
+    public float INIT_MAX_X = 12.5f;//12f;
     public float INIT_MIN_Y = 1f;//7.5f;
-    public float INIT_JITTER = 0;//1/16f;
-    public int INIT_PARTICLES = 2;
+    public float INIT_JITTER = 1/16f;
+    public int INIT_PARTICLES = 200;
 
 
     // SIM PROPERTIES
@@ -66,9 +66,9 @@ namespace BB
     private readonly Kernel K_VISCOSITY = Kernel.GetViscosity(PT_SMOOTHING);
     private readonly float REST_DENSITY = PT_MASS * Kernel.GetPoly6(PT_SMOOTHING).W(Vec3.zero);//;300; // TODO: compute somehow?
 
-    public float GAS_CONST = 8f;//.0001f * 8.3145f * (273.15f + 30f); // const for equation of state * temp
-    public float VISCOSITY = 5.5f;//200f; // TODO:
-    public float BOUNDS_DAMPING = -0.05f;//-.5f;
+    public float GAS_CONST = 200f;//.0001f * 8.3145f * (273.15f + 30f); // const for equation of state * temp
+    public float VISCOSITY = 3f;//200f; // TODO:
+    public float BOUNDS_DAMPING = -.9f;
     public float VEL_DAMPING = 1;//.99f;
     private readonly Vec3 GRAVITY = 9.8f * new Vec3(0, -1, 0);
 
@@ -80,8 +80,9 @@ namespace BB
     }
 
     private /*readonly*/ Particle[] particles;
+    private readonly SpatialHash<int> hash = new SpatialHash<int>(PT_SMOOTHING);
 
-    private Sprite sprite;
+    private readonly Sprite sprite;
     private Line bounds;
 
     private void DebugSim() {
@@ -117,19 +118,26 @@ namespace BB
       Init();
     }
 
-    public void Init() {
+    private bool do_restart = false;
 
+    public void Restart() {
+      do_restart = true;
+    }
+
+    private void Init() {
       if (particles != null)
         for (int i = 0; i < particles.Length; ++i)
           particles[i].obj.Destroy();
 
-      DebugSim();
+      // DebugSim();
 
       if (bounds != null)
         bounds.Destroy();
 
       InitBoundsRender();
       particles = InitParticles(sprite);
+
+      do_restart = false;
     }
 
     private void InitBoundsRender() {
@@ -155,7 +163,7 @@ namespace BB
         var p = InitParticle(sprite, pos + new Vec2(jitter, 0), colr);
         particles[i] = p;
 
-        pos.x += PT_SIZE * 2;
+        pos.x += PT_SIZE * 8;
         if (pos.x > INIT_MAX_X) {
           pos.x = INIT_MIN_X;
           pos.y += PT_SIZE * 2;
@@ -190,7 +198,7 @@ namespace BB
         ref var p = ref particles[i];
         var density = 0f;
 
-        for (int j = 0; j < particles.Length; ++j) {
+        foreach (int j in hash.GetNeighbors(p.pos, PT_SMOOTHING)) {
           ref var pj = ref particles[j];
           density += pj.mass * K_POLY6.W(pj.pos - p.pos);
         }
@@ -206,23 +214,17 @@ namespace BB
         Vec3 fPressure = Vec2.zero;
         Vec3 fViscosity = Vec2.zero;
 
-        for (int j = 0; j < particles.Length; ++j) {
+        foreach (int j in hash.GetNeighbors(p.pos, PT_SMOOTHING)) {
           if (j == i)
             continue;
 
           ref var pj = ref particles[j];
           var dist = pj.pos - p.pos;
 
-          if (dist.sqrMagnitude > float.Epsilon) {
-            // var pressureMag = pj.mass * ((p.pressure + pj.pressure) / (2 * pj.density)) * K_SPIKEY.W(dist);
-            //  fPressure -= dist.normalized * pressureMag;
+          if (dist.sqrMagnitude > float.Epsilon)
             fPressure += -pj.mass * ((p.pressure + pj.pressure) / (2 * pj.density)) * K_SPIKEY.Gradient(dist);
-          }
-          BreakOnNan(fPressure);
 
-          //fViscosity += dist * VISCOSITY * pj.mass * K_VISCOSITY.Laplacian(dist);
-          var velRel = (pj.vel - p.vel) / pj.density;
-          fViscosity += pj.mass * VISCOSITY * velRel * K_VISCOSITY.Laplacian(dist);
+          fViscosity += pj.mass * VISCOSITY * ((pj.vel - p.vel) / pj.density) * K_VISCOSITY.Laplacian(dist);
           BreakOnNan(fViscosity);
         }
 
@@ -265,7 +267,13 @@ namespace BB
     }
 
     protected override void Tick(float dt) {
-      dt = dt * 1f;//.2f;
+      if (do_restart)
+        Init();
+
+      hash.Clear();
+      for (int i = 0; i < particles.Length; ++i)
+        hash.Add(particles[i].pos, i);
+
       CalcDensityPressure();
       CalcForces();
       UpdatePos(dt);
