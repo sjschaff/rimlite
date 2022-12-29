@@ -20,7 +20,7 @@ namespace BB
         public bool lockToMap = false;
         private const float panSpeed = 2.5f;
         private const float zoomZpeed = .5f;
-        private const float minZoom = 2;
+        private const float minZoom = 1;//2;
         private const float maxZoom = 20;
 
         private static float Speed(PlaySpeed speed)
@@ -74,7 +74,7 @@ namespace BB
         public GameController()
         {
             registry = new Registry();
-            assets = new AssetSrc();
+            assets = AssetSrc.singleton;
             cam = Camera.main;
             game = new Game(registry, assets);
             gui = new GameUI(this);

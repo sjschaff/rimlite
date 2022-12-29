@@ -1,6 +1,7 @@
 using BB;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 using Vec2 = UnityEngine.Vector2;
@@ -10,19 +11,47 @@ using Vec3I = UnityEngine.Vector3Int;
 
 namespace BB
 {
-  public abstract class AetherTestBase {
-    protected readonly Game game;
+  public abstract class FixedTimeSim
+  {
+      private float dTRemainder = 0;
+      private const float updateRate = 1 / 120f;
 
-    public AetherTestBase(Game game) {
-      this.game = game;
+      public void Update(float dt)
+      {
+          dt += dTRemainder;
+          if (dt >= updateRate) {
+              Tick(updateRate);
+              dt -= updateRate;
+          }
+
+          dTRemainder = dt;
+      }
+
+      protected abstract void Tick(float dt);
+  }
+
+  public abstract class AetherTestBase : FixedTimeSim {
+
+    protected Transform root_xf;
+
+    public AetherTestBase() {
+      root_xf = new GameObject("aether_test").transform;
     }
 
     protected struct SpriteObj {
       public SpriteRenderer sprite;
       public Transform xf;
 
+      public List<GameObject> objs;
+
       public void Render(Vec2 pos) {
         xf.localPosition = pos;
+      }
+
+      public void Destroy() {
+        xf.gameObject.Destroy();
+        foreach (var obj in objs)
+          obj.Destroy();
       }
     }
 
@@ -39,10 +68,11 @@ namespace BB
       var obj = new SpriteObj();
       var id = Guid.NewGuid();
       var name = $"aether_sprite_{id}";
-      obj.sprite = game.assets.CreateObjectWithRenderer<SpriteRenderer>(
-        game.aetherContainer, Vec2.zero, name, RenderLayer.OverMinion.Layer(200));
+      obj.sprite = AssetSrc.singleton.CreateObjectWithRenderer<SpriteRenderer>(
+        root_xf, Vec2.zero, name, RenderLayer.OverMinion.Layer(200));
       obj.sprite.sprite = sprite;
       obj.xf = obj.sprite.gameObject.transform;
+      obj.objs = new List<GameObject>();
       return obj;
     }
 

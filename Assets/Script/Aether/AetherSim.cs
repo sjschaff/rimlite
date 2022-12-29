@@ -10,25 +10,6 @@ using Vec2I = UnityEngine.Vector2Int;
 
 namespace BB
 {
-    public abstract class FixedTimeSim
-    {
-        private float dTRemainder = 0;
-        private const float updateRate = 1 / 60f;
-
-        public void Update(float dt)
-        {
-            dt += dTRemainder;
-            if (dt >= updateRate) {
-                Tick(updateRate);
-                dt -= updateRate;
-            }
-
-            dTRemainder = dt;
-        }
-
-        protected abstract void Tick(float dt);
-    }
-
     public class AetherSim : FixedTimeSim
     {
         private class AetherTiles
@@ -107,13 +88,13 @@ namespace BB
         private readonly Game game;
         private readonly Aether aether;
 
-        public readonly AetherSPH sph;
+        public readonly AetherTestBase sph;
 
 
         public AetherSim(Game game, int size)
         {
             Debug.Log("Initializing Aether Subsystem");
-            sph = new AetherSPH(game);
+            sph = new AetherSPH_2();
             return;
 
             var whiteTex = AssetSrc.CreateFlatTex(Color.white);
@@ -200,7 +181,7 @@ namespace BB
 
         protected override void Tick(float dt)
         {
-            sph.Tick(dt);
+            //sph.Tick(dt);
             return;
             /*
             Navier-Strokes:

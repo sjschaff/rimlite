@@ -8,6 +8,7 @@ namespace BB
 {
     public class AssetSrc
     {
+
         public readonly Cache<string, Texture2D> textures;
         public readonly Cache<AtlasDef, Atlas> atlases;
         public readonly Cache<SpriteDef, Sprite> sprites;
@@ -21,7 +22,16 @@ namespace BB
 
         private readonly Texture2D whiteTex;
 
-        public AssetSrc()
+        private static AssetSrc _singleton;
+        public static AssetSrc singleton {
+          get {
+            if (_singleton == null)
+              _singleton = new AssetSrc();
+            return _singleton;
+          }
+        }
+
+        private AssetSrc()
         {
             textures = new Cache<string, Texture2D>(
                 file => LoadTex(file));

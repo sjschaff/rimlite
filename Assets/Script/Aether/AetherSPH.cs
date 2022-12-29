@@ -31,25 +31,27 @@ namespace BB
 
     Particle[] particles;
 
-    private const int NUM_PARTICLES = 30;
-    private const float MASS = 2; // ???
+    private const float SIM_RES = 0.5f;
+
+    private const int NUM_PARTICLES = (int)(90 / (SIM_RES * SIM_RES));
+    private const float MASS = 2 * SIM_RES; // ???
 
 
-    private const float SMOOTHING_DIST = .4f; // h
-    private const float EQ_OF_STATE_CONSTANT = .1f; // k
-    private const float POLYTOPIC_INDEX = 3.5f; //1; // n  (compressibility, 0 == totally compressible)
-    private const float DAMPING = .99f;
+    private const float SMOOTHING_DIST = .4f * SIM_RES; // h
+    private const float EQ_OF_STATE_CONSTANT = .01f * (SIM_RES * SIM_RES); // k
+    private const float POLYTOPIC_INDEX = 1.5f; //1; // n  (compressibility, 0 == totally compressible)
+    private const float DAMPING = .9f;
 
-    private readonly Vec3 GRAVITY_CENTER = new Vec3(1.5f, 3.5f, 0);
+    private readonly Vec3 GRAVITY_CENTER = new Vec3(3.5f, 3.5f, 0);
     private const float GRAVITY_STRENGTH = 0;//2.01f * .25f;zv
 
 
     private const float RESTITUTION = .2f;
     private const float MAX_X = 10f;
-    private const float DOWN_GRAV = 0.8f;
+    private const float DOWN_GRAV = 3.2f;
 
 
-    public AetherSPH(Game game) : base(game) {
+    public AetherSPH(Game game) {
       var sprite = this.CreateParticleSprite(AssetSrc.CreateFlatTex(Color.magenta), 1/16f);
 
       var lr_bounds = game.assets.CreateLine(game.aetherContainer, "bounds", RenderLayer.OverMinion.Layer(200), Color.white, 1/16f, false, false);
@@ -163,7 +165,7 @@ def gradW( x, y, z, h ):
 
 
       var pressure = EQ_OF_STATE_CONSTANT * Math.Pow(density, 1 + (1/POLYTOPIC_INDEX));
-      p.pd_ratio = (float)(density / (pressure * pressure));
+      p.pd_ratio = (float)(density / (pressure * pressure)); // SUPER backwards lol => P / d*d
     }
 
     private void CalcAcc(int i) {
@@ -250,7 +252,7 @@ acceleration(pI) = - sum(particles:pJ)(mass * (pI.pdr + p).pdr) * dKernel(pI.pos
       p.Render();
     }
 
-    public void Tick(float dt) {
+    protected override void Tick(float dt) {
       // https://philip-mocz.medium.com/create-your-own-smoothed-particle-hydrodynamics-simulation-with-python-76e1cec505f1
       for (int i = 0; i < particles.Length; ++i)
         CalcDensityPressureRatio(i);
