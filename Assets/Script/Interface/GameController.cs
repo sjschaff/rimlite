@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
+using UnityEngine.EventSystems;
 using static UnityEngine.EventSystems.PointerEventData;
 
 using Vec2 = UnityEngine.Vector2;
@@ -71,8 +72,11 @@ namespace BB
         private Vec3 camPosInitial;
         private Selection lastSingleClickSelection;
 
+        public static GameController ctrl; // TODO: less shitty
+
         public GameController()
         {
+            ctrl = this;
             registry = new Registry();
             assets = AssetSrc.singleton;
             cam = Camera.main;
@@ -356,6 +360,8 @@ namespace BB
         public void OnDrag(Vec2 scPos, InputButton button)
         {
             Vec2 pos = ScreenToWorld(scPos);
+            activeTool?.RawMouseMove(pos);
+
             if (button == InputButton.Left)
             {
                 if (activeTool != null && activeTool.IsDragable())
@@ -369,7 +375,7 @@ namespace BB
 
                 UpdateDragOutline(pos);
             }
-            else if (button == InputButton.Right)
+            else if (button == InputButton.Right && !Input.GetKey(KeyCode.LeftControl))
             {
                 Vec2 scDrag = dragStartCam - scPos;
                 Vec3 drag = cam.ScreenToViewportPoint(scDrag).Scaled(cam.OrthoSize());
@@ -418,6 +424,15 @@ namespace BB
         {
             mouseOver = false;
             activeTool?.OnMouseExit();
+        }
+
+
+        public void OnMouseDown(Vec2 scPos, InputButton button) {
+          activeTool?.RawMouseDown(button, ScreenToWorld(scPos));
+        }
+
+        public void OnMouseUp(Vec2 scPos, InputButton button) {
+          activeTool?.RawMouseUp(button, ScreenToWorld(scPos));
         }
     }
 }

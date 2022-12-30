@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 
 using Vec2 = UnityEngine.Vector2;
@@ -66,16 +67,62 @@ namespace BB {
 
     }
 
+    public class AetherTool : UITool {
+      private readonly AetherSPH_2 aether;
+
+      private Dictionary<PointerEventData.InputButton, bool> button_states = new Dictionary<PointerEventData.InputButton, bool>();
+      private Vec2 mouse_pos;
+
+      public AetherTool(GameController ctrl, AetherSPH_2 aether) : base(ctrl) {
+        this.aether = aether;
+      }
+
+
+      public override void RawMouseDown(PointerEventData.InputButton button, Vec2 pos) {
+        button_states[button] = true;
+        mouse_pos = pos;
+      }
+
+      public override void RawMouseUp(PointerEventData.InputButton button, Vec2 pos) {
+        button_states[button] = false;
+        mouse_pos = pos;
+      }
+
+      public override void RawMouseMove(Vec2 pos)
+      {
+        mouse_pos = pos;
+      }
+
+      public void Update() {
+        aether.inject = button_states.GetOrDefault(PointerEventData.InputButton.Left, false);
+        aether.remove = button_states.GetOrDefault(PointerEventData.InputButton.Right, false);
+        aether.mouse_pos = mouse_pos;
+      }
+    }
+
+    private AetherTool tool;
+
+    public void Awake() {
+    }
+
     public void Start() {
       aether = new AetherSPH_2();
     }
 
+
     public void Update() {
+      var ctrl = GameController.ctrl;
+      if (tool == null)
+        tool = new AetherTool(ctrl, aether);
+      ctrl.ReplaceTool(tool);
+
       UpdateParams();
       if (do_restart) {
         aether.Restart();
         do_restart = false;
       }
+
+      tool.Update();
       aether.Update(Time.deltaTime);
     }
   }

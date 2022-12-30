@@ -581,7 +581,9 @@ namespace BB
         IBeginDragHandler,
         IDragHandler,
         IEndDragHandler,
-        IScrollHandler
+        IScrollHandler,
+        IPointerDownHandler,
+        IPointerUpHandler
     {
         private GameController ctrl;
         private readonly Dictionary<PointerEventData.InputButton, bool> isDragging
@@ -626,6 +628,13 @@ namespace BB
         public void OnScroll(PointerEventData eventData)
         {
             ctrl.OnScroll(eventData.scrollDelta);
+        }
+
+        public void OnPointerDown(PointerEventData evt) {
+          ctrl.OnMouseDown(evt.position, evt.button);
+        }
+        public void OnPointerUp(PointerEventData evt) {
+          ctrl.OnMouseUp(evt.position, evt.button);
         }
     }
 }

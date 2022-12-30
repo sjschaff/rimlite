@@ -16,9 +16,10 @@ namespace BB
 
         public readonly Shader spriteShader;
         public readonly Material spriteMaterial;
+        public readonly Material defaultLineMaterial;
 
         private readonly Shader lineShader;
-        private readonly Cache<Color, Material> lineMaterials;
+        public readonly Cache<Color, Material> lineMaterials;
 
         private readonly Texture2D whiteTex;
 
@@ -92,6 +93,8 @@ namespace BB
 
                     return material;
                 });
+
+            defaultLineMaterial = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply"));
         }
 
         private Texture2D LoadTex(string path)
@@ -145,10 +148,13 @@ namespace BB
         public Line CreateLine(
             Transform parent, string name,
             RenderLayer layer, Color color, float width,
-            bool loop, bool useWorldspace)
+            bool loop, bool useWorldspace, bool useDefaultMaterial = false)
         {
             var line = CreateObjectWithRenderer<LineRenderer>(parent, Vec2.zero, name, layer);
-            line.material = lineMaterials.Get(color);
+            if (useDefaultMaterial)
+              line.material = defaultLineMaterial;
+            else
+              line.material = lineMaterials.Get(color);
             line.loop = loop;
             line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             line.receiveShadows = false;

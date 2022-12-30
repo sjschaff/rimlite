@@ -70,10 +70,10 @@ namespace BB
       var obj = new SpriteObj();
       var id = Guid.NewGuid();
       var name = $"aether_sprite_{id}";
-      obj.sprite = AssetSrc.singleton.CreateObjectWithRenderer<SpriteRenderer>(
-        root_xf, Vec2.zero, name, RenderLayer.OverMinion.Layer(200));
-      obj.sprite.sprite = sprite;
-      obj.xf = obj.sprite.gameObject.transform;
+      // obj.sprite = AssetSrc.singleton.CreateObjectWithRenderer<SpriteRenderer>(
+      //   root_xf, Vec2.zero, name, RenderLayer.OverMinion.Layer(200));
+      // obj.sprite.sprite = sprite;
+      // obj.xf = obj.sprite.gameObject.transform;
       obj.objs = new List<GameObject>();
       return obj;
     }
