@@ -205,6 +205,7 @@ namespace BB
                 tilemap.tileAnchor = Vec2.zero;
 
                 var render = node.AddComponent<TM.TilemapRenderer>();
+                render.enabled = false;
                 render.sortOrder = TM.TilemapRenderer.SortOrder.TopRight;
                 render.mode = TM.TilemapRenderer.Mode.Chunk;
                 render.detectChunkCullingBounds = TM.TilemapRenderer.DetectChunkCullingBounds.Auto;

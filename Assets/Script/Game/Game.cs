@@ -107,7 +107,7 @@ namespace BB
             workOverlays = CreateContainer("Work Overlays");
             aetherContainer = CreateContainer("Aether Container");
 
-            aether = new AetherSim(this, 32);
+            //aether = new AetherSim(this, 32);
             map = new Map(this);
             map.InitDebug(new Vec2I(32, 32));
 
@@ -242,9 +242,10 @@ namespace BB
 
         public void Update(float dt)
         {
-            aether.Update(dt);
+            //aether.Update(dt*.2f);
             effects.ForEach(e => e.Update(dt));
 
+            return;
             foreach (Minion minion in minions)
             {
                 if (!minion.isDrafted)

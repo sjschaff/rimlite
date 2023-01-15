@@ -4,13 +4,13 @@ namespace BB
 {
     public class Work
     {
-#if DEBUG
+//#if DEBUG
         private static int D_nextID = 0;
         public readonly int D_uniqueID;
         public readonly string D_workName;
         public readonly List<string> D_tasksCompleted
             = new List<string>();
-#endif
+//#endif
         [System.Diagnostics.Conditional("DEBUG")]
         private void D_TrackTaskCompleted(Task task)
             => D_tasksCompleted.Add(task.description);
