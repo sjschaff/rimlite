@@ -1,6 +1,7 @@
 using BB;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 
@@ -37,7 +38,7 @@ namespace BB
 
       public void Render() {
         BreakOnNan(pos);
-        if (obj.sprite != null) // #debug
+        if (obj.xf != null) // #debug
           obj.Render(pos);
       }
     }
@@ -49,11 +50,11 @@ namespace BB
 
 
     // INITIAL STATE
-    public float INIT_MIN_X = 7.5f;
-    public float INIT_MAX_X = 12.5f;//12f;
+    public float INIT_MIN_X = 1f;
+    public float INIT_MAX_X = 6f;//12f;
     public float INIT_MIN_Y = 1f;//7.5f;
     public float INIT_JITTER = 1/16f;
-    public int INIT_PARTICLES = 200;
+    public int INIT_PARTICLES = 2000;
 
 
     // SIM PROPERTIES
@@ -66,9 +67,31 @@ namespace BB
     private readonly Kernel K_VISCOSITY = Kernel.GetViscosity(PT_SMOOTHING);
     private readonly float REST_DENSITY = PT_MASS * Kernel.GetPoly6(PT_SMOOTHING).W(Vec3.zero);//;300; // TODO: compute somehow?
 
+    private static Gradient _Gradient() {
+      var g = new Gradient();
+      g.SetKeys(
+        new GradientColorKey[] {
+          new GradientColorKey(new Color(.05f, .05f, 1f), 0f),
+          new GradientColorKey(Color.blue, 0.0333333f),
+          new GradientColorKey(Color.magenta, 1f),
+        },
+        new GradientAlphaKey[] {}
+      );
+
+      return g;
+    }
+
+    private readonly Gradient gradient = _Gradient();
+    private const float COLR_SCALE = 6f;
+
+    // private readonly float COLR_SCALING_DENSITY = 1.1f * PT_MASS * Kernel.GetPoly6(PT_SMOOTHING).W(Vec3.zero);
+    // private readonly float COLR_SCALING_DENSITY2 = 4f * PT_MASS * Kernel.GetPoly6(PT_SMOOTHING).W(Vec3.zero);
+
+
     public float GAS_CONST = 200f;//.0001f * 8.3145f * (273.15f + 30f); // const for equation of state * temp
     public float VISCOSITY = 3f;//200f; // TODO:
     public float BOUNDS_DAMPING = -.9f;
+    public float BOUNDS_FRICTION = .9f;
     public float VEL_DAMPING = 1;//.99f;
     private readonly Vec3 GRAVITY = 9.8f * new Vec3(0, -1, 0);
 
@@ -155,6 +178,7 @@ namespace BB
       var rand = new System.Random(0);
       var pos = new Vec2(INIT_MIN_X, INIT_MIN_Y);
 
+      float gap = PT_SIZE * 4;
 
       var particles = new Particle[INIT_PARTICLES];
       for (int i = 0; i < particles.Length; ++i) {
@@ -163,10 +187,12 @@ namespace BB
         var p = InitParticle(sprite, pos + new Vec2(jitter, 0), colr);
         particles[i] = p;
 
-        pos.x += PT_SIZE * 8;
+
+
+        pos.x += gap;
         if (pos.x > INIT_MAX_X) {
           pos.x = INIT_MIN_X;
-          pos.y += PT_SIZE * 2;
+          pos.y += gap;
         }
       }
 
@@ -177,14 +203,16 @@ namespace BB
       var p = new Particle();
       p.obj = CreateSpriteObj(sprite);
 
-      var line = AssetSrc.singleton.CreateLine(p.obj.xf, "circle", RenderLayer.OverMinion.Layer(200), colr, 1/64f, true, false);
-      line.SetCircle(new Circle(Vec2.zero, PT_SMOOTHING),16);
-      p.obj.objs.Add(line.transform.gameObject);
+      // var line = AssetSrc.singleton.CreateLine(p.obj.xf, "circle", RenderLayer.OverMinion.Layer(200), colr, 1/64f, true, false);
+      // line.SetCircle(new Circle(Vec2.zero, PT_SMOOTHING),16);
+      // p.obj.objs.Add(line.transform.gameObject);
 
-      var line2 = AssetSrc.singleton.CreateLine(p.obj.xf, "circle", RenderLayer.OverMinion.Layer(200), Color.cyan, 1/64f, true, false);
+      var line2 = AssetSrc.singleton.CreateLine(
+        root_xf, "circle", RenderLayer.OverMinion.Layer(200), Color.cyan, .2f/*1/64f*/, true, false,
+        useDefaultMaterial: true);
       line2.SetCircle(new Circle(Vec2.zero, PT_SIZE),16);
-      p.obj.objs.Add(line2.transform.gameObject);
-
+      // p.obj.objs.Add(line2.transform.gameObject);
+      p.obj.xf = line2.transform;
 
       p.mass = PT_MASS;
       p.pos = pos;
@@ -198,7 +226,7 @@ namespace BB
         ref var p = ref particles[i];
         var density = 0f;
 
-        foreach (int j in hash.GetNeighbors(p.pos, PT_SMOOTHING)) {
+        foreach (int j in hash.GetNeighbors(p.pos, PT_SMOOTHING, false)) {
           ref var pj = ref particles[j];
           density += pj.mass * K_POLY6.W(pj.pos - p.pos);
         }
@@ -214,7 +242,7 @@ namespace BB
         Vec3 fPressure = Vec2.zero;
         Vec3 fViscosity = Vec2.zero;
 
-        foreach (int j in hash.GetNeighbors(p.pos, PT_SMOOTHING)) {
+        foreach (int j in hash.GetNeighbors(p.pos, PT_SMOOTHING, false)) {
           if (j == i)
             continue;
 
@@ -249,26 +277,78 @@ namespace BB
         if (p.pos.x - PT_SIZE < MIN_X) {
           p.pos.x = MIN_X + PT_SIZE;
           p.vel.x *= BOUNDS_DAMPING;
+          p.vel.y *= BOUNDS_FRICTION;
         }
         if (p.pos.x + PT_SIZE > MAX_X) {
           p.pos.x = MAX_X - PT_SIZE;
           p.vel.x *= BOUNDS_DAMPING;
+          p.vel.y *= BOUNDS_FRICTION;
         }
         if (p.pos.y - PT_SIZE < MIN_Y) {
           p.pos.y = MIN_Y + PT_SIZE;
           p.vel.y *= BOUNDS_DAMPING;
+          p.vel.x *= BOUNDS_FRICTION;
         }
 
         p.vel *= VEL_DAMPING;
 
+        var fr_grad = Mathf.Clamp((p.density - REST_DENSITY) / (COLR_SCALE - 1f), 0f, 1f);
+        Color colr = gradient.Evaluate(fr_grad);
+
+        var line = p.obj.xf.GetComponent<LineRenderer>();
+        line.startColor = colr;
+        line.endColor = colr;
+
+        // This is hilariously dumb
+        // p.obj.xf.GetComponent<LineRenderer>().material = AssetSrc.singleton.lineMaterials.Get(colr);
         p.Render();
       }
 
     }
 
+    public bool inject = false;
+    public bool remove = false;
+    public Vec2 mouse_pos = Vec2.zero;
+
+    private const int INJECT_RATE = 480;
+    private const float MANIP_RADIUS = 1.5f;
+
+
     protected override void Tick(float dt) {
       if (do_restart)
         Init();
+
+
+      if (remove) {
+        HashSet<int> removals = new HashSet<int>(hash.GetNeighbors(mouse_pos, MANIP_RADIUS, true));
+        Particle[] new_particles = new Particle[particles.Length - removals.Count];
+        int j = 0;
+        for (int i = 0; i < particles.Length; ++i) {
+          if (!removals.Contains(i)) {
+            new_particles[j] = particles[i];
+            j++;
+          } else {
+            particles[i].obj.Destroy();
+          }
+        }
+
+        particles = new_particles;
+      }
+
+      if (inject) {
+        var c = particles.Length;
+        var injection = Mathf.RoundToInt(dt * INJECT_RATE);
+        var total = c + injection;
+        var vel = GRAVITY * 2f;
+        if (mouse_pos.y < 5)
+          vel = Vec3.zero;
+        Array.Resize(ref particles, total);
+        for (int i = c; i < total; ++i) {
+          var pt = UnityEngine.Random.insideUnitCircle * MANIP_RADIUS + mouse_pos;
+          particles[i] = InitParticle(sprite, pt, Color.white);
+          particles[i].vel = vel;
+        }
+      }
 
       hash.Clear();
       for (int i = 0; i < particles.Length; ++i)

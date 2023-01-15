@@ -7,7 +7,7 @@ namespace BB
 {
     public class Line
     {
-        private readonly Transform transform;
+        public readonly Transform transform;
         private readonly LineRenderer renderer;
 
         public Line(LineRenderer renderer)

@@ -1,0 +1,204 @@
+
+struct OTNode {
+  int3 origin;
+  int size;
+
+  int children[8];
+
+  int values_offset;
+  int values_count;
+};
+
+struct Particle {
+  float3 pos;
+  float mass;
+  float3 vel;
+  float density;
+  float pressure;
+};
+
+RWStructuredBuffer<OTNode> ot_nodes;
+RWStructuredBuffer<int> particles_indices;
+RWStructuredBuffer<Particle> particles;
+
+#define PI 3.14159265
+const float EPS = .000001;
+
+// TODO: make params?
+#define PT_SIZE 0.1
+#define H 0.4
+const float DT = 1/120;
+
+const float H2 = H * H;
+const float C_POLY6_K = 315 / (64 * PI * pow(H, 9));
+const float C_SPIKY_GRAD = 45 / (PI * pow(H, 6));
+const float C_VISCOSITY_LAPL = 45 / (PI * pow(H, 6));
+
+const float MIN_X = 0;
+const float MAX_X = 40;
+const float MIN_Y = 0;
+
+const float GAS_CONST = 200;
+const float REST_DENSITY = 173; // TODO: estimation
+const float VISCOSITY = 3;
+const float BOUNDS_DAMPING = -.9;
+const float BOUNDS_FRICTION = .9;
+const float VEL_DAMPING = 1;
+const float3 GRAVITY = 9.8 * float3(0, -1, 0);
+
+
+int3 GridPos(float3 pos) {
+  return int3(floor(pos / H));
+}
+
+int3 GetChildIndex(int3 pos, int size, int3 origin) {
+  int half_size = size >> 1;
+  int3 center_ofs = int3(1,1,1) * half_size;
+  int3 center = origin + center_ofs;
+  int x = (pos.x < center.x) ? 0 : 1;
+  int y = (pos.y < center.y) ? 0 : 1;
+  int z = (pos.z < center.z) ? 0 : 1;
+  return int3(x, y, z);
+}
+
+// Tree traversal
+#define ForEachNeighbor(POS, IND)\
+  float3 _extent = float3(1, 1, 1) * H;\
+  int3 _min = GridPos(POS + _extent);\
+  int3 _max = GridPos(POS - _extent);\
+\
+  for (int _x = _min.x; _x <= _max.x; ++_x) {\
+    for (int _y = _min.y; _y <= _max.y; ++_y) {\
+      for (int _z = _min.z; _z <= _max.z; ++_z) {\
+        int3 _bucket = int3(_x, _y, _z);\
+\
+        int _inode = 0;\
+        while (_inode >= 0) {\
+          OTNode _node = ot_nodes[_inode];\
+          if (_node.size == 1) {\
+            for (int _i = 0; _i < _node.values_count; ++_i) {\
+              int IND = particles_indices[_node.values_offset + _i];\
+              // do thing
+
+#define EndForEachNeighbor()\
+            }\
+            break;\
+          } else {\
+            int3 _child = GetChildIndex(_bucket, _node.size, _node.origin);\
+            int _ichild = _child.x * 4 + _child.y * 2 + _child.z;\
+            _inode = _node.children[_ichild];\
+          }\
+        }\
+      }\
+    }\
+  }\
+
+
+// Kernels
+float Poly6(float3 v) {
+  float R2 = dot(v, v);
+  if (R2 >= H2)
+    return 0;
+
+  float X = H2 - R2;
+  return C_POLY6_K * X * X * X;
+}
+
+float3 SpikyGrad(float3 v) {
+  float R = length(v);
+  if (R >= H || R < EPS)
+    return float3(0, 0, 0);
+
+  float X = H - R;
+  float M = C_SPIKY_GRAD * X * X / R;
+  return v * M;
+}
+
+float ViscLaplacian(float3 v) {
+  float R = length(v);
+  if (R >= H)
+    return 0;
+
+  float X = H - R;
+  return C_VISCOSITY_LAPL * X;
+}
+
+void ComputeDensityPressure(int i) {
+  Particle p = particles[i];
+
+  p.density = 0;
+  ForEachNeighbor(p.pos, j) {
+    Particle pj = particles[j];
+    p.density += pj.mass * Poly6(pj.pos - p.pos);
+  } EndForEachNeighbor()
+
+  p.pressure = GAS_CONST * (p.density - REST_DENSITY);
+  particles[i] = p;
+}
+
+void IntegrateParticle(int i) {
+  Particle p = particles[i];
+
+  // compute forces
+  float3 f_pressure = float3(0, 0, 0);
+  float3 f_viscosity = float3(0, 0, 0);
+
+  ForEachNeighbor(p.pos, j) {
+    if (j == i)
+      continue;
+
+    Particle pj = particles[j];
+    float3 dist = pj.pos - p.pos;
+
+    if (dot(dist, dist) > EPS)
+      f_pressure += -pj.mass * ((p.pressure + pj.pressure) / (2 * pj.density)) * SpikyGrad(dist);
+
+    f_viscosity += pj.mass * VISCOSITY * ((pj.vel - p.vel) / pj.density) * ViscLaplacian(dist);
+  } EndForEachNeighbor()
+
+  float3 f_gravity = GRAVITY * p.density;
+  float3 f_total = f_pressure + f_viscosity + f_gravity;
+
+  float3 acc = f_total / p.density;
+  float half_acc = DT * acc * .5f;
+
+  // integration
+  p.vel += half_acc;
+  p.pos += p.vel * DT;
+  p.vel += half_acc;
+
+  // collision
+  if (p.pos.x - PT_SIZE < MIN_X) {
+    p.pos.x = MIN_X + PT_SIZE;
+    p.vel.x *= BOUNDS_DAMPING;
+    p.vel.y *= BOUNDS_FRICTION;
+  }
+  if (p.pos.x + PT_SIZE > MAX_X) {
+    p.pos.x = MAX_X - PT_SIZE;
+    p.vel.x *= BOUNDS_DAMPING;
+    p.vel.y *= BOUNDS_FRICTION;
+  }
+  if (p.pos.y - PT_SIZE < MIN_Y) {
+    p.pos.y = MIN_Y + PT_SIZE;
+    p.vel.y *= BOUNDS_DAMPING;
+    p.vel.x *= BOUNDS_FRICTION;
+  }
+
+  p.vel *= VEL_DAMPING;
+
+  particles[i] = p;
+}
+
+
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel AetherComputePressure
+[numthreads(256,1,1)]
+void AetherComputePressure (uint3 id : SV_DispatchThreadID) {
+  ComputeDensityPressure(id.x);
+}
+
+#pragma kernel AetherIntegrate
+[numthreads(256,1,1)]
+void AetherIntegrate(uint3 id : SV_DispatchThreadID) {
+  IntegrateParticle(id.x);
+}
